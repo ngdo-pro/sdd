@@ -29,6 +29,7 @@ These rules apply universally to all agents operating within the **Spec Framewor
 
 ## 4. Integrity & Non-Regression Rule
 * A spec can only be marked as completed and synced into `knowledge/` when **100% of quality gates** (unit tests, component/integration tests, e2e tests, linter, typechecker) pass cleanly.
+* **Reviewer Independent Execution:** The Clean-Room Reviewer is strictly required to execute the test suite (unit, integration, E2E) and static checks locally during audit before granting `APPROVED`. Zero faith-based or unchecked approvals allowed.
 
 ---
 

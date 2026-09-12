@@ -53,6 +53,7 @@ flowchart LR
 
 5. **Clean-Room Independent Audit:**
    - Once all quality gates pass, instantiate `reviewer` in an **isolated session with zero prior conversational context**.
+   - The `reviewer` independently executes the complete test suite (unit, integration, and E2E) and project quality gates to verify everything passes live.
    - If changes are requested: route the audit report back to `implementer`.
 
 6. **Closure & Hand-off to Knowledge Track:**

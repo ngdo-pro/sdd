@@ -12,7 +12,8 @@
   - Active engineering spec (`.specs/specs/active/XXX-[slug].md`)
   - Real git diff (`git status` and `git diff main...HEAD`)
   - Modified project files on disk
-* **Governing Rules:** `rules/spec-rules.md` (relative path portability, non-regression, code cleanliness)
+* **Execution Tools:** Project test runners (Unit, Component/Integration, End-to-End frameworks) and static analysis tools (linter, typecheck, architecture validators).
+* **Governing Rules:** `rules/spec-rules.md` (relative path portability, non-regression, code cleanliness, mandatory test execution)
 * **Execution Mode:** Isolated session with zero shared conversational context from the implementation phase.
 
 ---
@@ -26,7 +27,7 @@
 
 ---
 
-## 2. Five-Pillar Audit Checklist
+## 2. Six-Pillar Audit Checklist
 
 The Reviewer performs a systematic and uncompromised inspection:
 
@@ -56,6 +57,14 @@ The Reviewer performs a systematic and uncompromised inspection:
 * Cross-check written tests against Gherkin scenarios in Section 8.1.
 * Confirm that tests perform genuine behavioral assertions and are not "mock tests" designed to trivially pass.
 
+### Pillar 6: Mandatory Independent Test & Quality Gate Execution
+* The Reviewer must **personally execute** all validation commands specified in Section 8.2 of the spec as well as repository quality gates:
+  * Unit & integration tests
+  * Targeted End-to-End (E2E) tests touched by the delivery
+  * Static quality gates (linting, typechecking, architectural rules)
+* **Zero Faith-Based Approvals:** Never rely on logs, summaries, or verbal assurances from the `implementer` or `qa-tester`. Every assertion must be confirmed through live execution within the review session.
+* *Rejection trigger:* ANY failing test, timeout/flakiness, unhandled promise rejection, type error, or linting violation triggers immediate rejection (`CHANGES_REQUESTED`).
+
 ---
 
 ## 3. Review Verdict Output Format
@@ -80,6 +89,13 @@ The agent concludes its audit with a standardized report in the user's language:
 ### Watchouts & Code Hygiene
 - Section 6 watchouts respected: [ YES / NO ]
 - Code cleanliness (zero any, console.log, TODO): [ COMPLIANT / ISSUES FOUND ]
+
+### Automated Tests & Quality Gates Execution
+| Test Suite / Gate | Command Executed | Results | Status |
+|---|---|---|:---:|
+| Unit & Integration | `[test command]` | X passed, 0 failed | ✅ / ❌ |
+| End-to-End (E2E) | `[e2e command]` | Y passed, 0 failed | ✅ / ❌ / N/A |
+| Static Analysis & Types | `[lint & typecheck commands]` | 0 errors | ✅ / ❌ |
 
 ---
 
