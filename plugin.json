@@ -1,6 +1,11 @@
 {
   "name": "spec-framework",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Universal Spec-Driven Development (SDD) Framework for AI Coding Agents",
-  "author": "Nanko Team"
+  "author": "Nanko Team",
+  "cli": {
+    "command": "spec",
+    "entry": "bin/spec.js"
+  },
+  "extensions": "extensions"
 }

@@ -42,3 +42,21 @@ These rules apply universally to all agents operating within the **Spec Framewor
 ## 6. Exhaustiveness & Scope Slicing Rule
 * **Never artificially cap questions, edge cases, invariants, or pitfalls.** Be thorough and resolve all ambiguities, failure modes, security boundaries, and architectural trade-offs upfront.
 * **Proactive Scope Slicing:** If addressing all edge cases or pitfalls reveals that a feature or spec is becoming too dense, spans too many user journeys, or carries excessive risk, **never hide or omit requirements**. Instead, explicitly recommend slicing the scope into smaller, atomic, sequential features or specs.
+
+---
+
+## 7. Deterministic Mechanics via CLI Rule
+* **Single source of movement:** All lifecycle movements (activating, archiving, relocating artifacts between `planned/`, `active/` and `archive/`, updating `Status:` headers, wiring parent↔child references) MUST go through the `spec` CLI rather than ad-hoc file moves:
+  - `spec move <ref> --to <planned|active|archived>` — transition an artifact.
+  - `spec link <spec-ref> --feature <ref>` — register a spec in its parent feature.
+  - `spec sync [<ref>] [--create]` — reconcile local artifacts with remote backends.
+* **Why:** the CLI applies each movement to *every enabled backend*. A raw `mv`
+  would silently desynchronize remote mirrors (e.g. Linear issues).
+* **Local-first source of truth:** The local filesystem is always the canonical
+  source of truth. Remote backends (Linear, GitHub, …) are **mirrors**; never
+  author the sole copy of an artifact remotely.
+* **Backend resolution:** Backends are declared in `.specs/config.json` and
+  resolved through the adapter port documented in `extensions/README.md`. New
+  backends are plugins and MUST respect `--dry-run` idempotency.
+* **Read-only inspection:** `spec status`, `spec list` and `spec validate`
+  (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.

@@ -43,3 +43,17 @@ Clarify all interaction specifics, edge cases, and constraints without artificia
 
 ### 4. Next Step
 Propose generating the corresponding technical engineering spec via `/spec [domain] [topic]`.
+
+---
+
+## Deterministic Mechanics (Rule 7)
+
+Register the feature in its parent initiative via the CLI so remote backends stay
+synchronized:
+
+```bash
+spec link [feature-slug] --initiative [initiative-slug]
+```
+
+If the CLI is unavailable, fall back to editing the initiative `README.md` roadmap
+manually and explicitly warn the user that remote backends were not updated.

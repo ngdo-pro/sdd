@@ -1,0 +1,14 @@
+{
+  "id": "example",
+  "name": "Example Backend",
+  "version": "1.0.0",
+  "type": "backend",
+  "kind": "remote",
+  "entry": "backend.js",
+  "description": "Template backend. Copy this folder to extensions/<your-id>/ and implement backend.js.",
+  "capabilities": ["read", "list", "transition", "create", "link"],
+  "settings": {
+    "endpoint": "",
+    "tokenEnv": "EXAMPLE_TOKEN"
+  }
+}

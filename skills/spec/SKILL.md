@@ -65,3 +65,17 @@ All generated specification documents (`.specs/specs/planned/XXX-[slug].md`) mus
 
 6. **Validation:**
    * Invite the user to review the spec before launching implementation (`/build-spec XXX`).
+
+---
+
+## Deterministic Mechanics (Rule 7)
+
+Delegate every lifecycle movement to the `spec` CLI instead of raw file moves, so
+remote backends (Linear, …) stay synchronized:
+
+* Activating the initiative: `spec move [initiative-slug] --kind initiative --to active`
+* Activating the feature: `spec move [feature-slug] --kind feature --to active`
+* Registering the spec in the feature: `spec link [XXX-slug] --feature [feature-slug]`
+
+If the CLI is unavailable, fall back to the documented file moves and explicitly
+warn the user that remote backends were not updated.

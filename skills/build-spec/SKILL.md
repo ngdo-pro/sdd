@@ -47,3 +47,16 @@ Use this skill when the user requests implementing an approved engineering speci
 7. **Status Update & Hand-off:**
    * Check off completed tasks in **Section 7 (Sequential Execution Plan)** within the active spec file.
    * Prompt user to run `/test-spec [id]` or `/sync-knowledge [id]`.
+
+---
+
+## Deterministic Mechanics (Rule 7)
+
+Perform the activation movement through the CLI so remote backends stay in sync:
+
+```bash
+spec move [XXX] --to active
+```
+
+If the CLI is unavailable, fall back to the documented `planned/ ➔ active/` file
+move and explicitly warn the user that remote backends were not updated.

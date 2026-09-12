@@ -48,3 +48,18 @@ All updated knowledge documents must be maintained in the user's language.
 
 5. **Confirmation:**
    * Summarize all performed updates (updated domain knowledge files, created PDRs/ADRs, archived spec, and cascaded completion milestones).
+
+---
+
+## Deterministic Mechanics (Rule 7)
+
+Archive and cascade through the CLI so remote backends stay synchronized:
+
+```bash
+spec move [XXX] --to archived                                  # archive the delivered spec
+spec move [feature-slug] --kind feature --to archived          # if the feature is fully delivered
+spec move [initiative-slug] --kind initiative --to archived    # if the initiative is fully delivered
+```
+
+If the CLI is unavailable, fall back to the documented file moves and explicitly
+warn the user that remote backends were not updated.
