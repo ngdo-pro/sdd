@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "005",
+  "slug": "005-linear-mcp",
+  "title": "Connecteur Linear via MCP",
+  "state": "archived",
+  "relations": {
+    "feature": "03-linear-mcp",
+    "initiative": "setup-experience"
+  },
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
+    "Change Type": "`Refactor`",
+    "Complexity": "`Large`"
+  },
+  "remote": {},
+  "progress": {
+    "done": true
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

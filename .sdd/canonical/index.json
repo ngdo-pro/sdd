@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T16:38:17.344Z",
+  "generatedAt": "2026-09-13T17:46:57.169Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -68,7 +68,7 @@
       "id": "02-setup-skill",
       "slug": "02-setup-skill",
       "title": "Skill /setup — interview et validation MCP",
-      "state": "planned",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/02-setup-skill.json",
       "body": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/02-setup-skill.md",
       "projection": ".sdd/generated/initiatives/setup-experience/features/02-setup-skill.md",
@@ -77,9 +77,29 @@
       },
       "progress": {
         "done": false,
-        "children": 0,
-        "completedChildren": 0,
-        "complete": false
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "03-linear-mcp",
+      "slug": "03-linear-mcp",
+      "title": "Connecteur Linear via MCP",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/03-linear-mcp/03-linear-mcp.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/03-linear-mcp/03-linear-mcp.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/features/03-linear-mcp.md",
+      "relations": {
+        "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
       },
       "remote": {}
     },
@@ -146,16 +166,16 @@
       "id": "setup-experience",
       "slug": "setup-experience",
       "title": "Expérience d'installation",
-      "state": "planned",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/setup-experience/setup-experience.json",
       "body": ".sdd/canonical/initiatives/setup-experience/setup-experience.md",
       "projection": ".sdd/generated/initiatives/setup-experience/README.md",
       "relations": {},
       "progress": {
         "done": false,
-        "children": 2,
-        "completedChildren": 1,
-        "complete": false
+        "children": 3,
+        "completedChildren": 3,
+        "complete": true
       },
       "remote": {}
     },
@@ -233,6 +253,48 @@
       "projection": ".sdd/generated/initiatives/setup-experience/specs/004.md",
       "relations": {
         "feature": "01-declarative-init",
+        "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "005",
+      "slug": "005-linear-mcp",
+      "title": "Connecteur Linear via MCP",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/03-linear-mcp/specs/005.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/03-linear-mcp/specs/005.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/specs/005.md",
+      "relations": {
+        "feature": "03-linear-mcp",
+        "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "006",
+      "slug": "006-setup-skill",
+      "title": "Skill /setup — interview et validation MCP",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/specs/006.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/specs/006.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/specs/006.md",
+      "relations": {
+        "feature": "02-setup-skill",
         "initiative": "setup-experience"
       },
       "progress": {

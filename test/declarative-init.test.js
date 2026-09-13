@@ -117,7 +117,8 @@ test('[U3][INV-1] manifestFor resolves the builtin and workspace catalog, reject
     const linear = await manifestFor(root, 'linear');
     assert.equal(linear.id, 'linear');
     assert.equal(linear.settingTypes.createOnMove, 'boolean');
-    assert.deepEqual(linear.requiredSettings, ['teamKey']);
+    assert.equal(linear.settingTypes.mcp, 'object');
+    assert.deepEqual(linear.requiredSettings, ['teamKey', 'mcp']);
 
     const custom = await manifestFor(root, 'custom');
     assert.equal(custom.settings.retries, 1);
@@ -227,7 +228,7 @@ test('[C2][INV-3] re-init is idempotent: explicit values survive, manifest defau
   }
 });
 
-test('[C3][INV-5] validate refuses an enabled connector missing its requiredSettings', async () => {
+test('[C3][INV-5][INV-2] validate refuses an enabled connector missing its requiredSettings', async () => {
   const root = await makeWorkspace();
   try {
     await writeFiles(root, {
@@ -240,8 +241,105 @@ test('[C3][INV-5] validate refuses an enabled connector missing its requiredSett
     const { output, exitCode } = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
     assert.equal(exitCode, 1);
     assert.match(output, /\[connector-settings\] connector linear/);
-    assert.match(output, /requiredSettings: \["teamKey"\]/);
+    assert.match(output, /requiredSettings: \["teamKey", ?"mcp"\]/);
     process.exitCode = 0;
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[C4][INV-1] validate rejects secret-shaped settings keys and accepts lookalike keys', async () => {
+  const root = await makeWorkspace();
+  const config = (settings) => JSON.stringify({
+    version: 3,
+    sourceOfTruth: 'model',
+    connectors: [{ id: 'linear', type: 'linear', enabled: true, settings }],
+  });
+  try {
+    // Top-level apiKey (Gherkin scenario 3) and suffix variants.
+    await writeFiles(root, {
+      '.sdd/config.json': config({
+        teamKey: 'ENG',
+        mcp: { command: 'npx', args: ['-y', '@linear/mcp-server'] },
+        apiKey: 'lin_api_xxx',
+        authToken: 'mcp_tok',
+      }),
+    });
+    const rejected = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(rejected.exitCode, 1);
+    assert.match(rejected.output, /settings must not contain secrets \(apiKey\)/);
+    assert.match(rejected.output, /settings must not contain secrets \(authToken\)/);
+    process.exitCode = 0;
+
+    await writeFiles(root, { '.sdd/config.json': config({
+      teamKey: 'ENG',
+      createOnMove: false,
+      mcp: { command: 'npx', args: ['-y', '@linear/mcp-server'], apiToken: 'x' },
+    }) });
+    const nested = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(nested.exitCode, 1);
+    assert.match(nested.output, /settings must not contain secrets \(mcp\.apiToken\)/);
+    process.exitCode = 0;
+
+    // `tokenBucketRate` is a legit key: no secret finding.
+    await writeFiles(root, { '.sdd/config.json': config({
+      teamKey: 'ENG',
+      tokenBucketRate: 10,
+      mcp: { url: 'https://mcp.linear.app/sse' },
+    }) });
+    const compliant = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(compliant.exitCode, 0);
+    assert.equal(compliant.output.includes('secrets'), false);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[C5][INV-2] validate requires the resolved mcp transport for an enabled linear connector', async () => {
+  const root = await makeWorkspace();
+  const config = (settings) => JSON.stringify({
+    version: 3,
+    sourceOfTruth: 'model',
+    connectors: [{ id: 'linear', type: 'linear', enabled: true, settings }],
+  });
+  try {
+    await writeFiles(root, { '.sdd/config.json': config({ teamKey: 'ENG' }) });
+    const missing = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(missing.exitCode, 1);
+    assert.match(missing.output, /required setting "mcp" is missing or empty/);
+
+    await writeFiles(root, { '.sdd/config.json': config({ teamKey: 'ENG', mcp: {} }) });
+    const empty = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(empty.exitCode, 1);
+    assert.match(empty.output, /required setting "mcp" is missing or empty/);
+    process.exitCode = 0;
+
+    await writeFiles(root, { '.sdd/config.json': config({
+      teamKey: 'ENG',
+      mcp: { command: 'npx', args: ['-y', '@linear/mcp-server'] },
+    }) });
+    const resolved = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
+    assert.equal(resolved.exitCode, 0);
+    process.exitCode = 0;
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[C6][INV-2] repeated --linear.mcp.args flags build the settings.mcp args array', async () => {
+  const root = await makeWorkspace();
+  try {
+    await cli([
+      'init', '--connector', 'linear',
+      '--linear.teamKey=ENG',
+      '--linear.mcp.command=npx',
+      '--linear.mcp.args=-y',
+      '--linear.mcp.args=@linear/mcp-server',
+    ], root);
+    const config = await readConfig(root);
+    const linear = getBackendConfig(config, 'linear');
+    // settings.mcp is the only transport: { command, args } leaves, depth ≤ 2.
+    assert.deepEqual(linear.settings.mcp, { command: 'npx', args: ['-y', '@linear/mcp-server'] });
   } finally {
     await cleanup(root);
   }
@@ -249,18 +347,14 @@ test('[C3][INV-5] validate refuses an enabled connector missing its requiredSett
 
 test('[C3][INV-5] validate reports invalid setting types and passes a compliant connector', async () => {
   const root = await makeWorkspace();
+  const config = (settings) => JSON.stringify({
+    version: 3,
+    sourceOfTruth: 'model',
+    connectors: [{ id: 'linear', type: 'linear', enabled: true, settings }],
+  });
   try {
     await writeFiles(root, {
-      '.sdd/config.json': JSON.stringify({
-        version: 3,
-        sourceOfTruth: 'model',
-        connectors: [{
-          id: 'linear',
-          type: 'linear',
-          enabled: true,
-          settings: { teamKey: 'ENG', createOnMove: 'yes' },
-        }],
-      }),
+      '.sdd/config.json': config({ teamKey: 'ENG', createOnMove: 'yes', mcp: { command: 'npx', args: ['-y', '@linear/mcp-server'] } }),
     });
     const invalid = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
     assert.equal(invalid.exitCode, 1);
@@ -268,11 +362,7 @@ test('[C3][INV-5] validate reports invalid setting types and passes a compliant 
     process.exitCode = 0;
 
     await writeFiles(root, {
-      '.sdd/config.json': JSON.stringify({
-        version: 3,
-        sourceOfTruth: 'model',
-        connectors: [{ id: 'linear', type: 'linear', enabled: true, settings: { teamKey: 'ENG', createOnMove: true } }],
-      }),
+      '.sdd/config.json': config({ teamKey: 'ENG', createOnMove: true, mcp: { command: 'npx', args: ['-y', '@linear/mcp-server'] } }),
     });
     const compliant = await capturingExitCode(() => validate({ cwd: root, flags: { json: false } }));
     assert.equal(compliant.exitCode, 0);

@@ -22,7 +22,7 @@
 * **Frontières & Délégations :**
   * `knowledge/` (`.sdd/knowledge/decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
   * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge des orphelins, suppressions listées et prévisualisables ; l'horizon de purge est limité à `generated/` depuis le retrait du sweep hérité).
-  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
+  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) et **dépourvus de secret** (toute clé de forme `apiKey|token|secret` est rejetée par `validate`, cf. §4) ; le connecteur Linear porte un transport MCP résolu `settings.mcp` (`{command,args}` | `{url}` — cf. §3), écrit par le skill `/setup`, jamais de credential ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
   * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`sdd migrate` reconstruit de zéro puis le retire avec la source).
 
 ---
@@ -79,9 +79,21 @@ erDiagram
 | connector | `id` | string | Non | Unique dans `connectors[]` ; intrinsèques (`local`, `filesystem`) exclus | Identité du miroir + clé de namespace des settings flags |
 | connector | `type` | string | Non | Résolu du manifest (`type ?? id`) | Sélection de la fabrique backend (`src/connectors/`) |
 | connector | `enabled` | boolean | Non | `true` à la déclaration ; muté par `enable`/`disable` | Sélection des miroirs actifs (sync/status) |
-| connector | `settings` | object | Oui | Typé par le manifest (`settingTypes`) ; objets par feuilles via subkeys (profondeur ≤ 2) | Configuration du miroir (ex. `teamKey`, `stateMap`, `labels`, `createOnMove`) |
+| connector | `settings` | object | Oui | Typé par le manifest (`settingTypes`) ; objets par feuilles via subkeys (profondeur ≤ 2) ; **aucune clé de forme secrète** (`apiKey\|token\|secret` — rejetée par `validate`) | Configuration du miroir (ex. `teamKey`, `stateMap`, `labels`, `createOnMove`, `mcp`) |
 
-* **Contrat de manifest (`extensions/<id>/extension.json`) :** `settings` (défauts seedés), `settingTypes` (`string | boolean | number | object` — absent ⇒ tout `string` optionnel, rétrocompatible), `requiredSettings` (présence + non-vide auditées par la règle `connector-settings` de `sdd validate` pour les connecteurs activés). Le manifest est la source de typage : la coercion à l'écriture (`coerceSetting`) et l'audit à la lecture (`validate`) partagent le même contrat.
+* **Contrat de manifest (`extensions/<id>/extension.json`) :** `settings` (défauts seedés), `settingTypes` (`string | boolean | number | object` — absent ⇒ tout `string` optionnel, rétrocompatible), `requiredSettings` (présence + non-vide auditées par la règle `connector-settings` de `sdd validate` pour les connecteurs activés — l'objet vide compte comme absent ; le connecteur linear exige `["teamKey", "mcp"]`). Le manifest est la source de typage : la coercion à l'écriture (`coerceSetting`) et l'audit à la lecture (`validate`) partagent le même contrat. Depuis la spec 005, le manifest linear (v2.0.0) ne porte plus aucun bloc `authentication` — suppression clean break, sans période mixte ([ADR-002](../../decisions/architecture/ADR-002-transport-connecteurs-environnement.md)).
+* **Contrat de données `settings.mcp` (transport MCP résolu — spec 005) :**
+
+```json
+{ "mcp": { "command": "npx", "args": ["-y", "@linear/mcp-server"] } }
+```
+```json
+{ "mcp": { "url": "https://mcp.linear.app/sse" } }
+```
+
+  * Exactement l'une des deux formes — stdio `{command, args}` (`args` tableau de strings, les flags répétés formant le tableau) ou HTTP `{url}` ; les deux à la fois, ou aucune, sont rejetées (`UsageError`, exit 2).
+  * Résolu une fois par le skill `/setup` (`skills/setup/SKILL.md`) depuis les configs MCP de l'hôte (lecture seule) — jamais saisi à la main, jamais deviné par le CLI.
+  * **Ne contient aucun secret :** l'authentification vit dans l'environnement ; `validate` rejette toute clé de settings de forme `apiKey|token|secret` (clé ou suffixe, case-insensitive, séparateurs tolérés, scan imbriqué — `tokenBucketRate` légitime passe).
 * **Garanties de forme :** `connectors[]` est triée par id après chaque merge (diff on-disk stable) ; les merges (`mergeSettingOverrides`, `mergeConnectorConfigs`) sont purs — aucun objet partagé n'est muté ; les valeurs explicites (flags, interview) écrasent, les défauts du manifest ne remplissent que les clés absentes.
 
 ---
@@ -104,3 +116,4 @@ erDiagram
    * Typage garanti par le manifest : les settings sont coercés avant écriture (`boolean` strict `true\|false` — `1/0/yes/no` refusés, `number` numérique, `object` par feuilles) ; une valeur non coercible est rejetée avant toute écriture en citant `<id>.<key>`.
    * Idempotence du merge : les défauts du manifest ne ré-écrasent jamais une valeur utilisateur ; un connecteur jamais déclaré est ajouté, jamais retiré ; `connectors[]` triée par id.
    * Complétude auditée : un connecteur activé doit porter ses `requiredSettings` (règle `connector-settings` de `sdd validate`, exit 1) ; les connecteurs sans manifest (tiers, rétrocompatibles) ne sont pas audités.
+   * Zéro secret audité : toute clé de settings de forme `apiKey|token|secret` (clé ou suffixe, case-insensitive, séparateurs tolérés, scan imbriqué) produit un finding `connector-settings` (exit 1) — le framework ne détient aucun credential, l'authentification vit dans le transport d'environnement (ADR-002) ; complétude du transport : linear activé exige `teamKey` **et** un `mcp` non vide (`requiredSettings ["teamKey","mcp"]`).

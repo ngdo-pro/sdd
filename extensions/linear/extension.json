@@ -6,25 +6,22 @@
   "kind": "mirror",
   "builtin": true,
   "entry": "../../src/connectors/linear.js",
-  "description": "Mirrors canonical model artifacts onto Linear issues (GraphQL API). Built into the CLI and documented here.",
+  "description": "Mirrors canonical model artifacts onto Linear issues through the Linear MCP server (JSON-RPC stdio or HTTP). Built into the CLI and documented here.",
   "capabilities": ["read", "list", "transition", "create"],
-  "authentication": {
-    "env": "LINEAR_API_KEY",
-    "setting": "settings.apiKey"
-  },
   "remoteRefs": "artifact.remote.linear (stored in .sdd/canonical/**/<artifact>.json)",
   "settings": {
     "teamKey": "",
     "stateMap": { "planned": "Backlog", "active": "In Progress", "archived": "Done" },
     "labels": { "initiative": "initiative", "feature": "feature", "spec": "spec" },
-    "createOnMove": false
+    "createOnMove": false,
+    "mcp": {}
   },
   "settingTypes": {
     "teamKey": "string",
     "stateMap": "object",
     "labels": "object",
-    "createOnMove": "boolean"
+    "createOnMove": "boolean",
+    "mcp": "object"
   },
-  "requiredSettings": ["teamKey"]
+  "requiredSettings": ["teamKey", "mcp"]
 }
-

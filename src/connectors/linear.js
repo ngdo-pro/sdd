@@ -1,10 +1,13 @@
 import { ConnectorError } from '../core/errors.js';
 import { DEFAULT_LINEAR_SETTINGS } from '../core/config.js';
-
-const LINEAR_ENDPOINT = 'https://api.linear.app/graphql';
+import { createMcpClient } from './mcp/client.js';
+import { linearTools, parseIssue, parseIssues, parseToolPayload } from './mcp/linear-tools.js';
 
 /**
- * Linear connector — mirrors local artifacts onto Linear issues.
+ * Linear connector — mirrors local artifacts onto Linear issues through the
+ * Linear MCP server (JSON-RPC stdio or HTTP), never through an API key (INV-1).
+ * The authenticated transport lives in `settings.mcp` (resolved by /setup), so
+ * the auth never leaves the environment.
  *
  * The local filesystem stays the source of truth. Each artifact is linked to at
  * most one Linear issue through `.sdd/.remote-map.json`, which keeps the sync
@@ -13,76 +16,38 @@ const LINEAR_ENDPOINT = 'https://api.linear.app/graphql';
 export default function createLinearBackend({ config, connectorConfig }) {
   const settings = { ...DEFAULT_LINEAR_SETTINGS, ...(connectorConfig.settings ?? {}) };
   const connectorId = connectorConfig.id;
-  const apiKey = settings.apiKey ?? process.env.LINEAR_API_KEY ?? null;
-  let teamCache = null;
+  let client = null;
 
-  async function graphql(query, variables) {
-    if (!apiKey) {
-      throw new ConnectorError(
-        `Linear connector "${connectorId}" has no API key. Export LINEAR_API_KEY or set settings.apiKey in .sdd/config.json.`,
-      );
+  /**
+   * Resolves (and caches for the whole command invocation, INV-4) the MCP
+   * transport. Without `settings.mcp` the connector is inoperative (INV-2).
+   */
+  function transport() {
+    if (client && !client.closed) return client;
+    const mcp = settings.mcp;
+    if (!mcp || typeof mcp !== 'object' || Array.isArray(mcp) || Object.keys(mcp).length === 0) {
+      throw new ConnectorError(`Linear connector "${connectorId}" has no MCP transport configured — run /setup.`);
     }
-    let response;
+    client = createMcpClient(mcp); // malformed shape → UsageError (exit 2)
+    return client;
+  }
+
+  /** Runs one mapped tool call, appending the /setup invite to transport failures. */
+  async function call({ tool, args }) {
+    const mcp = transport();
     try {
-      response = await fetch(LINEAR_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: apiKey },
-        body: JSON.stringify({ query, variables }),
-      });
+      return await mcp.call(tool, args);
     } catch (error) {
-      throw new ConnectorError(`Linear request failed: ${error.message}`);
+      if (error instanceof ConnectorError && !error.message.includes('/setup')) {
+        throw new ConnectorError(`${error.message} — run /setup to check the connector transport.`);
+      }
+      throw error;
     }
-    if (!response.ok) {
-      throw new ConnectorError(`Linear API HTTP ${response.status}: ${await response.text()}`);
-    }
-    const payload = await response.json();
-    if (Array.isArray(payload.errors) && payload.errors.length > 0) {
-      throw new ConnectorError(`Linear API error: ${payload.errors.map((error) => error.message).join('; ')}`);
-    }
-    return payload.data;
-  }
-
-  async function getTeam() {
-    if (teamCache) return teamCache;
-    if (!settings.teamKey) {
-      throw new ConnectorError(`Linear connector "${connectorId}" requires settings.teamKey in .sdd/config.json.`);
-    }
-    const data = await graphql(TEAM_QUERY, { key: settings.teamKey });
-    const team = data.teams?.nodes?.[0];
-    if (!team) throw new ConnectorError(`Linear team "${settings.teamKey}" not found.`);
-    teamCache = team;
-    return team;
-  }
-
-  function findState(team, stateName) {
-    return team.states?.nodes?.find(
-      (state) => state.name.toLowerCase() === String(stateName).toLowerCase(),
-    ) ?? null;
-  }
-
-  function findLabel(team, labelName) {
-    if (!labelName) return null;
-    return team.labels?.nodes?.find(
-      (label) => label.name.toLowerCase() === String(labelName).toLowerCase(),
-    ) ?? null;
-  }
-
-  async function resolveStateId(state) {
-    const team = await getTeam();
-    const stateName = settings.stateMap?.[state];
-    if (!stateName) {
-      throw new ConnectorError(`No Linear state mapping for framework state "${state}". Update settings.stateMap.`);
-    }
-    const match = findState(team, stateName);
-    if (!match) {
-      throw new ConnectorError(`Linear team "${settings.teamKey}" has no workflow state named "${stateName}".`);
-    }
-    return match;
   }
 
   async function fetchIssue(identifier) {
-    const data = await graphql(ISSUE_QUERY, { id: identifier });
-    return data.issue ?? null;
+    const payload = parseToolPayload(await call(linearTools.resolve(identifier)));
+    return parseIssue(payload);
   }
 
   function buildDescription(artifact) {
@@ -102,23 +67,25 @@ export default function createLinearBackend({ config, connectorConfig }) {
   }
 
   async function createIssue(artifact, state) {
-    const team = await getTeam();
-    const targetState = findState(team, settings.stateMap?.[state] ?? settings.stateMap?.planned);
-    const label = findLabel(team, settings.labels?.[artifact.kind]);
-
+    if (!settings.teamKey) {
+      throw new ConnectorError(`Linear connector "${connectorId}" requires settings.teamKey in .sdd/config.json.`);
+    }
     const input = {
-      teamId: team.id,
+      teamKey: settings.teamKey,
       title: artifact.title ?? artifact.slug,
       description: buildDescription(artifact),
     };
-    if (targetState) input.stateId = targetState.id;
-    if (label) input.labelIds = [label.id];
+    const stateName = settings.stateMap?.[state] ?? settings.stateMap?.planned ?? null;
+    if (stateName) input.state = stateName;
+    const labelName = settings.labels?.[artifact.kind] ?? null;
+    if (labelName) input.labels = [labelName];
 
-    const data = await graphql(CREATE_ISSUE_MUTATION, { input });
-    if (!data.issueCreate?.success) {
-      throw new ConnectorError('Linear issueCreate returned success=false.');
+    const payload = parseToolPayload(await call(linearTools.create(input)));
+    const created = parseIssue(payload);
+    if (!created?.identifier) {
+      throw new ConnectorError('Linear create_issue returned no identifier.');
     }
-    return data.issueCreate.issue;
+    return created;
   }
 
   return {
@@ -137,22 +104,23 @@ export default function createLinearBackend({ config, connectorConfig }) {
         id: issue.identifier,
         slug: issue.identifier,
         title: issue.title,
-        state: issue.state?.name ?? null,
+        state: issue.state,
         path: null,
       };
     },
 
     async list({ kind } = {}) {
-      const team = await getTeam();
-      const data = await graphql(ISSUES_QUERY, { teamId: team.id });
-      const nodes = data.team?.issues?.nodes ?? [];
-      const issues = nodes.map((issue) => ({
+      if (!settings.teamKey) {
+        throw new ConnectorError(`Linear connector "${connectorId}" requires settings.teamKey in .sdd/config.json.`);
+      }
+      const payload = parseToolPayload(await call(linearTools.list({ teamKey: settings.teamKey })));
+      const issues = parseIssues(payload).map((issue) => ({
         kind: 'issue',
         id: issue.identifier,
         slug: issue.identifier,
         title: issue.title,
-        state: issue.state?.name ?? null,
-        labels: issue.labels?.nodes?.map((label) => label.name) ?? [],
+        state: issue.state,
+        labels: issue.labels ?? [],
         path: null,
       }));
       if (!kind) return issues;
@@ -187,17 +155,12 @@ export default function createLinearBackend({ config, connectorConfig }) {
       if (!issue) {
         throw new ConnectorError(`Linear issue "${ref}" not found (mapped from ${artifact.slug}).`);
       }
-      if ((issue.state?.name ?? '').toLowerCase() === targetName.toLowerCase()) {
+      if ((issue.state ?? '').toLowerCase() === targetName.toLowerCase()) {
         return { moved: false, remoteRef: ref, state: targetName };
       }
-
-      const targetState = await resolveStateId(toState);
       if (dryRun) return { moved: false, planned: true, remoteRef: ref, state: targetName };
 
-      const data = await graphql(UPDATE_ISSUE_MUTATION, { id: issue.id, input: { stateId: targetState.id } });
-      if (!data.issueUpdate?.success) {
-        throw new ConnectorError(`Linear issueUpdate failed for ${ref}.`);
-      }
+      await call(linearTools.transition(ref, targetName));
       return { moved: true, remoteRef: ref, state: targetName };
     },
 
@@ -213,65 +176,12 @@ export default function createLinearBackend({ config, connectorConfig }) {
     async link() {
       return { linked: false, skipped: true, reason: 'Linear relations are not managed by the framework yet.' };
     },
+
+    /** Releases the underlying MCP transport early (INV-4, test/diagnostic hook). */
+    async close() {
+      if (!client) return;
+      await client.close();
+      client = null;
+    },
   };
 }
-
-const TEAM_QUERY = `
-  query SpecFrameworkTeam($key: String!) {
-    teams(filter: { key: { eq: $key } }) {
-      nodes {
-        id
-        key
-        name
-        states { nodes { id name } }
-        labels { nodes { id name } }
-      }
-    }
-  }
-`;
-
-const ISSUE_QUERY = `
-  query SpecFrameworkIssue($id: String!) {
-    issue(id: $id) {
-      id
-      identifier
-      title
-      state { id name }
-      labels { nodes { id name } }
-    }
-  }
-`;
-
-const ISSUES_QUERY = `
-  query SpecFrameworkIssues($teamId: String!) {
-    team(id: $teamId) {
-      issues(first: 100) {
-        nodes {
-          id
-          identifier
-          title
-          state { id name }
-          labels { nodes { id name } }
-        }
-      }
-    }
-  }
-`;
-
-const CREATE_ISSUE_MUTATION = `
-  mutation SpecFrameworkIssueCreate($input: IssueCreateInput!) {
-    issueCreate(input: $input) {
-      success
-      issue { id identifier title }
-    }
-  }
-`;
-
-const UPDATE_ISSUE_MUTATION = `
-  mutation SpecFrameworkIssueUpdate($id: String!, $input: IssueUpdateInput!) {
-    issueUpdate(id: $id, input: $input) {
-      success
-      issue { id identifier state { id name } }
-    }
-  }
-`;

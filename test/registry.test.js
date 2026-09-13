@@ -92,9 +92,14 @@ test('[INV-1] manifestFor resolves the bundled linear manifest with the extended
     assert.equal(manifest.type, 'linear');
     assert.equal(manifest.settingTypes.teamKey, 'string');
     assert.equal(manifest.settingTypes.createOnMove, 'boolean');
-    assert.deepEqual(manifest.requiredSettings, ['teamKey']);
+    assert.equal(manifest.settingTypes.mcp, 'object');
+    assert.deepEqual(manifest.requiredSettings, ['teamKey', 'mcp']);
     assert.equal(manifest.settings.teamKey, '');
     assert.equal(manifest.settings.createOnMove, false);
+    assert.deepEqual(manifest.settings.mcp, {});
+    // INV-1 (spec 005): no authentication block, no apiKey setting anywhere.
+    assert.equal(manifest.authentication, undefined);
+    assert.deepEqual(Object.keys(manifest.settings).filter((key) => key.toLowerCase().includes('key') && key !== 'teamKey'), []);
   } finally {
     await cleanup(root);
   }

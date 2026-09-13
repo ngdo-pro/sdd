@@ -121,7 +121,7 @@ export default function createBackend({ cwd, config, backendConfig }) {
 
 | id | Source | Auth | Notes |
 |---|---|---|---|
-| `linear` | built-in (`src/connectors/linear.js`) | `LINEAR_API_KEY` | Mirrors artifacts onto Linear issues. |
+| `linear` | built-in (`src/connectors/linear.js`) | none (rides the Linear MCP server via `settings.mcp`) | Mirrors artifacts onto Linear issues. |
 
 ## 5. Planned / community connectors
 

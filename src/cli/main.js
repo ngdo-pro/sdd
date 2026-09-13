@@ -92,7 +92,21 @@ export async function run(argv) {
   // (parseArgs with strict: false exposes them as dotted values keys), plus
   // un-namespaced keys which `connectors enable <id>` binds to its positional.
   // A dotted flag without a value is a malformed call — rejected here so no
-  // command ever sees a silent `true` (INV-2).
+  // command ever sees a silent `true` (INV-2). Repeated occurrences of the
+  // same dotted flag (`--linear.mcp.args=-y --linear.mcp.args=npx`) collapse
+  // to their last value in parseArgs — collect every occurrence so array
+  // settings like `mcp.args` arrive as string arrays (spec 005 §4.1).
+  const repeated = new Map();
+  for (const token of argv) {
+    const separator = token.indexOf('=');
+    if (!token.startsWith('--') || separator === -1) continue;
+    const key = token.slice(2, separator);
+    if (!key.includes('.')) continue;
+    const values = repeated.get(key) ?? [];
+    values.push(token.slice(separator + 1));
+    repeated.set(key, values);
+  }
+
   const declaredOptions = new Set(Object.keys(OPTIONS));
   const settings = {};
   for (const [key, value] of Object.entries(values)) {
@@ -101,7 +115,8 @@ export async function run(argv) {
     if (value === true) {
       throw new UsageError(`Option "--${key}" requires a value (--${key}=<value>).`);
     }
-    settings[key] = value;
+    const occurrences = repeated.get(key);
+    settings[key] = occurrences && occurrences.length > 1 ? occurrences : value;
   }
 
   await handler({

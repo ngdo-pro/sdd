@@ -5,15 +5,17 @@
   "type": "connector",
   "kind": "remote",
   "entry": "connector.js",
-  "description": "Template connector. Copy this folder to extensions/<your-id>/ and implement connector.js.",
+  "description": "Template connector. Copy this folder to extensions/<your-id>/ and implement connector.js. An MCP-backed connector declares an optional `settings.mcp` transport ({command,args} for stdio, or {url} for HTTP — never both) resolved by /setup; see extensions/linear for the contract.",
   "capabilities": ["read", "list", "transition", "create", "link"],
   "settings": {
     "endpoint": "",
-    "tokenEnv": "EXAMPLE_TOKEN"
+    "tokenEnv": "EXAMPLE_TOKEN",
+    "mcp": {}
   },
   "settingTypes": {
     "endpoint": "string",
-    "tokenEnv": "string"
+    "tokenEnv": "string",
+    "mcp": "object"
   },
   "requiredSettings": ["endpoint"]
 }

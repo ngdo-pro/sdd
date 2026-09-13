@@ -689,7 +689,7 @@ test('[E1][INV-1..INV-5] dry-run preview, declarative init, idempotent re-init, 
   try {
     // 1. Dry-run: a JSON preview of the resolved config, and nothing written.
     const preview = await cliCaptured(
-      ['init', '--connector', 'linear', '--linear.teamKey=ENG', '--dry-run'],
+      ['init', '--connector', 'linear', '--linear.teamKey=ENG', '--linear.mcp.command=npx', '--linear.mcp.args=-y', '--linear.mcp.args=@linear/mcp-server', '--dry-run'],
       root,
     );
     const previewConfig = JSON.parse(preview.slice(0, preview.lastIndexOf('}') + 1));
@@ -700,13 +700,14 @@ test('[E1][INV-1..INV-5] dry-run preview, declarative init, idempotent re-init, 
     assert.equal(await fileExists(root, '.sdd/config.json'), false);
 
     // 2. Real init: same resolution, typed and sorted on disk.
-    await cli(['init', '--connector', 'linear', '--linear.teamKey=ENG'], root);
+    await cli(['init', '--connector', 'linear', '--linear.teamKey=ENG', '--linear.mcp.command=npx', '--linear.mcp.args=-y', '--linear.mcp.args=@linear/mcp-server'], root);
     const config = await loadConfig(root);
     assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
     const linear = getBackendConfig(config, 'linear');
     assert.equal(linear.enabled, true);
     assert.equal(linear.settings.teamKey, 'ENG');
     assert.equal(linear.settings.createOnMove, false);
+    assert.deepEqual(linear.settings.mcp, { command: 'npx', args: ['-y', '@linear/mcp-server'] });
     assert.deepEqual(linear.settings.stateMap, { planned: 'Backlog', active: 'In Progress', archived: 'Done' });
 
     // 3. Re-init with an explicit override: the value wins, siblings survive.

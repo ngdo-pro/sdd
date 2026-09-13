@@ -3,7 +3,7 @@
 > **Type:** Product / UX  
 > **Initiative Slug:** `setup-experience`  
 > **Owner:** TBD  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Started:** 2026-09-13  
 
 ---
@@ -42,5 +42,7 @@ sdd init [--connector <id>]… [--<id>.<key>[.<subkey>]=<value>]… [--interacti
 
 - [x] **`01-declarative-init`**: Init déclaratif multi-connecteurs  
   ↳ *Feature:* [`generated/initiatives/setup-experience/features/01-declarative-init.md`](./features/01-declarative-init.md)  *(Archived ✅)*
-- [ ] **`02-setup-skill`**: Skill /setup — interview et validation MCP  
-  ↳ *Feature:* [`generated/initiatives/setup-experience/features/02-setup-skill.md`](./features/02-setup-skill.md)  *(Framed ✅ — Ready for `/spec`)*
+- [x] **`02-setup-skill`**: Skill /setup — interview et validation MCP  
+  ↳ *Feature:* [`generated/initiatives/setup-experience/features/02-setup-skill.md`](./features/02-setup-skill.md)  *(Archived ✅)*
+- [x] **`03-linear-mcp`**: Connecteur Linear via MCP  
+  ↳ *Feature:* [`generated/initiatives/setup-experience/features/03-linear-mcp.md`](./features/03-linear-mcp.md)  *(Archived ✅)*

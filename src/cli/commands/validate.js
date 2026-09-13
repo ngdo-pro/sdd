@@ -15,10 +15,45 @@ function matchesType(value, type) {
   }
 }
 
+/** A required setting is present only when it carries a value (an empty object carries nothing). */
+function isEmptySetting(value) {
+  return value === undefined || value === null || value === ''
+    || (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+}
+
 /**
- * Rule `connector-settings` (INV-5): an enabled connector must carry every
- * `requiredSettings` entry of its manifest (present and non-empty) and every
- * declared `settingTypes` entry must be structurally valid. Connectors
+ * Secret-shaped setting keys (INV-1 — zero secrets): `apiKey`, `token`,
+ * `secret` as the key or key suffix, case-insensitive, separator-tolerant.
+ * Word middles never match (`tokenBucketRate` is a legitimate setting).
+ */
+const SECRET_KEY_WORDS = ['apikey', 'token', 'secret'];
+
+function isSecretShapedKey(key) {
+  const normalized = String(key).toLowerCase().replace(/[_\s-]/g, '');
+  return SECRET_KEY_WORDS.some((word) => normalized === word || normalized.endsWith(word));
+}
+
+/** Collects the dotted paths of every secret-shaped settings key, nested included. */
+function secretSettingPaths(settings, prefix = '') {
+  const found = [];
+  if (settings === null || typeof settings !== 'object' || Array.isArray(settings)) return found;
+  for (const [key, value] of Object.entries(settings)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (isSecretShapedKey(key)) {
+      found.push(path);
+      continue;
+    }
+    found.push(...secretSettingPaths(value, path));
+  }
+  return found;
+}
+
+/**
+ * Rule `connector-settings` (INV-1, INV-2, INV-5): an enabled connector must
+ * carry every `requiredSettings` entry of its manifest (present and
+ * non-empty — Linear additionally requires the resolved `mcp` transport),
+ * every declared `settingTypes` entry must be structurally valid, and no
+ * settings key may be secret-shaped (apiKey/token/secret). Connectors
  * without a manifest are unchecked (third-party, retrocompatible).
  */
 async function connectorSettingsFindings(cwd) {
@@ -32,8 +67,7 @@ async function connectorSettingsFindings(cwd) {
     const settings = connector.settings ?? {};
     const required = manifest.requiredSettings ?? [];
     for (const key of required) {
-      const value = settings[key];
-      if (value === undefined || value === null || value === '') {
+      if (isEmptySetting(settings[key])) {
         findings.push({
           artifact: `connector ${connector.id}`,
           rule: 'connector-settings',
@@ -51,6 +85,13 @@ async function connectorSettingsFindings(cwd) {
           detail: `settings.${key} must be ${type} (got ${Array.isArray(value) ? 'array' : typeof value})`,
         });
       }
+    }
+    for (const path of secretSettingPaths(settings)) {
+      findings.push({
+        artifact: `connector ${connector.id}`,
+        rule: 'connector-settings',
+        detail: `settings must not contain secrets (${path})`,
+      });
     }
   }
   return findings;

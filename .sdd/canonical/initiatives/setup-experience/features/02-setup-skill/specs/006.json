@@ -1,17 +1,22 @@
 {
   "version": 3,
-  "kind": "feature",
-  "id": "02-setup-skill",
-  "slug": "02-setup-skill",
+  "kind": "spec",
+  "id": "006",
+  "slug": "006-setup-skill",
   "title": "Skill /setup — interview et validation MCP",
   "state": "archived",
   "relations": {
+    "feature": "02-setup-skill",
     "initiative": "setup-experience"
   },
-  "fields": {},
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
+    "Change Type": "`New Capability`",
+    "Complexity": "`Medium`"
+  },
   "remote": {},
   "progress": {
-    "done": false
+    "done": true
   },
   "createdAt": "2026-09-13",
   "updatedAt": "2026-09-13"

@@ -48,10 +48,11 @@ _None._
 
 ### 🎯 Planned Initiatives (Ready)
 
-- [ ] **`setup-experience`**: Expérience d'installation  
-  ↳ *Initiative:* [`generated/initiatives/setup-experience/README.md`](./initiatives/setup-experience/README.md)
+_None._
 
 ### ✅ Archived / Delivered
 
 - [x] **`layout-v3`**: SDD Layout v3  
   ↳ *Initiative:* [`generated/initiatives/layout-v3/README.md`](./initiatives/layout-v3/README.md)
+- [x] **`setup-experience`**: Expérience d'installation  
+  ↳ *Initiative:* [`generated/initiatives/setup-experience/README.md`](./initiatives/setup-experience/README.md)

@@ -92,7 +92,7 @@ An artifact's metadata:
 
 * **`agents/`**: Specialized agent definitions (Product Orchestrator, Delivery Orchestrator, Knowledge Orchestrator, Product Designer, Product Challenger, Spec Writer, Implementer, QA Tester, Clean-Room Reviewer).
 * **`templates/`**: Section templates used to author artifact **bodies** (Vision, Initiative, Feature, Spec, ADR, PDR, Domain Behavior, Contracts, Models, Tech).
-* **`skills/`**: Agentic skills and slash commands (`/vision`, `/initiative`, `/feature`, `/spec`, `/build-spec`, `/test-spec`, `/sync-knowledge`, `/sync-behavior`, `/sync-contracts`, `/sync-models`, `/sync-tech`, …).
+* **`skills/`**: Agentic skills and slash commands (`/setup`, `/vision`, `/initiative`, `/feature`, `/spec`, `/build-spec`, `/test-spec`, `/sync-knowledge`, `/sync-behavior`, `/sync-contracts`, `/sync-models`, `/sync-tech`, …).
 * **`rules/`**: Specification integrity rules (`spec-rules.md`).
 * **`bin/` + `src/`**: The `sdd` CLI (Node.js ≥ 18.17; the single runtime dependency `@clack/prompts` powers `--interactive` and is loaded on demand) — the only writer of the model.
 * **`extensions/`**: Pluggable mirror-connector catalogue (contract + template + Linear).
@@ -136,8 +136,9 @@ sdd init --interactive                         # TTY interview (multi-select + t
 * Re-init is idempotent: explicit values win, manifest defaults never overwrite a user value, connectors are added but never removed, and `connectors[]` stays sorted by id.
 * `local` is the intrinsic model connector — never listed in `connectors[]`.
 * `sdd connectors enable|disable <id>` accepts the same settings (un-namespaced keys bind to the positional `<id>`): `sdd connectors enable linear --teamKey=ENG --createOnMove=true`.
-* `sdd validate` enforces the `connector-settings` rule: an enabled connector must carry its manifest `requiredSettings` (e.g. Linear's `teamKey`) with valid types.
+* `sdd validate` enforces the `connector-settings` rule: an enabled connector must carry its manifest `requiredSettings` (e.g. Linear's `teamKey` and the resolved `mcp` transport) with valid types, and no settings key may be secret-shaped (`apiKey`/`token`/`secret`) — the framework carries zero secrets (INV-1).
 * `--interactive` prompts only when stdout is a TTY; in CI it exits with a UsageError pointing at the explicit flags.
+* The **`/setup`** skill is the guided adoption path: interview, read-only discovery of the Linear MCP transport in the host configs (`.mcp.json`, `opencode.json`, `.agents/**`), semantic validation through MCP, then the exact `sdd init … --dry-run` preview and a CLI-only application — the config is never hand-edited.
 
 ### Everything happens in one command
 
@@ -192,7 +193,8 @@ The importer parses titles, metadata blocks (`## Metadata`, `> **Status:**`), st
         "teamKey": "ENG",
         "stateMap": { "planned": "Backlog", "active": "In Progress", "archived": "Done" },
         "labels": { "spec": "spec", "feature": "feature", "initiative": "initiative" },
-        "createOnMove": false
+        "createOnMove": false,
+        "mcp": { "url": "https://mcp.linear.app/sse" }
       }
     }
   ]
@@ -205,12 +207,22 @@ The model is intrinsic and never listed in `connectors`; that list contains **re
 
 ## Mirroring onto Linear
 
+The Linear mirror talks to the **Linear MCP server** — the authenticated transport
+your environment already provides. No API key ever lives in the framework: the
+connector rides `settings.mcp`, resolved once by `/setup` (stdio `{command,args}`
+or HTTP `{url}`, never both).
+
 ```bash
-export LINEAR_API_KEY="lin_api_..."
 sdd connectors enable linear --teamKey=ENG   # declare the mirror with its team
 sdd sync --create                # create the missing issues, align their states
 sdd move 042-login --to active   # model transition + Linear state update
 ```
+
+Without `settings.mcp` the connector is inoperative: `sync`/`move` fail with
+"no MCP transport configured — run /setup" and `sdd validate` reports a
+`connector-settings` finding. Run the `/setup` skill to resolve the Linear MCP
+transport into `.sdd/config.json` (it never stores credentials, only the
+command or URL your MCP client uses).
 
 Remote identifiers are stored in the model (`artifact.remote.linear`), so syncs stay idempotent and reviewable in git.
 

@@ -83,7 +83,11 @@ export async function connectors({ cwd, positionals, flags }) {
 
   const entry = getBackendConfig(config, id);
   success(`Connector "${id}" ${entry.enabled ? 'enabled' : 'disabled'} in .sdd/config.json`);
-  if (id === 'linear' && entry.enabled && !entry.settings?.teamKey) {
-    info('Set settings.teamKey (and LINEAR_API_KEY) before syncing.');
+  if (id === 'linear' && entry.enabled) {
+    const missing = [
+      ...(entry.settings?.teamKey ? [] : ['settings.teamKey']),
+      ...(!entry.settings?.mcp || Object.keys(entry.settings.mcp).length === 0 ? ['settings.mcp (run /setup)'] : []),
+    ];
+    if (missing.length > 0) info(`Set ${missing.join(' and ')} before syncing.`);
   }
 }

@@ -188,6 +188,9 @@ function coerceSettingPath(id, settingPath, raw, settingTypes) {
   if (declared !== undefined && declared !== 'object') {
     throw new UsageError(`"${id}.${key}" is declared "${declared}": use --${id}.${key}=<value> without subkey.`);
   }
+  // Repeated flags (`--linear.mcp.args=-y --linear.mcp.args=npx`) arrive as an
+  // array of occurrences — coerced into an array of string leaves (spec 005).
+  if (Array.isArray(raw)) return raw.map((item) => String(item));
   return coerceSetting(id, settingPath, raw, 'string');
 }
 

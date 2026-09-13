@@ -1,7 +1,7 @@
 # Domaine : Workspace Management (spec-model) — Comportement Produit
 
 > **Mission :** Gouverner le workspace SDD : créer, lier, faire vivre, migrer et archiver les artefacts du modèle canonique (`vision`, `initiative`, `feature`, `spec`) via le CLI `spec`, avec un cycle de vie porté par les métadonnées — jamais par les chemins.
-> **Acteurs & Personas :** Utilisateur humain (lead/dev qui pilote le process), Agent (orchestrateurs spécialisés : `/initiative`, `/feature`, `/spec`, `/sync-knowledge`…).
+> **Acteurs & Personas :** Utilisateur humain (lead/dev qui pilote le process), Agent (orchestrateurs spécialisés : `/initiative`, `/feature`, `/spec`, `/sync-knowledge`…), Agent amorceur (`/setup` — configuration des connecteurs, protocole `skills/setup/SKILL.md`).
 
 ---
 
@@ -10,6 +10,7 @@
 * **Ce qui relève de ce domaine (In Scope) :**
   * Bootstrap et layout du workspace : `.sdd/canonical/` sans état, tout répertoire créé à la volée.
   * Amorçage déclaratif des connecteurs : déclaration par flags (`sdd init --connector …`), settings seedés depuis les manifests avec overrides namespacés, interview TTY optionnelle, re-init idempotent — la config des miroirs se pose à la création du workspace comme après coup (le mirroring lui-même reste hors graphe).
+  * Amorçage guidé des connecteurs : l'agent `/setup` conduit l'adoptant de zéro à un workspace configuré et validé — interview, découverte read-only du transport MCP de l'hôte, validation sémantique via MCP, application CLI-only (cf. `PAR-WM-07`).
   * Cycle de vie des artefacts : cadrage du graphe, transitions d'état, achèvement en cascade.
   * Intégrité du graphe : relations, unicité des ids, dérivabilité des chemins.
   * Gouvernance des projections : elles vivent sous `.sdd/generated/`, écrites et purgées exclusivement par le CLI — jamais éditées à la main.
@@ -17,7 +18,7 @@
 * **Ce qui relève d'autres domaines (Out of Scope & Frontières) :**
   * *Rendu des projections markdown :* feature `02-generated-namespace` (livrée) — namespace `.sdd/generated/`, purge des orphelins listée et prévisualisable, garde de drift `render --check` (cf. `PAR-WM-05`).
   * *Entrée racine optionnelle `site/` :* déléguée à `04-static-site` (à venir — elle étendra la racine autorisée).
-  * *Mirroring distant :* Linear reste un miroir ; le modèle canonique est la seule vérité.
+  * *Mirroring distant :* Linear reste un miroir ; le modèle canonique est la seule vérité ; l'authentification vit dans le transport MCP de l'environnement — jamais dans le framework ([ADR-002](../../decisions/architecture/ADR-002-transport-connecteurs-environnement.md)) ; la validation sémantique des settings (teamKey, labels) est agent-side (`/setup`), jamais CLI.
 
 ---
 
@@ -33,6 +34,8 @@ flowchart TD
     Marker -->|cause corrigée, relance| Migrate
     Retire --> Start
     Start([Workspace vierge ou existant]) --> Init[sdd init — arbre minimal]
+    Start -.->|première configuration d'un connecteur| Setup["Agent /setup<br>interview → découverte MCP read-only → validation → dry-run"]
+    Setup -->|application CLI-only, après confirmation| Decl
     Init -->|--connector + settings namespacés| Decl[sdd init déclaratif — seed manifest ⊕ overrides coercés, config typée]
     Init -.->|--interactive hors TTY| ErrTTY([UsageError invitant aux flags — aucun prompt])
     Decl --> Frame[Upsert initiative → feature → spec]
@@ -56,6 +59,7 @@ flowchart TD
 | `PAR-WM-04` | Achever & archiver en cascade | Agent orchestrateur | `sdd done <ref> --cascade` | Spec puis parents complets archivés |
 | `PAR-WM-05` | Synchroniser & auditer les projections | Utilisateur / Agent | `sdd render` / `--dry-run` / `--check` | Projections sous `.sdd/generated/` fidèles au modèle ; drift signalé sans écriture |
 | `PAR-WM-06` | Migrer un workspace hérité | Utilisateur / Agent | `sdd migrate [--dry-run]` | Workspace reconstruit intégralement à la racine `.sdd/`, ancienne racine retirée — ou plan complet sans écriture en `--dry-run` |
+| `PAR-WM-07` | Amorçage guidé d'un connecteur (`/setup`) | Agent amorceur (`/setup`) | Commande `/setup` ou demande de configuration d'un miroir | Workspace configuré et validé : connecteur activé, settings vérifiés, transport MCP résolu — persisté exclusivement par le CLI |
 
 ---
 
@@ -107,6 +111,14 @@ flowchart TD
 * **Post-conditions :** workspace opérationnel à la racine `.sdd/`, graphe préservé à l'identique (identifiants, slugs, relations, avancement, refs distantes) ; un second `sdd migrate` ne fait rien.
 * **Variantes :** *Déjà migré :* no-op, rien d'écrit. *Coexistence (migration pendue ou en échec) :* le workspace à moitié construit est effacé puis reconstruit de zéro — c'est la seule issue, toutes les autres écritures étant refusées. *Workspace non identifiable (markdown seul, sans index de métadonnées) :* erreur orientée `sdd import` (conversion complète) ou `sdd init` (workspace vierge) — rien d'écrit.
 
+### `PAR-WM-07` : Amorçage guidé d'un connecteur (`/setup`)
+* **Acteur :** Agent amorceur — le protocole de référence est le skill `skills/setup/SKILL.md` ; cette fiche résume son parcours observable côté adoptant.
+* **Prérequis :** un répertoire de travail ; pour la validation sémantique, un serveur MCP Linear accessible dans l'environnement — sinon repli explicite.
+* **Déclencheur :** `/setup` (ou demande de configuration d'un connecteur miroir).
+* **Déroulement nominal :** 1. interview — une question à la fois (connecteurs cibles, team, labels), après un premier `sdd status` ; 2. découverte read-only des configs MCP de l'hôte (`.mcp.json`, `opencode.json`, `.agents/**`) → transport résolu `{command,args}` ou `{url}` ; 3. validation sémantique via MCP (team, labels) — toute valeur non vérifiable entre en synthèse marquée « (non vérifiée) » ; 4. synthèse complète puis `sdd init --connector linear … --dry-run` (la commande exacte est affichée) ; 5. après confirmation explicite, application par la commande validée (`sdd init` ou `sdd connectors enable`) — jamais d'écriture manuelle de fichier ; 6. clôture par `sdd validate`.
+* **Post-conditions :** connecteur activé avec `teamKey` et transport MCP résolus ; `sdd validate` exit 0 ; aucun secret affiché, copié ou persisté.
+* **Variantes :** *Serveur MCP introuvable :* repli explicite — activer sans validation sémantique (valeurs marquées « (non vérifiée) ») ou rester local ; l'humain arbitre, rien ne s'exécute sans lui. *Confirmation refusée :* rien n'est exécuté, la synthèse reste consultable. *Workspace déjà configuré (relance) :* ajustements proposés en merge après lecture de `sdd status` — rien n'est dupliqué.
+
 ---
 
 ## 5. Invariants & Règles Métier
@@ -126,6 +138,10 @@ flowchart TD
 * **`RULE-WM-13` (Interactif explicite, CI-safe) :** les prompts ne surviennent que si `--interactive` ET un terminal (TTY) ; sinon erreur claire invitant aux flags — sans `--interactive`, aucun prompt jamais, même interactif implicite.
 * **`RULE-WM-14` (Coercion stricte) :** les settings sont typés par le manifest — booléens `true|false` uniquement (`1/0/yes/no` refusés), nombres numériques, objets par feuilles (subkeys, profondeur ≤ 2) ; toute valeur non coercible est rejetée en citant `<id>.<key>`, rien d'écrit.
 * **`RULE-WM-15` (`local` intrinsèque) :** le connecteur du modèle local n'apparaît jamais dans `connectors[]` ni dans l'interview — le modèle canonique est toujours la source de vérité, jamais un miroir.
+* **`RULE-WM-16` (Zéro secret dans le framework) :** aucun connecteur ne détient ni ne demande d'identifiant — le bloc `authentication` du manifest Linear est supprimé (fin du token Linear, cf. [ADR-002](../../decisions/architecture/ADR-002-transport-connecteurs-environnement.md)) ; `sdd validate` rejette des settings portant une clé de forme secrète (`apiKey`, `token`, `secret` — clé ou suffixe, case-insensitive, imbriqué) ; l'authentification est la responsabilité exclusive du transport d'environnement.
+* **`RULE-WM-17` (Inopérant sans transport résolu) :** sans `settings.mcp` (absent ou vide), `sync`/`move` n'opèrent aucun mirroring — erreur par artefact « no MCP transport configured — run /setup », aucun `remoteRef` écrit ; `sdd validate` signale le connecteur incomplet (exit 1) ; jamais de repli implicite vers une auth directe.
+* **`RULE-WM-18` (Contrat miroir inchangé) :** le passage au transport MCP est invisible pour l'appelant — mêmes opérations (`resolve/list/transition/create/link`), mêmes refs `remoteRef`, même `--dry-run`, mêmes call-sites `sync/move/done` ; `sdd sync`/`sdd move` restent des invocations binaires déterministes et CI-friendly (jamais d'orchestration d'agent).
+* **`RULE-WM-19` (Client éphémère) :** chaque commande ouvre son propre client MCP et le referme — aucun serveur résident, aucune socket persistée entre deux invocations ; un crash, un timeout ou une erreur laisse l'environnement intact.
 
 ---
 
@@ -150,5 +166,8 @@ flowchart TD
 | Valeur non coercible (ex. `--linear.createOnMove=1`) | UsageError exit 2 citant `linear.createOnMove` — booléen strict `true\|false` uniquement | Corriger la valeur (les types déclarés viennent du manifest) |
 | Flag de settings sans namespace correspondant (ex. `--ghost.teamKey=X` sans `--connector ghost`) | UsageError exit 2 — namespace inconnu, rien d'écrit | Déclarer d'abord le connecteur (`--connector <id>`) ou aligner le namespace |
 | Connecteur activé incomplet (ex. linear sans `teamKey`) | `sdd validate` → finding `connector-settings` citant la `requiredSettings` manquante, exit 1 | Renseigner la setting (ex. `sdd connectors enable linear --teamKey=ENG`) |
+| `sdd sync --create` (ou `move` d'un artefact lié) avec linear activé sans `settings.mcp` | Erreur par artefact « no MCP transport configured — run /setup » (warning) ; aucun `remoteRef` écrit ; la commande se termine normalement | Lancer le skill `/setup`, ou `sdd connectors enable linear --linear.mcp.command=… --linear.mcp.args=…` — puis `sdd validate` (exit 0 attendu) |
+| Settings d'un connecteur portant une clé de forme secrète (`apiKey`, `token`, `secret`…) | `sdd validate` → finding `connector-settings` citant le chemin (`settings must not contain secrets (…)`), exit 1 | Retirer le secret des settings — l'authentification vit dans le transport d'environnement (ADR-002) |
+| Première configuration d'un connecteur miroir | Parcours guidé `/setup` (`PAR-WM-07`) : interview → découverte MCP read-only → validation → dry-run → application CLI-only | Re-run `/setup` pour des ajustements (mode merge, idempotent) |
 | Re-init / re-enable sur une config déjà peuplée | Merge idempotent : les défauts du manifest n'écrasent pas les valeurs posées, connecteurs conservés, liste triée | — |
 | Projections désactivées (`projections.markdown: false`) | Aucune projection markdown n'est écrite ; `--check` sort 0 (aucune projection attendue) | Réactiver dans `config.json` (absence de la clé = activé) |

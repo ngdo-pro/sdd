@@ -1,7 +1,7 @@
 # Feature: Skill /setup — interview et validation MCP
 
 > **Parent Initiative:** `setup-experience`  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Author(s):** TBD  
 > **Last Updated:** 2026-09-13  
 
@@ -58,4 +58,5 @@ Le CLI valide la structure mais pas la sémantique : un `teamKey` erroné ou un 
 
 ## 6. Implementation Spec(s)
 
-*No execution specs linked yet.*
+- [x] **`006-setup-skill`** : Skill /setup — interview et validation MCP  
+  ↳ *Spec:* [`generated/initiatives/setup-experience/specs/006.md`](../specs/006.md)
