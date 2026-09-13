@@ -27,11 +27,8 @@ export const HELP = `
     move <ref>           Transition an artifact state (model + mirrors)
     done <ref>           Mark delivered, check off parents (--cascade)
     link <ref>           Set a parent relation in the model
-    render [--check] [--site]
-                         Regenerate the .sdd/generated/ projections (default)
-                         or the static consumption site (.sdd/site/ with
-                         --site); --check is the CI drift guard over
-                         generated/, --dry-run previews the write plan
+    render [--check]     Regenerate .sdd/generated/ projections (CI drift
+                         guard); preview the write plan with --dry-run
     model [--write]      Inspect the graph / regenerate index.json
     status [<ref>]       Model state, derived progress, remote mirrors
     list                 List artifacts (--kind, --state)
@@ -53,8 +50,6 @@ export const HELP = `
     --undo               Reopen an artifact (done)
     --create             Create missing remote artifacts (sync)
     --check              Report drift without writing (render)
-    --site               Build the static consumption site (.sdd/site/) —
-                         never committed, regenerated on demand (render)
     --write              Write index.json (model)
     --backend <id>       Restrict to a mirror (repeatable)
     --dry-run            Preview changes without writing

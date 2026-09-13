@@ -26,13 +26,6 @@ export const INDEX_FILENAME = 'index.json';
 /** Project-level framework configuration file (relative to `.sdd/`). */
 export const CONFIG_FILENAME = 'config.json';
 
-/**
- * Static consumption site — a pure render artifact (never a source of truth,
- * never committed, never read by the CLI). It is born with the first
- * `spec render --site`: tolerated, never required, never pre-allocated.
- */
-export const SITE_DIRNAME = 'site';
-
 /** Canonical lifecycle states, in order. */
 export const STATES = ['planned', 'active', 'archived'];
 
@@ -60,25 +53,13 @@ export function generatedRoot(cwd) {
   return path.join(cwd, SPECS_DIRNAME, GENERATED_DIRNAME);
 }
 
-/** Root of the static consumption site: `.sdd/site/` (written by `render --site` only). */
-export function siteRoot(cwd) {
-  return path.join(cwd, SPECS_DIRNAME, SITE_DIRNAME);
-}
-
 /**
  * Exhaustive `.sdd/` root (INV-1): any other entry is a `root-layout`
- * violation. `generated/` and `site/` are allowed but never required (a
- * workspace with `projections.markdown: false` or an empty model stays
- * valid; the site is born with the first `render --site` — tolerated,
- * never required, never pre-allocated).
+ * violation. `generated/` is allowed but never required (a workspace with
+ * `projections.markdown: false` or an empty model stays valid). `site/` will
+ * be appended by the feature 04-static-site.
  */
-export const ALLOWED_ROOT_ENTRIES = [
-  'config.json',
-  CANONICAL_DIRNAME,
-  GENERATED_DIRNAME,
-  KNOWLEDGE_DIRNAME,
-  SITE_DIRNAME,
-];
+export const ALLOWED_ROOT_ENTRIES = ['config.json', CANONICAL_DIRNAME, GENERATED_DIRNAME, KNOWLEDGE_DIRNAME];
 
 export function indexFilePath(cwd) {
   return path.join(canonicalRoot(cwd), INDEX_FILENAME);

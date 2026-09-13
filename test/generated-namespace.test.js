@@ -26,7 +26,7 @@ const BASE_FLAGS = {
   to: undefined, kind: undefined, state: undefined, slug: undefined, title: undefined,
   from: undefined, feature: undefined, initiative: undefined, field: undefined,
   backends: undefined, create: false, force: false, check: false, write: false,
-  cascade: false, undo: false, done: false, site: false, dryRun: false, json: false,
+  cascade: false, undo: false, done: false, dryRun: false, json: false,
 };
 
 function ctx(cwd, positionals = [], flags = {}) {
@@ -147,9 +147,7 @@ test('[U2][INV-1] generatedRoot, exhaustive root and untouched init layout', asy
   const root = await makeWorkspace();
   try {
     assert.equal(generatedRoot(root), path.join(root, '.sdd', 'generated'));
-    // `site/` appended by feature 04-static-site: tolerated, never required,
-    // never pre-allocated.
-    assert.deepEqual([...ALLOWED_ROOT_ENTRIES], ['config.json', 'canonical', 'generated', 'knowledge', 'site']);
+    assert.deepEqual([...ALLOWED_ROOT_ENTRIES], ['config.json', 'canonical', 'generated', 'knowledge']);
 
     // `spec init` still pre-allocates nothing beyond the canonical store.
     assert.deepEqual(standardLayout(root), [path.join(root, '.sdd'), path.join(root, '.sdd', 'canonical')]);
