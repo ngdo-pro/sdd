@@ -46,8 +46,8 @@
 
 *Ordered sequence of discrete features planned for this initiative:*
 
-- [ ] **`01-canonical-tree`**: Arborescence canonique v3  
-  ↳ *Feature:* [`initiatives/planned/layout-v3/planned/01-canonical-tree.md`](./planned/01-canonical-tree.md)  *(Framed ✅ — Ready for `/spec`)*
+- [x] **`01-canonical-tree`**: Arborescence canonique v3  
+  ↳ *Feature:* [`initiatives/planned/layout-v3/archive/01-canonical-tree.md`](./archive/01-canonical-tree.md)  *(Archived ✅)*
 - [ ] **`02-generated-namespace`**: Namespace generated/  
   ↳ *Feature:* [`initiatives/planned/layout-v3/planned/02-generated-namespace.md`](./planned/02-generated-namespace.md)  *(Framed ✅ — Ready for `/spec`)*
 - [ ] **`03-sdd-migration`**: Racine .sdd et migration idempotente  

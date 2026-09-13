@@ -1,7 +1,7 @@
 # Feature: Arborescence canonique v3
 
 > **Parent Initiative:** `layout-v3`  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Author(s):** TBD  
 > **Last Updated:** 2026-09-13  
 
@@ -57,5 +57,5 @@ Livraison : 1ʳᵉ de l'initiative (avant 02 et 03).
 
 ## 6. Implementation Spec(s)
 
-- [ ] **`001-canonical-layout`** : Layout canonique v3  
-  ↳ *Spec:* [`specs/active/001-canonical-layout.md`](../../../../specs/active/001-canonical-layout.md)
+- [x] **`001-canonical-layout`** : Layout canonique v3  
+  ↳ *Spec:* [`specs/archive/001-canonical-layout.md`](../../../../specs/archive/001-canonical-layout.md)

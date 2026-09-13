@@ -1,25 +1,25 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T08:30:29.807Z",
+  "generatedAt": "2026-09-13T08:46:47.710Z",
   "artifacts": [
     {
       "kind": "feature",
       "id": "01-canonical-tree",
       "slug": "01-canonical-tree",
       "title": "Arborescence canonique v3",
-      "state": "planned",
+      "state": "archived",
       "meta": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.json",
       "body": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.md",
-      "projection": ".specs/initiatives/planned/layout-v3/planned/01-canonical-tree.md",
+      "projection": ".specs/initiatives/planned/layout-v3/archive/01-canonical-tree.md",
       "relations": {
         "initiative": "layout-v3"
       },
       "progress": {
         "done": false,
         "children": 1,
-        "completedChildren": 0,
-        "complete": false
+        "completedChildren": 1,
+        "complete": true
       },
       "remote": {}
     },
@@ -96,7 +96,7 @@
       "progress": {
         "done": false,
         "children": 4,
-        "completedChildren": 0,
+        "completedChildren": 1,
         "complete": false
       },
       "remote": {}
@@ -106,19 +106,19 @@
       "id": "001",
       "slug": "001-canonical-layout",
       "title": "Layout canonique v3",
-      "state": "active",
+      "state": "archived",
       "meta": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.json",
       "body": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.md",
-      "projection": ".specs/specs/active/001-canonical-layout.md",
+      "projection": ".specs/specs/archive/001-canonical-layout.md",
       "relations": {
         "feature": "01-canonical-tree",
         "initiative": "layout-v3"
       },
       "progress": {
-        "done": false,
+        "done": true,
         "children": 0,
         "completedChildren": 0,
-        "complete": false
+        "complete": true
       },
       "remote": {}
     },
