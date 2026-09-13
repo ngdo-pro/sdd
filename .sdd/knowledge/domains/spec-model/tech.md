@@ -1,4 +1,4 @@
-# Domaine : Workspace Management (workspace-management) — Architecture Technique
+# Domaine : Workspace Management (spec-model) — Architecture Technique
 
 > [!NOTE]
 > **Mission :** Architecture du CLI `spec` et du modèle canonique sans état : lecture/écriture de `.sdd/canonical/` (état en métadonnées), index v3, projections markdown sous `.sdd/generated/` (namespace exclusif, régénéré et purgé par le CLI), migration de workspaces hérités par reconstruction intégrale (`spec migrate`) et garde-fous d'intégrité (drift de projections, racine exhaustive, coexistence verrouillée).

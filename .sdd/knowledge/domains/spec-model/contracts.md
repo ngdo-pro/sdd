@@ -1,4 +1,4 @@
-# Domaine : Workspace Management (workspace-management) — Contrats d'API & Schémas
+# Domaine : Workspace Management (spec-model) — Contrats d'API & Schémas
 
 > **Spécification Formelle :** pas d'API réseau — le contrat de ce domaine est la **surface CLI `spec`** (`bin/spec.js`) et les **formats générés** (`index.json`, `config.json`, métadonnées schema v3).
 > **Format d'échange :** JSON (métadonnées / index / config) + Markdown (corps / projections) ; sortie machine via `--json`.

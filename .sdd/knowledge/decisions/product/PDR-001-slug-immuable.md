@@ -2,7 +2,7 @@
 
 * **Status:** Accepted
 * **Date:** 2026-09-13
-* **Domain:** `workspace-management`
+* **Domain:** `spec-model`
 
 ---
 

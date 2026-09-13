@@ -10,7 +10,7 @@
     "initiative": "layout-v3"
   },
   "fields": {
-    "Domain": "`.sdd/knowledge/domains/workspace-management/`",
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
     "Change Type": "`Refactor`",
     "Complexity": "`Large`"
   },

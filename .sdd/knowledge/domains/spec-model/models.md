@@ -1,4 +1,4 @@
-# Domaine : Workspace Management (workspace-management) — Modèles de Données
+# Domaine : Workspace Management (spec-model) — Modèles de Données
 
 > **Mission :** Modèle canonique sans état, stocké en fichiers sous la racine `.sdd/` : quatre kinds d'artefacts (métadonnée JSON + corps markdown) reliés par `relations` et indexés dans `index.json` v3 — projections markdown sous `.sdd/generated/` (100 % générées, purgées et régénérées par le CLI) ; aucun datastore SQL, aucune table.
 > **Conventions Transversales :**
