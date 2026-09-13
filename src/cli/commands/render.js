@@ -1,21 +1,56 @@
 import { loadConfig } from '../../core/config.js';
+import { UsageError } from '../../core/errors.js';
 import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { loadModel } from '../../model/store.js';
 import { writeIndex } from '../../model/index.js';
+import { renderSite } from '../../render/site.js';
 import { refresh } from '../context.js';
 import { heading, info, printJson, success, table, warn } from '../render.js';
 
 const DRIFT_STATUSES = new Set(['stale', 'missing', 'unexpected']);
 
 /**
- * `spec render [--check] [--dry-run]` — regenerates every markdown projection
- * under `.sdd/generated/` (and the index) from the canonical model.
+ * `spec render [--check] [--dry-run] [--site]` — regenerates every markdown
+ * projection under `.sdd/generated/` (and the index) from the canonical
+ * model, or the static consumption site under `.sdd/site/` with `--site`.
  * `--check` is the read-only CI guard over `generated/` (exit 1 on stale,
- * missing or unexpected). `--dry-run` previews the full write plan without
- * writing anything. Reads pass through the coexistence lock freely; only the
- * writing mode is guarded (INV-5).
+ * missing or unexpected — it never inspects `site/`). `--dry-run` previews
+ * the full write plan without writing anything. `--site` is an autonomous
+ * writing mode: it loads no config (independent of `projections.markdown`)
+ * and writes nothing outside `.sdd/site/`. Reads pass through the
+ * coexistence lock freely; only the writing modes are guarded (INV-5).
  */
 export async function render({ cwd, flags }) {
+  if (flags.site) {
+    // 1. Flag conflict: a demand-regenerated artifact has nothing to preview
+    //    or guard (INV-4: --check covers generated/ only).
+    if (flags.check || flags.dryRun) {
+      throw new UsageError(
+        '`--site` cannot be combined with `--check` or `--dry-run`: the site is regenerated on demand, '
+        + 'there is nothing to preview and nothing to guard (the drift check covers .sdd/generated/ only).',
+      );
+    }
+    // 2. Coexistence guard — the site is a mutating write.
+    assertNoCoexistence(cwd);
+    // 3. The model only: no config is ever loaded (the site is independent
+    //    of projections.markdown), no index read, no projection parsed.
+    const artifacts = await loadModel(cwd);
+    if (artifacts.length === 0) {
+      // 4. Empty model: warn, write nothing, leave a pre-existing site/ intact.
+      warn('The model is empty — nothing was written (an existing .sdd/site/ is left intact).');
+      return;
+    }
+    // 5. Full purge + rebuild inside .sdd/site/.
+    const results = await renderSite(cwd, artifacts);
+    if (flags.json) {
+      printJson({ site: true, results });
+      return;
+    }
+    heading(`Rendered ${results.length} site page(s) into .sdd/site/`);
+    table(results.map((entry) => [entry.kind, entry.slug, entry.path]), ['kind', 'slug', 'path']);
+    return;
+  }
+
   const writing = !flags.check && !flags.dryRun;
   if (writing) assertNoCoexistence(cwd);
   const config = await loadConfig(cwd);

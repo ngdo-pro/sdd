@@ -3,8 +3,8 @@
   "kind": "spec",
   "id": "004",
   "slug": "004-static-site",
-  "title": "Site statique de consommation",
-  "state": "planned",
+  "title": "Site statique de consultation",
+  "state": "active",
   "relations": {
     "feature": "04-static-site",
     "initiative": "layout-v3"

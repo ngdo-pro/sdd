@@ -58,12 +58,17 @@ Artifacts are stored once, in a canonical model, and **everything else is genera
 │       ├── README.md                            # generated feature roadmap
 │       ├── features/<feature-slug>.md           # flattened at the initiative level
 │       └── specs/<id>.md                        # flattened, sorted by id (002.md)
-└── knowledge/                                   # authored, outside the graph
-    ├── decisions/{architecture,product}/
-    └── domains/
+├── knowledge/                                   # authored, outside the graph
+│   ├── decisions/{architecture,product}/
+│   └── domains/
+└── site/                                        # OPTIONAL — static consumption site
+    ├── index.html                               # dashboard (badges, progress, dates)
+    ├── initiatives/<slug>.html                  # feature roadmap with state checkboxes
+    ├── features/<feature-slug>.html             # its specs
+    └── specs/<id>.html                          # spec body (markdown converted)
 ```
 
-Every directory is created on demand (`spec init` pre-allocates nothing).
+Every directory is created on demand (`spec init` pre-allocates nothing). `site/` is tolerated, never required and never pre-allocated: it is born with the first `spec render --site` and is a **consumption artifact only** — never a source of truth, never committed, never read by the CLI.
 
 An artifact's metadata:
 
@@ -110,6 +115,7 @@ spec link <ref> --feature <ref>  # set a parent relation
 spec move <ref> --to <state>     # lifecycle transition (model + mirrors)
 spec done <ref> --cascade        # mark delivered, archive, propagate upwards
 spec render [--check] [--dry-run] # regenerate .sdd/generated/ (--check = CI drift guard)
+spec render --site               # build the static consumption site into .sdd/site/
 spec model [--write]             # inspect the graph / regenerate index.json
 spec status [<ref>]              # model state, derived progress, mirror refs
 spec list [--kind k] [--state s]
@@ -143,6 +149,16 @@ No markdown surgery: the feature's `## 6.` list, the initiative's `## 4.` roadma
 spec render --check   # exits 1 when a projection is out of date with the model
 spec validate         # exits 1 on spec-rules violations
 ```
+
+`--check` covers `generated/` only — the static site is never inspected: it is regenerated on demand (`spec render --site`), so there is nothing to guard. `--site` cannot be combined with `--check` or `--dry-run`.
+
+### Static site rule: init adds, render never touches
+
+The root `.gitignore` entry `.sdd/site/` is pinned by the workspace setup script only:
+
+* `spec init` appends the exact line `.sdd/site/` to an existing root `.gitignore` — once, idempotently, and never creates the file;
+* `spec render --site` writes nothing outside `.sdd/site/` — never the `.gitignore`, never a projection, never the index;
+* a workspace migrated with `spec migrate` whose `.gitignore` predates the entry: re-run `spec init` (idempotent) or add the line by hand.
 
 ---
 
