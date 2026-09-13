@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "kind": "vision",
+  "id": "vision",
+  "slug": "vision",
+  "title": "SDD Framework",
+  "state": null,
+  "relations": {},
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

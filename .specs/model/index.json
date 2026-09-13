@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "sourceOfTruth": "model",
+  "generatedAt": "2026-09-13T07:05:06.112Z",
+  "artifacts": [
+    {
+      "kind": "vision",
+      "id": "vision",
+      "slug": "vision",
+      "title": "SDD Framework",
+      "state": null,
+      "meta": ".specs/model/vision.json",
+      "body": ".specs/model/vision.md",
+      "projection": ".specs/vision.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    }
+  ]
+}
