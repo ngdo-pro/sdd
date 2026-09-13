@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "002",
+  "slug": "002-generated-projections",
+  "title": "Projections sous generated/",
+  "state": "planned",
+  "relations": {
+    "feature": "02-generated-namespace",
+    "initiative": "layout-v3"
+  },
+  "fields": {
+    "Domain": "`.specs/knowledge/domains/workspace-management/`",
+    "Change Type": "`Refactor`",
+    "Complexity": "`Large`"
+  },
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T08:46:47.710Z",
+  "generatedAt": "2026-09-13T08:56:45.715Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -37,7 +37,7 @@
       },
       "progress": {
         "done": false,
-        "children": 0,
+        "children": 1,
         "completedChildren": 0,
         "complete": false
       },
@@ -119,6 +119,27 @@
         "children": 0,
         "completedChildren": 0,
         "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "002",
+      "slug": "002-generated-projections",
+      "title": "Projections sous generated/",
+      "state": "planned",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.md",
+      "projection": ".specs/specs/planned/002-generated-projections.md",
+      "relations": {
+        "feature": "02-generated-namespace",
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
       },
       "remote": {}
     },
