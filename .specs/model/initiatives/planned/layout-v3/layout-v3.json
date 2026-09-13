@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "kind": "initiative",
+  "id": "layout-v3",
+  "slug": "layout-v3",
+  "title": "SDD Layout v3",
+  "state": "planned",
+  "relations": {},
+  "fields": {
+    "Type": "Architecture / Tech"
+  },
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

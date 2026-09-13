@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "kind": "feature",
+  "id": "04-static-site",
+  "slug": "04-static-site",
+  "title": "Site statique optionnel",
+  "state": "planned",
+  "relations": {
+    "initiative": "layout-v3"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

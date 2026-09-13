@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "kind": "feature",
+  "id": "02-generated-namespace",
+  "slug": "02-generated-namespace",
+  "title": "Namespace generated/",
+  "state": "planned",
+  "relations": {
+    "initiative": "layout-v3"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

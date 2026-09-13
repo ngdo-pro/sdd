@@ -48,7 +48,8 @@ _None._
 
 ### 🎯 Planned Initiatives (Ready)
 
-_None._
+- [ ] **`layout-v3`**: SDD Layout v3  
+  ↳ *Initiative:* [`initiatives/planned/layout-v3/README.md`](./initiatives/planned/layout-v3/README.md)
 
 ### ✅ Archived / Delivered
 

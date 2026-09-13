@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "kind": "feature",
+  "id": "03-sdd-migration",
+  "slug": "03-sdd-migration",
+  "title": "Racine .sdd et migration idempotente",
+  "state": "planned",
+  "relations": {
+    "initiative": "layout-v3"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}
