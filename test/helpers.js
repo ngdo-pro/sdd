@@ -6,7 +6,7 @@ import { saveArtifact } from '../src/model/store.js';
 
 /** Creates an isolated temporary workspace root. */
 export async function makeWorkspace() {
-  return mkdtemp(path.join(tmpdir(), 'spec-framework-'));
+  return mkdtemp(path.join(tmpdir(), 'sdd-framework-'));
 }
 
 export async function cleanup(root) {

@@ -1,5 +1,5 @@
 {
-  "name": "@nanko/spec-framework",
+  "name": "@nanko/sdd-framework",
   "version": "2.0.0",
   "description": "Universal Spec-Driven Development (SDD) Framework for Antigravity and Claude Code",
   "keywords": [

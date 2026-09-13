@@ -70,7 +70,7 @@ export async function run(argv) {
   const { values, positionals } = parsed;
 
   if (values.version) {
-    line(`spec-framework ${VERSION}`);
+    line(`sdd-framework ${VERSION}`);
     return;
   }
 
