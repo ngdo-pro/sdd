@@ -1,7 +1,7 @@
 {
   "version": 2,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T07:40:53.038Z",
+  "generatedAt": "2026-09-13T07:58:41.063Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -17,7 +17,7 @@
       },
       "progress": {
         "done": false,
-        "children": 0,
+        "children": 1,
         "completedChildren": 0,
         "complete": false
       },
@@ -96,6 +96,26 @@
       "progress": {
         "done": false,
         "children": 4,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "001",
+      "slug": "001-canonical-layout",
+      "title": "Layout canonique v3",
+      "state": "planned",
+      "meta": ".specs/model/specs/planned/001-canonical-layout.json",
+      "body": ".specs/model/specs/planned/001-canonical-layout.md",
+      "projection": ".specs/specs/planned/001-canonical-layout.md",
+      "relations": {
+        "feature": "01-canonical-tree"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
         "completedChildren": 0,
         "complete": false
       },
