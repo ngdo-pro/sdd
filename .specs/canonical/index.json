@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T09:28:22.521Z",
+  "generatedAt": "2026-09-13T09:40:29.790Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -57,7 +57,7 @@
       },
       "progress": {
         "done": false,
-        "children": 0,
+        "children": 1,
         "completedChildren": 0,
         "complete": false
       },
@@ -140,6 +140,27 @@
         "children": 0,
         "completedChildren": 0,
         "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "003",
+      "slug": "003-sdd-migration",
+      "title": "Racine .sdd et migration idempotente",
+      "state": "planned",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.md",
+      "projection": ".specs/generated/initiatives/layout-v3/specs/003.md",
+      "relations": {
+        "feature": "03-sdd-migration",
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
       },
       "remote": {}
     },
