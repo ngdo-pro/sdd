@@ -45,4 +45,5 @@ Livraison : déferrable — dernière de l'initiative (les features 01–03 dél
 
 ## 6. Implementation Spec(s)
 
-*No execution specs linked yet.*
+- [ ] **`004-static-site`** : Site statique de consommation  
+  ↳ *Spec:* [`generated/initiatives/layout-v3/specs/004.md`](../specs/004.md)
