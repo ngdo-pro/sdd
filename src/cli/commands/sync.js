@@ -1,49 +1,48 @@
-import { loadConfig } from '../../core/config.js';
-import { createBackends, getSourceBackend } from '../../backends/registry.js';
-import { loadRemoteMap, saveRemoteMap, getRemoteRef } from '../../core/remote-map.js';
-import { listArtifacts } from '../../core/artifact.js';
-import { heading, info, line, printJson, success, warn } from '../render.js';
+import { findByRef } from '../../model/store.js';
+import { heading, line, printJson, success, warn } from '../render.js';
+import { loadContext, persistArtifact, refresh } from '../context.js';
 
 /**
- * `spec sync [<ref>]` — reconciles local artifacts with remote backends.
+ * `spec sync [<ref>]` — reconciles remote mirrors with the canonical model.
  * Creates missing remote artifacts (`--create`) and realigns their state.
  */
 export async function sync({ cwd, positionals, flags }) {
-  const config = await loadConfig(cwd);
-  const backends = await createBackends(cwd, config, { only: flags.backends });
-  const source = getSourceBackend(backends, config);
-  const remoteBackends = backends.filter((backend) => backend.remote);
+  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
 
-  if (remoteBackends.length === 0) {
-    warn('No remote backend enabled. Use `spec backend enable linear`.');
+  if (mirrors.length === 0) {
+    warn('No remote mirror enabled. Use `spec backend enable <id>`.');
     return;
   }
 
   const reference = positionals[0];
-  const artifacts = reference
-    ? [await source.resolve(reference, { kind: flags.kind })]
-    : await listArtifacts(cwd, { kind: flags.kind });
-
-  const remoteMap = await loadRemoteMap(cwd);
+  const targets = reference ? [findByRef(artifacts, reference, { kind: flags.kind })] : artifacts;
+  const dirty = new Set();
   const report = [];
 
-  for (const artifact of artifacts) {
+  for (const artifact of targets) {
     if (artifact.state === null || artifact.state === undefined) continue;
-    for (const backend of remoteBackends) {
-      const linked = getRemoteRef(remoteMap, artifact.path, backend.id);
-      const entry = { artifact: artifact.path, backend: backend.id, action: null, ok: true };
 
+    for (const mirror of mirrors) {
+      const entry = { artifact: artifact.slug, kind: artifact.kind, backend: mirror.id, action: null, ok: true };
       try {
-        if (!linked) {
+        if (!artifact.remote?.[mirror.id]) {
           if (!flags.create) {
-            entry.action = 'skipped (not linked, use --create)';
+            entry.action = 'skipped (not linked — use --create)';
             report.push(entry);
             continue;
           }
-          const created = await backend.create(artifact, { remoteMap, dryRun: flags.dryRun });
-          entry.action = created.planned ? `would create` : `created ${created.remoteRef}`;
+          const created = await mirror.create(artifact, { dryRun: flags.dryRun });
+          entry.action = created.planned ? 'would create' : `created ${created.remoteRef}`;
+          if (created.remoteRef) {
+            artifact.remote = { ...artifact.remote, [mirror.id]: created.remoteRef };
+            dirty.add(artifact);
+          }
         }
-        const transition = await backend.transition(artifact, artifact.state, { remoteMap, dryRun: flags.dryRun });
+        if (!artifact.remote?.[mirror.id]) {
+          report.push(entry);
+          continue;
+        }
+        const transition = await mirror.transition(artifact, artifact.state, { dryRun: flags.dryRun });
         entry.action = entry.action ?? (transition.moved ? `state ${transition.state}` : 'in sync');
       } catch (error) {
         entry.ok = false;
@@ -53,17 +52,24 @@ export async function sync({ cwd, positionals, flags }) {
     }
   }
 
-  if (!flags.dryRun) await saveRemoteMap(cwd, remoteMap);
+  if (!flags.dryRun) {
+    for (const artifact of dirty) {
+      await persistArtifact(cwd, artifacts, artifact, { previous: artifact.model });
+    }
+    await refresh(cwd, artifacts);
+  }
 
   if (flags.json) {
     printJson(report);
     return;
   }
 
-  heading(`Sync ${report.length} operation(s)`);
+  heading(`Sync: ${report.length} operation(s)`);
   for (const entry of report) {
-    if (!entry.ok) warn(`${entry.artifact} [${entry.backend}]: ${entry.action}`);
-    else success(`${entry.artifact} [${entry.backend}]: ${entry.action}`);
+    const label = `${entry.artifact} [${entry.backend}]`;
+    if (!entry.ok) warn(`${label}: ${entry.action}`);
+    else if (entry.action?.startsWith('skipped')) line(`  · ${label}: ${entry.action}`);
+    else success(`${label}: ${entry.action}`);
   }
   if (flags.dryRun) line('\n  (dry-run: nothing was written)');
 }

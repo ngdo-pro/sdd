@@ -10,6 +10,7 @@ Mirrors Spec Framework artifacts onto **Linear issues**. Built into the CLI
 ```bash
 export LINEAR_API_KEY="lin_api_..."      # Personal API key
 spec backend enable linear
+spec sync --create                       # create the missing issues
 ```
 
 Then set your team key in `.specs/config.json`:
@@ -17,7 +18,6 @@ Then set your team key in `.specs/config.json`:
 ```json
 {
   "backends": [
-    { "id": "filesystem", "type": "filesystem", "enabled": true, "required": true },
     {
       "id": "linear",
       "type": "linear",
@@ -43,28 +43,24 @@ Then set your team key in `.specs/config.json`:
 | Artifact kind | **Label** (`initiative` / `feature` / `spec`) — reused if it already exists |
 | Lifecycle state | **Workflow state** via `stateMap` |
 | Parent ↔ child link | Reported as unsupported (Linear relations are not managed yet) |
-| Local ↔ remote identity | `.specs/.remote-map.json` (committed) |
+| Local ↔ remote identity | `artifact.remote.linear` in the artifact's canonical metadata |
 
-The **local filesystem remains the source of truth**. Linear is a mirror:
-`spec move` performs the local move *and* realigns the linked issue.
+The **model is the source of truth**: `spec move` performs the model transition
+*and* realigns the linked issue. The returned identifier is persisted by the CLI
+into `.specs/model/**/<artifact>.json` → `remote.linear`.
 
 ---
 
 ## 3. Usage
 
 ```bash
-# Create issues for every local artifact and align their states
-spec sync --create --backend linear
-
-# Move a spec: local file moves AND the Linear issue transitions
-spec move 042 --to active
-
-# Inspect the mirror
-spec status 042
+spec sync --create --backend linear   # create issues + align states
+spec move 042-login --to active       # model transition AND issue transition
+spec status 042-login                 # show the current mirror reference
 ```
 
-`createOnMove: true` makes `spec move` auto-create the missing Linear issue
-instead of failing when an artifact was never synced.
+`createOnMove: true` makes `spec move` auto-create the missing issue instead of
+failing when an artifact was never synced.
 
 ---
 

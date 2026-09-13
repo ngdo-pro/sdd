@@ -7,56 +7,47 @@ description: Implement code changes, execute migrations, and pass quality gates 
 
 Use this skill when the user requests implementing an approved engineering specification (`/build-spec [id]`).
 
+> **Model-first (Rule 7):** the spec lives in `.specs/model/specs/<state>/XXX-slug.{json,md}`. The projection `.specs/specs/<state>/XXX-slug.md` and the parent feature's `## 6.` section are generated — never edit them.
+
 ---
 
 ## Procedure
 
 1. **Activate Specification (Planned ➔ Active):**
-   * Check if the spec is located in `.specs/specs/planned/[id]*.md`:
-     - If yes: move the file to `.specs/specs/active/[id]*.md` (the spec is now officially active in development).
-     - If already in `.specs/specs/active/[id]*.md`: proceed directly.
-   * Read `.specs/specs/active/[id]*.md`, `.specs/architecture.md`, and the target domain knowledge (`.specs/knowledge/domains/[domain]/`).
-   * **Inventory & Signatures:** Analyze the factorized `tree` (Section 3.1) and key contracts (Section 3.2).
-   * **Technical Watchouts:** Read **Section 6** before writing any code to prevent documented pitfalls.
-   * **BDD Requirements:** Follow the Gherkin scenarios in **Section 8.1** (Unit ➔ Component/Integration ➔ E2E) as the direct implementation roadmap.
-   * *Invariance Rule:* If the user requests a scope adjustment mid-development, update the active spec first (via `/update-spec`) before altering code.
+   ```bash
+   spec move [XXX] --to active
+   ```
+   This performs the model transition, relocates both model files and the projection, and mirrors the movement onto every enabled backend.
+   * **Reading the spec:** `spec status [XXX]` for metadata, then read `.specs/model/specs/active/XXX-*.md` for the **body** (the authoritative content).
+   * **Inventory & Signatures:** analyze the factorized `tree` (Section 3.1) and key contracts (Section 3.2).
+   * **Technical Watchouts:** read **Section 6** before writing any code.
+   * **BDD Requirements:** follow the Gherkin scenarios in **Section 8.1** as the implementation roadmap.
+   * *Invariance Rule:* if the user requests a scope adjustment mid-development, update the spec first via `/update-spec` before altering code.
 
 2. **Data Tier & Persistence Implementation:**
-   * Implement database migrations, schema definitions, and repository adapters according to project conventions.
-   * Ensure primary key standards and data integrity constraints are strictly respected.
+   * Implement migrations, schema definitions, and repository adapters per project conventions.
+   * Ensure primary key standards and integrity constraints are respected.
    * Implement corresponding unit and integration tests for persistence logic.
 
 3. **Core Domain & Service Logic Implementation:**
-   * Implement business logic, domain entities, use cases, and service layers adhering to the project's architectural pattern.
+   * Implement business logic, domain entities, use cases, and services per the project's architectural pattern.
    * Keep business rules decoupled from transport and delivery frameworks.
 
 4. **UI & Consumer Tier Implementation:**
    * Implement UI components, views, CLI handlers, or RPC controllers defined in the spec.
-   * Adhere to project styling conventions (e.g., CSS Modules, design tokens) and state management patterns.
+   * Adhere to project styling conventions and state management patterns.
    * Handle standard interaction states (idle, loading, validation error, server error, success).
 
 5. **Infrastructure & Configuration:**
-   * Update configuration files, environment variable definitions, or container files as declared in Section 4.3 of the spec.
-   * Propagate configuration changes across deployment configurations and CI/CD pipelines if applicable.
+   * Update configuration files, environment variable definitions, or container files declared in Section 4.3.
+   * Propagate configuration changes across deployment configs and CI/CD pipelines if applicable.
 
 6. **Quality Gates & Command Execution (Section 8.2):**
-   * First, execute the targeted test commands declared in Section 8.2 of the spec.
-   * Next, run the project's static analysis, linting, and typechecking quality gates.
+   * First execute the targeted test commands declared in Section 8.2.
+   * Then run the project's static analysis, linting, and typechecking gates.
    * Fix all detected defects until a 100% pass rate is achieved.
 
 7. **Status Update & Hand-off:**
-   * Check off completed tasks in **Section 7 (Sequential Execution Plan)** within the active spec file.
-   * Prompt user to run `/test-spec [id]` or `/sync-knowledge [id]`.
-
----
-
-## Deterministic Mechanics (Rule 7)
-
-Perform the activation movement through the CLI so remote backends stay in sync:
-
-```bash
-spec move [XXX] --to active
-```
-
-If the CLI is unavailable, fall back to the documented `planned/ ➔ active/` file
-move and explicitly warn the user that remote backends were not updated.
+   * Check off completed tasks in **Section 7** of the body (edit the model body via `/update-spec`, not the projection).
+   * Verify `spec render --check` passes and `spec validate` is clean.
+   * Prompt the user to run `/test-spec [id]` or `/sync-knowledge [id]`.

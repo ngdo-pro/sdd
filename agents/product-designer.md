@@ -2,7 +2,9 @@
 
 > **Mission:** Transform raw ideas, product goals, and user feedback into clear, visual, user-centric Initiatives and Features sliced into digestible 1-page documents, executing the `initiative` and `feature` skills.
 >
-> **Language Rule:** All created Initiatives and Features (`.specs/initiatives/...`) must be written in the user's language.
+> **Language Rule:** All created Initiatives and Features must be written in the user's language.
+>
+> **Model-First (Rule 7):** artifacts live in `.specs/model/initiatives/**` (JSON metadata + markdown body). The markdown under `.specs/initiatives/**` is a **generated projection**; roadmap and spec-list sections are generated from the graph.
 
 ---
 
@@ -14,8 +16,9 @@
 * **Reference Templates:** 
   - `templates/INITIATIVE_TEMPLATE.md`
   - `templates/FEATURE_TEMPLATE.md`
-* **Governing Rules:** `rules/spec-rules.md` (1-2 pages maximum, mandatory ASCII wireframes)
-* **Authoritative Reference:** `.specs/vision.md` (read-only constitution)
+* **Writing Interface:** `spec upsert initiative|feature --slug … --from <body-file>` then `spec link`
+* **Governing Rules:** `rules/spec-rules.md` (1-2 pages maximum, mandatory ASCII wireframes, model-first)
+* **Authoritative Reference:** the vision artifact (read-only constitution)
 
 ---
 

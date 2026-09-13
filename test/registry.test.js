@@ -1,22 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  createBackends,
-  discoverExtensionFactories,
-  getSourceBackend,
-  resolveFactories,
-} from '../src/backends/registry.js';
+import { createBackends, discoverExtensionFactories, resolveFactories } from '../src/backends/registry.js';
 import { defaultConfig, normalizeConfig } from '../src/core/config.js';
 import { BackendError } from '../src/core/errors.js';
-import { makeWorkspace, writeFiles, cleanup } from './helpers.js';
+import { makeWorkspace, cleanup, writeFiles } from './helpers.js';
 
-test('built-in factories always resolve', async () => {
+test('the built-in linear factory always resolves', async () => {
   const factories = await resolveFactories();
-  assert.equal(typeof factories.filesystem, 'function');
   assert.equal(typeof factories.linear, 'function');
 });
 
-test('discoverExtensionFactories picks up default-export factories', async () => {
+test('discoverExtensionFactories picks up default-export factories only', async () => {
   const root = await makeWorkspace();
   try {
     await writeFiles(root, {
@@ -32,12 +26,21 @@ test('discoverExtensionFactories picks up default-export factories', async () =>
   }
 });
 
-test('createBackends instantiates the enabled backends only', async () => {
+test('createBackends instantiates enabled mirrors only', async () => {
   const root = await makeWorkspace();
   try {
     const config = normalizeConfig({ backends: [{ id: 'linear', enabled: true }] });
     const backends = await createBackends(root, config);
-    assert.deepEqual(backends.map((backend) => backend.id), ['filesystem', 'linear']);
+    assert.deepEqual(backends.map((backend) => backend.id), ['linear']);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('createBackends returns nothing when no mirror is enabled', async () => {
+  const root = await makeWorkspace();
+  try {
+    assert.deepEqual(await createBackends(root, defaultConfig()), []);
   } finally {
     await cleanup(root);
   }
@@ -53,25 +56,15 @@ test('createBackends rejects unknown backend types', async () => {
   }
 });
 
-test('createBackends errors when nothing is enabled', async () => {
+test('createBackends loads a third-party extension from a custom directory', async () => {
   const root = await makeWorkspace();
   try {
-    const config = normalizeConfig({ backends: [{ id: 'filesystem', enabled: false }] });
-    const only = ['filesystem'];
-    const backends = await createBackends(root, config, { only });
-    assert.equal(backends.length, 1);
-    await assert.rejects(() => createBackends(root, normalizeConfig({ backends: [] }), { only: ['nope'] }), BackendError);
-  } finally {
-    await cleanup(root);
-  }
-});
-
-test('getSourceBackend defaults to the filesystem', async () => {
-  const root = await makeWorkspace();
-  try {
-    const config = defaultConfig();
-    const backends = await createBackends(root, config);
-    assert.equal(getSourceBackend(backends, config).id, 'filesystem');
+    await writeFiles(root, {
+      'ext/custom/backend.js': 'export default function create({ backendConfig }) { return { id: backendConfig.id }; }\n',
+    });
+    const config = normalizeConfig({ backends: [{ id: 'custom', type: 'custom', enabled: true }] });
+    const backends = await createBackends(root, config, { extensionsDir: `${root}/ext` });
+    assert.deepEqual(backends.map((backend) => backend.id), ['custom']);
   } finally {
     await cleanup(root);
   }

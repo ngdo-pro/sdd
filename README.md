@@ -6,20 +6,68 @@ Natively compatible with **Google Antigravity (`.agents`)** and **Claude Code (`
 
 ---
 
-## Pipeline Architecture
+## Model-First Architecture
+
+Artifacts are stored once, in a canonical model, and **everything else is generated**:
 
 ```text
-1. VISION         → "Why the product exists" (.specs/vision.md)
-   ↓
-2. INITIATIVE     → "The macro strategic milestone" (.specs/initiatives/(planned|active|archive)/[slug]/README.md)
-   ↓
-3. FEATURE        → "What the user or system achieves" (.specs/initiatives/.../[slug]/(planned|active|archive)/[feature].md)
-   ↓
-4. SPEC           → "The executable, tested engineering plan" (.specs/specs/(planned|active|archive)/XXX-[slug].md)
-   ↓
+                    ┌────────────────────────────────────┐
+   agents  ────────▶│  MODEL  (.specs/model/)            │
+   spec CLI         │  <artifact>.json  metadata         │
+                    │  <artifact>.md    prose body       │
+                    └─────────────┬──────────────────────┘
+                                  │  projections (generated)
+          ┌───────────────────────┼──────────────────────┐
+          ▼                       ▼                      ▼
+   .specs/specs/**          Linear issues          GitHub Issues
+   .specs/initiatives/**    (mirror)               (planned)
+   .specs/vision.md
+```
+
+* **Canonical:** `.specs/model/` — one JSON metadata file + one markdown body file per artifact.
+* **Generated:** the markdown documents under `.specs/` (roadmaps, checkboxes, `Status:` headers) and remote issues.
+* **Single writer:** the `spec` CLI. Never hand-edit a projection or a model file.
+
+### Pipeline
+
+```text
+1. VISION         → "Why the product exists"
+2. INITIATIVE     → "The macro strategic milestone"
+3. FEATURE        → "What the user or system achieves"
+4. SPEC           → "The executable, tested engineering plan"
 5. BUILD & QA     → Code implementation & quality gates validation
-   ↓
-6. SYNC KNOWLEDGE → Living documentation & capitalization (.specs/knowledge/)
+6. SYNC KNOWLEDGE → Living documentation & capitalization
+```
+
+### Canonical layout
+
+```text
+.specs/model/
+├── index.json                                     # generated manifest (id → files, graph, progress)
+├── vision.json  vision.md
+├── specs/<planned|active|archive>/042-login.{json,md}
+└── initiatives/<planned|active|archive>/<slug>/
+    ├── <slug>.{json,md}                           # the initiative
+    └── <planned|active|archive>/01-login.{json,md} # its features
+```
+
+An artifact's metadata:
+
+```json
+{
+  "version": 2,
+  "kind": "spec",
+  "id": "042",
+  "slug": "042-login",
+  "title": "Magic link login",
+  "state": "active",
+  "relations": { "feature": "01-login", "initiative": "demo" },
+  "fields": { "Domain": "`.specs/knowledge/domains/auth/`", "Complexity": "`Medium`" },
+  "remote": { "linear": "ENG-142" },
+  "progress": { "done": false },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}
 ```
 
 ---
@@ -27,67 +75,82 @@ Natively compatible with **Google Antigravity (`.agents`)** and **Claude Code (`
 ## Plugin Contents
 
 * **`agents/`**: Specialized agent definitions (Product Orchestrator, Delivery Orchestrator, Knowledge Orchestrator, Product Designer, Product Challenger, Spec Writer, Implementer, QA Tester, Clean-Room Reviewer).
-* **`templates/`**: Standardized markdown templates (Vision, Initiative, Feature, Spec, ADR, PDR, Domain Behavior, Contracts, Models, Tech).
-* **`skills/`**: Agentic skills and slash commands (`/vision`, `/initiative`, `/feature`, `/spec`, `/build-spec`, `/test-spec`, `/sync-knowledge`, `/sync-behavior`, `/sync-contracts`, `/sync-models`, `/sync-tech`, etc.).
+* **`templates/`**: Section templates used to author artifact **bodies** (Vision, Initiative, Feature, Spec, ADR, PDR, Domain Behavior, Contracts, Models, Tech).
+* **`skills/`**: Agentic skills and slash commands (`/vision`, `/initiative`, `/feature`, `/spec`, `/build-spec`, `/test-spec`, `/sync-knowledge`, `/sync-behavior`, `/sync-contracts`, `/sync-models`, `/sync-tech`, …).
 * **`rules/`**: Specification integrity rules (`spec-rules.md`).
-* **`bin/` + `src/`**: The `spec` CLI (zero-dependency Node.js) that performs the deterministic lifecycle mechanics.
-* **`extensions/`**: Pluggable backend catalogue (contract + authoring template + Linear reference backend).
+* **`bin/` + `src/`**: The `spec` CLI (zero-dependency Node.js) — the only writer of the model.
+* **`extensions/`**: Pluggable mirror-backend catalogue (contract + template + Linear).
 * **`schemas/`**: JSON schemas (`config.schema.json`).
 
 ---
 
 ## CLI (`spec`)
 
-The CLI executes the **deterministic mechanics** of the pipeline (movements,
-linking, syncing) while skills and agents own the *content* and *decisions*.
-By default everything happens on the **local filesystem**; when a remote backend
-is enabled, the same movement is **mirrored** onto it.
-
 ```bash
-spec init                                      # bootstrap .specs/ + config.json
-spec move <ref> --to <planned|active|archived> # ★ transition an artifact
-spec status [<ref>]                            # local state + remote mirrors
-spec list [--kind spec|initiative|feature] [--state active]
-spec link <spec-ref> --feature <feature-ref>   # register in the parent document
-spec sync [<ref>] [--create] [--backend linear]# reconcile local → remote
-spec backend list | enable <id> | disable <id> # manage backends
-spec validate                                  # enforce spec-rules.md (paths, INV coverage)
+spec init                        # bootstrap .specs/model/ + projections + config
+spec import                      # migrate existing .specs/**/*.md into the model
+spec upsert <kind> --slug S --title T --from draft.md   # create/update an artifact
+spec link <ref> --feature <ref>  # set a parent relation
+spec move <ref> --to <state>     # lifecycle transition (model + mirrors)
+spec done <ref> --cascade        # mark delivered, archive, propagate upwards
+spec render [--check]            # regenerate projections (--check = CI drift guard)
+spec model [--write]             # inspect the graph / regenerate index.json
+spec status [<ref>]              # model state, derived progress, mirror refs
+spec list [--kind k] [--state s]
+spec sync [<ref>] [--create]     # reconcile remote mirrors
+spec backend list|enable|disable <id>
+spec validate                    # enforce spec-rules.md (paths, invariants, graph)
 ```
 
-`<ref>` accepts a spec ID (`042`), a slug (`042-login` / `login`) or a path.
-Every mutating command supports `--dry-run`; `--json` emits machine-readable output.
+`<ref>` accepts an id (`042`), a slug (`042-login` / `login`) or a path. Mutating commands support `--dry-run`; `--json` emits machine-readable output.
 
-### Example: local filesystem (default)
-
-```bash
-spec move 042 --to active
-#   ✔ filesystem: .specs/specs/planned/042-login.md → .specs/specs/active/042-login.md
-```
-
-### Example: mirroring onto Linear
+### Everything happens in one command
 
 ```bash
-export LINEAR_API_KEY="lin_api_..."
-spec backend enable linear        # then set settings.teamKey in .specs/config.json
-spec sync --create --backend linear
-spec move 042 --to active
-#   ✔ filesystem: .specs/specs/planned/042-login.md → .specs/specs/active/042-login.md
-#   ✔ linear: ENG-142 → In Progress
+# Author the body, attach it to its parents
+spec upsert spec --slug 042-login --title "Magic link login" \
+     --feature 01-login --from draft.md
+spec link 042-login --feature 01-login
+
+# Ship it: archives the spec AND cascades up the whole chain
+spec done 042-login --cascade
+#   ✔ spec 042-login: planned → archived
+#   ✔ feature 01-login archived (all children complete)
+#   ✔ initiative demo archived (all children complete)
 ```
+
+No markdown surgery: the feature's `## 6.` list, the initiative's `## 4.` roadmap and the vision's `## 5.` roadmap are **regenerated from the graph**, complete with checkboxes and relative links.
+
+### CI drift guard
+
+```bash
+spec render --check   # exits 1 when a projection is out of date with the model
+spec validate         # exits 1 on spec-rules violations
+```
+
+---
+
+## Migration from markdown-only specs
+
+Existing `.specs/**/*.md` documents are imported in one shot:
+
+```bash
+spec import          # idempotent; --force re-imports and overwrites the model
+spec render --check  # verify the regenerated projections match
+```
+
+The importer parses titles, metadata blocks (`## Metadata`, `> **Status:**`), strips graph-generated sections, and rebuilds the spec → feature → initiative relations from the roadmaps.
 
 ---
 
 ## Configuration (`.specs/config.json`)
 
-`spec init` generates it; `spec backend enable|disable` edits it.
-The **filesystem is always the required source of truth**; remote backends are optional.
-
 ```json
 {
-  "version": 1,
-  "sourceOfTruth": "filesystem",
+  "version": 2,
+  "sourceOfTruth": "model",
+  "projections": { "markdown": true },
   "backends": [
-    { "id": "filesystem", "type": "filesystem", "enabled": true, "required": true },
     {
       "id": "linear", "type": "linear", "enabled": false,
       "settings": {
@@ -101,17 +164,28 @@ The **filesystem is always the required source of truth**; remote backends are o
 }
 ```
 
+The model is intrinsic and never listed in `backends`; that list contains **remote mirrors only**.
+
 ---
 
-## Extending: pluggable backends
+## Mirroring onto Linear
 
-Any folder `extensions/<id>/backend.js` exposing a default-export factory is
-**auto-discovered** by the registry. A backend implements a small port
-(`resolve`, `list`, `transition`, `create`, `link`) over the canonical artifact
-model, and shares the committable `.specs/.remote-map.json` to stay idempotent.
+```bash
+export LINEAR_API_KEY="lin_api_..."
+spec backend enable linear        # then set settings.teamKey
+spec sync --create                # create the missing issues, align their states
+spec move 042-login --to active   # model transition + Linear state update
+```
 
-See **[`extensions/README.md`](./extensions/README.md)** for the full contract,
-the authoring template (`extensions/_TEMPLATE/`) and the Linear reference doc.
+Remote identifiers are stored in the model (`artifact.remote.linear`), so syncs stay idempotent and reviewable in git.
+
+---
+
+## Extending: pluggable mirror backends
+
+Any folder `extensions/<id>/backend.js` exposing a default-export factory is auto-discovered. A backend implements a small port (`resolve`, `list`, `transition`, `create`, `link`) over the canonical artifact model, respects `--dry-run`, and returns remote references for the CLI to persist in the model.
+
+See **[`extensions/README.md`](./extensions/README.md)** for the full contract, the authoring template (`extensions/_TEMPLATE/`) and the Linear reference documentation.
 
 ---
 
@@ -120,4 +194,3 @@ the authoring template (`extensions/_TEMPLATE/`) and the Linear reference doc.
 ```bash
 npm test        # node:test — zero dependencies
 ```
-

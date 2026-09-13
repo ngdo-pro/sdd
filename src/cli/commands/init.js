@@ -2,7 +2,7 @@ import { configPath, ensureDir, exists, standardLayout } from '../../core/paths.
 import { defaultConfig, writeConfig } from '../../core/config.js';
 import { info, success } from '../render.js';
 
-/** `spec init` — bootstraps the `.specs/` layout and the framework config. */
+/** `spec init` — bootstraps `.specs/model/`, projections and the config. */
 export async function init({ cwd, flags }) {
   for (const dir of standardLayout(cwd)) {
     await ensureDir(dir);
@@ -16,5 +16,5 @@ export async function init({ cwd, flags }) {
     success('Created .specs/config.json');
   }
 
-  success('Initialized .specs/ layout (specs, initiatives, decisions, knowledge).');
+  success('Initialized .specs/ (canonical model + markdown projections).');
 }

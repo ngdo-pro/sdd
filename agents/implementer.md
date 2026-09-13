@@ -19,6 +19,7 @@
 
 1. **Execute the `build-spec` Skill Protocol:**
    - Strictly follow the instructions in `skills/build-spec/SKILL.md`.
+   - Read the authoritative body from `.specs/model/specs/active/XXX-*.md` (the `.specs/specs/**` markdown is a generated projection).
    - Adhere to the phased sequential execution plan (Section 7 of the spec).
    - Only create or modify files explicitly declared in the Inventory (Section 3.1).
 

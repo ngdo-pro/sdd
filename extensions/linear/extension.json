@@ -1,17 +1,18 @@
 {
   "id": "linear",
   "name": "Linear Issues",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "linear",
-  "kind": "remote",
+  "kind": "mirror",
   "builtin": true,
   "entry": "../../src/backends/linear.js",
-  "description": "Mirrors framework artifacts onto Linear issues (GraphQL API). This backend is built into the CLI and documented here.",
+  "description": "Mirrors canonical model artifacts onto Linear issues (GraphQL API). Built into the CLI and documented here.",
   "capabilities": ["read", "list", "transition", "create"],
   "authentication": {
     "env": "LINEAR_API_KEY",
     "setting": "settings.apiKey"
   },
+  "remoteRefs": "artifact.remote.linear (stored in .specs/model/**/<artifact>.json)",
   "settings": {
     "teamKey": "",
     "stateMap": { "planned": "Backlog", "active": "In Progress", "archived": "Done" },
@@ -19,3 +20,4 @@
     "createOnMove": false
   }
 }
+

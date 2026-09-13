@@ -1,6 +1,6 @@
 ---
 name: sync-knowledge
-description: Propagate a delivered specification into the living knowledge documentation (.specs/knowledge/) via specialized sub-skills and archive the spec.
+description: Propagate a delivered specification into the living knowledge documentation and cascade the completion upwards through the model.
 ---
 
 # Skill: sync-knowledge
@@ -9,57 +9,43 @@ Use this skill after an engineering specification has passed all quality gates a
 
 All updated knowledge documents must be maintained in the user's language.
 
+> **Model-first (Rule 7):** the spec, its parent feature and initiative live in `.specs/model/`. Their markdown documents and remote issues are generated projections. Completion propagates **only** through the CLI.
+
 ---
 
 ## Procedure
 
 1. **Locate Specification:**
-   * Read `.specs/specs/active/[id]*.md` and identify the target domain from its metadata (`[domain]`).
-   * Ensure directory `.specs/knowledge/domains/[domain]/` exists (initialize if greenfield).
+   ```bash
+   spec status [id]
+   ```
+   Identify the target domain from its metadata; ensure `.specs/knowledge/domains/[domain]/` exists (initialize if greenfield).
 
-2. **Execute Pillar Synchronizations:**
-   * **Behavior (`/sync-behavior [id]`):** Update `.specs/knowledge/domains/[domain]/behavior.md` (User journeys, Mermaid flowchart, business rules, failure matrix). Enforce zero technical pollution.
-   * **Contracts (`/sync-contracts [id]`):** Update `.specs/knowledge/domains/[domain]/contracts.md` (REST endpoints, DTOs, Zod validation schemas).
-   * **Models (`/sync-models [id]`):** Update `.specs/knowledge/domains/[domain]/models.md` (Aggregates, SQL tables, columns, migrations, ERD).
-   * **Tech (`/sync-tech [id]`):** Update `.specs/knowledge/domains/[domain]/tech.md` (Architectural patterns, services, security invariants).
+2. **Execute Pillar Synchronizations (knowledge is hand-authored, not modelled):**
+   * **Behavior (`/sync-behavior [id]`):** update `.specs/knowledge/domains/[domain]/behavior.md` (journeys, Mermaid flowchart, business rules, failure matrix). Enforce zero technical pollution.
+   * **Contracts (`/sync-contracts [id]`):** update `.specs/knowledge/domains/[domain]/contracts.md` (endpoints, DTOs, validation schemas).
+   * **Models (`/sync-models [id]`):** update `.specs/knowledge/domains/[domain]/models.md` (aggregates, SQL tables, migrations, ERD).
+   * **Tech (`/sync-tech [id]`):** update `.specs/knowledge/domains/[domain]/tech.md` (patterns, services, security invariants).
 
 3. **Identify & Formalize Structural Decisions (PDR / ADR):**
    * Scan the delivered delta for non-trivial trade-offs:
-     - **Product / Ergonomic Decision (PDR):** Access models, disruptive UX choices, simplified workflows.  
-       $\rightarrow$ Generate PDR in `.specs/decisions/product/PDR-XXX-[slug].md` using `templates/PDR_TEMPLATE.md`.
-     - **Technical / Architectural Decision (ADR):** New dependencies, rendering engines, persistence patterns, protocols.  
-       $\rightarrow$ Generate ADR in `.specs/decisions/architecture/ADR-XXX-[slug].md` using `templates/ADR_TEMPLATE.md`.
-   * Ask the user if any ambiguity remains regarding a potential decision.
+     - **Product / Ergonomic Decision (PDR):** → `.specs/decisions/product/PDR-XXX-[slug].md` via `templates/PDR_TEMPLATE.md`.
+     - **Technical / Architectural Decision (ADR):** → `.specs/decisions/architecture/ADR-XXX-[slug].md` via `templates/ADR_TEMPLATE.md`.
+   * Ask the user if any ambiguity remains.
 
-4. **Archive Specification & Cascading Roadmap Completion:**
-   * Move the specification file from `.specs/specs/active/` to `.specs/specs/archive/`.
-   * **Level 1 (Feature):** If derived from an initiative feature:
-     - Check off this spec under `## 6. Implementation Spec(s)`: `- [x] **`[XXX-[slug]]`**`.
-     - **Cascade Check:** Are all specs in Section 6 now marked `[x]`?
-       - If yes:
-         * Update Feature header to `Status: Archived`.
-         * Move the feature file from `active/[feature].md` to `archive/[feature].md`.
-   * **Level 2 (Initiative):** If the Feature was archived:
-     - In the parent initiative's `README.md`, update the feature link to `archive/[feature].md` and check it off: `- [x] **`[feature-slug]`**: ...`.
-     - **Cascade Check:** Are all features of the initiative now in `archive/`?
-       - If yes: update Initiative header to `Status: Archived` and move the initiative directory from `.specs/initiatives/active/[initiative]` to `.specs/initiatives/archive/[initiative]`.
-   * **Level 3 (Vision):** If the Initiative was archived:
-     - In `.specs/vision.md` under Section 5 (*Strategic Initiatives Roadmap*), check off the initiative: `- [x] **`[initiative-slug]`**: ...`.
+4. **Complete & Cascate Through the CLI:**
+   ```bash
+   spec done [id] --cascade
+   ```
+   This single command:
+   * marks the spec `progress.done = true` and archives it (`active/ ➔ archive/`),
+   * archives every unfinished parent whose children are now all complete (feature ➔ initiative),
+   * regenerates every affected projection, the index, and mirrors the movements onto Linear.
+   * The generated sections (`## 6. Implementation Spec(s)`, `## 4. Feature Roadmap`, vision `## 5.`) update automatically — **never edit them by hand**.
 
-5. **Confirmation:**
-   * Summarize all performed updates (updated domain knowledge files, created PDRs/ADRs, archived spec, and cascaded completion milestones).
+   Use `--dry-run` first to preview the cascade, and `--undo` to reopen a spec if it was closed by mistake.
 
----
-
-## Deterministic Mechanics (Rule 7)
-
-Archive and cascade through the CLI so remote backends stay synchronized:
-
-```bash
-spec move [XXX] --to archived                                  # archive the delivered spec
-spec move [feature-slug] --kind feature --to archived          # if the feature is fully delivered
-spec move [initiative-slug] --kind initiative --to archived    # if the initiative is fully delivered
-```
-
-If the CLI is unavailable, fall back to the documented file moves and explicitly
-warn the user that remote backends were not updated.
+5. **Verification & Confirmation:**
+   * `spec render --check` → must be clean.
+   * `spec validate` → must be clean.
+   * Summarize all performed updates in the user's language: updated domain knowledge files, created PDRs/ADRs, archived spec, and the cascaded completion milestones (which features/initiatives were archived).

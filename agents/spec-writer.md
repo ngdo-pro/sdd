@@ -1,20 +1,23 @@
 # Role: Spec Writer (Technical Architect & Specifier)
 
-> **Mission:** Transform a qualified Feature (`Ready for Spec`) into a rigorous, testable, and executable technical engineering specification (`SPEC_TEMPLATE.md`), executing the `spec` skill.
+> **Mission:** Transform a qualified Feature (`Ready for Spec`) into a rigorous, testable, and executable technical engineering specification, executing the `spec` skill.
 >
-> **Language Rule:** All generated specification documents (`.specs/specs/planned/XXX-[slug].md` or `active/`) must be written in the user's language.
+> **Language Rule:** All generated specification content must be written in the user's language.
+>
+> **Model-First (Rule 7):** the spec is stored in `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). `.specs/specs/**` is a **generated projection** — never hand-edited.
 
 ---
 
 ## Tooling & Required Skills
 
 * **Primary Skill:** `skills/spec/SKILL.md` (`/spec`)
-* **Reference Template:** `templates/SPEC_TEMPLATE.md`
-* **Governing Rules:** `rules/spec-rules.md` (relative path portability, scannability, BDD traceability)
+* **Reference Template:** `templates/SPEC_TEMPLATE.md` (sections for the **body**)
+* **Governing Rules:** `rules/spec-rules.md` (portability, scannability, BDD traceability, model-first)
+* **Writing Interface:** `spec upsert spec --slug XXX-[slug] --title … --from <body-file>`
 * **Required Inputs:**
-  - Approved Feature brief (`.specs/initiatives/.../[feature].md`)
+  - Approved Feature (from the model: `spec status <feature-slug> --kind feature`)
   - Domain Ground Truth (`.specs/knowledge/domains/[domain]/`, **if already existing**)
-  - Global Architecture & Tenets (`.specs/architecture.md`, `.specs/vision.md`)
+  - Global Architecture & Tenets (`.specs/architecture.md`, the vision artifact)
 
 ---
 
@@ -27,7 +30,7 @@
 2. **Execute the `spec` Skill Protocol:**
    - Execute the step-by-step procedure defined in `skills/spec/SKILL.md`.
    - Ask targeted technical questions via `ask_question` for all critical boundary, error, or security ambiguities (proactively proposing to split the spec if scope spans multiple heavy subsystems).
-   - Instantiate `templates/SPEC_TEMPLATE.md` to produce `.specs/specs/planned/XXX-[slug].md`.
+   - Author the **body** from `templates/SPEC_TEMPLATE.md`, then persist it with `spec upsert` (never write model or projection files directly).
 
 3. **Delta Minimality & Precision:**
    - Focus exclusively on the scope required to fulfill the Feature brief.

@@ -2,34 +2,39 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/nanko/spec-framework/schemas/config.schema.json",
   "title": "Spec Framework configuration",
-  "description": "Configuration for the `spec` CLI (.specs/config.json).",
+  "description": "Configuration for the `spec` CLI (.specs/config.json). The canonical model in .specs/model/ is always the source of truth; `backends` lists remote mirrors only.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
-    "version": { "type": "integer", "const": 1 },
+    "version": { "type": "integer", "const": 2 },
     "sourceOfTruth": {
       "type": "string",
-      "default": "filesystem",
-      "description": "Backend id read from during resolution. Must reference an enabled backend."
+      "const": "model",
+      "description": "Always `model`: .specs/model/ holds the canonical artefacts."
+    },
+    "projections": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "markdown": { "type": "boolean", "default": true, "description": "Generate the markdown projections under .specs/." }
+      }
     },
     "backends": {
       "type": "array",
+      "description": "Remote mirror backends. The local model is intrinsic and never listed here.",
       "items": {
         "type": "object",
         "required": ["id", "type"],
         "additionalProperties": true,
         "properties": {
-          "id": { "type": "string", "description": "Unique backend identifier (also used as the remote-map key)." },
-          "type": { "type": "string", "description": "Backend implementation, e.g. filesystem, linear, or an extensions/<id> folder." },
+          "id": { "type": "string", "description": "Unique mirror identifier (also the key used in artifact.remote)." },
+          "type": { "type": "string", "description": "Backend implementation, e.g. linear, or an extensions/<id> folder." },
           "enabled": { "type": "boolean", "default": false },
-          "required": { "type": "boolean", "default": false, "description": "Required backends cannot be disabled." },
           "settings": { "type": "object", "additionalProperties": true }
         }
       },
-      "default": [
-        { "id": "filesystem", "type": "filesystem", "enabled": true, "required": true },
-        { "id": "linear", "type": "linear", "enabled": false }
-      ]
+      "default": [{ "id": "linear", "type": "linear", "enabled": false }]
     }
   }
 }
+

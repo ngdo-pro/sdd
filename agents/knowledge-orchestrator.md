@@ -67,10 +67,12 @@ flowchart TD
      - Disruptive UX or access model choice $\rightarrow$ Prompt for PDR generation.
      - New protocol, dependency, or persistence engine $\rightarrow$ Prompt for ADR generation.
 
-3. **Cascading Completion & Archiving:**
-   - Move `.specs/specs/active/XXX-[slug].md` to `.specs/specs/archive/XXX-[slug].md`.
-   - Update the parent feature in the active initiative (`Implemented ✅`).
-   - If all features of an initiative are completed, archive the initiative.
+3. **Cascading Completion & Archiving (CLI-driven):**
+   - Propagate completion **only** through the CLI: `spec done [id] --cascade`.
+     * marks the spec `progress.done`, archives it, then archives every unfinished parent whose children are complete,
+     * regenerates all affected projections (feature `## 6.`, initiative `## 4.`, vision `## 5.`), the index and the Linear mirrors.
+   - Never `mv` or edit a projection by hand: `.specs/specs/**` and `.specs/initiatives/**` are generated from `.specs/model/`.
+   - Use `spec render --check` to confirm no projection drifted from the model.
 
 ---
 

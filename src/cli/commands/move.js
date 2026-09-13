@@ -1,54 +1,76 @@
 import { UsageError } from '../../core/errors.js';
-import { loadConfig } from '../../core/config.js';
-import { createBackends, getSourceBackend } from '../../backends/registry.js';
-import { loadRemoteMap, saveRemoteMap } from '../../core/remote-map.js';
-import { normalizeState } from '../../core/transitions.js';
-import { arrow, heading, info, line, printJson, success } from '../render.js';
+import { assertTransition, normalizeState } from '../../core/transitions.js';
+import { findByRef, moveArtifact } from '../../model/store.js';
+import { arrow, heading, info, line, printJson, success, warn } from '../render.js';
+import { initiativeStateOf, loadContext, persistArtifact, refresh, runCascade } from '../context.js';
 
 /**
- * `spec move <ref> --to <state>` — the core movement.
- * Applies a lifecycle transition to every selected backend.
+ * `spec move <ref> --to <state>` — the core movement, applied to the canonical
+ * model first and then mirrored onto every enabled remote backend.
  */
 export async function move({ cwd, positionals, flags }) {
   const reference = positionals[0];
   if (!reference) {
     throw new UsageError('Usage: spec move <ref> --to <planned|active|archived>');
   }
-
   const toState = normalizeState(flags.to);
   if (!toState) {
     throw new UsageError(`Invalid or missing --to value "${flags.to ?? ''}" (expected: planned, active, archived).`);
   }
 
-  const config = await loadConfig(cwd);
-  const backends = await createBackends(cwd, config, { only: flags.backends });
-  const source = getSourceBackend(backends, config);
-  const artifact = await source.resolve(reference, { kind: flags.kind });
+  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
+  const artifact = findByRef(artifacts, reference, { kind: flags.kind });
 
-  const remoteMap = await loadRemoteMap(cwd);
-  const results = [];
-  for (const backend of backends) {
-    const result = await backend.transition(artifact, toState, { remoteMap, dryRun: flags.dryRun });
-    results.push({ backend: backend.id, ...result });
+  const mustMove = assertTransition(artifact, toState) === true;
+
+  // Mirrors first: a failing remote leaves the model untouched.
+  const mirrorResults = [];
+  const remoteRefs = {};
+  for (const mirror of mirrors) {
+    try {
+      const result = await mirror.transition(artifact, toState, { dryRun: flags.dryRun });
+      mirrorResults.push({ backend: mirror.id, ...result });
+      if (result.remoteRef) remoteRefs[mirror.id] = result.remoteRef;
+    } catch (error) {
+      mirrorResults.push({ backend: mirror.id, error: error.message });
+    }
   }
-  if (!flags.dryRun) await saveRemoteMap(cwd, remoteMap);
+
+  const next = { ...artifact, remote: { ...artifact.remote, ...remoteRefs } };
+  let moved = next;
+
+  if (!flags.dryRun) {
+    moved = mustMove
+      ? await moveArtifact(cwd, next, toState, { initiativeState: initiativeStateOf(artifacts, artifact) })
+      : await persistArtifact(cwd, artifacts, next, { previous: artifact.model });
+
+    const index = artifacts.findIndex((entry) => entry.slug === artifact.slug && entry.kind === artifact.kind);
+    if (index !== -1) artifacts[index] = moved;
+  }
+
+  const cascade = flags.cascade ? await runCascade(cwd, artifacts, { dryRun: flags.dryRun }) : [];
+  if (!flags.dryRun) await refresh(cwd, artifacts);
 
   if (flags.json) {
-    printJson({ artifact, to: toState, results });
+    printJson({ artifact: moved.slug, from: artifact.state, to: toState, mirrors: mirrorResults, cascade });
     return;
   }
 
   heading(`Moving ${artifact.kind} ${artifact.slug}`);
   info(`${artifact.state ?? '—'} ${arrow()} ${toState}`);
-  for (const result of results) {
-    if (result.planned) {
-      line(`  ${result.backend}: would move ${result.from} ${arrow()} ${result.to}${result.state ? ` (${result.state})` : ''}`);
-    } else if (result.moved) {
-      const detail = result.remoteRef ? `${result.remoteRef} ${arrow()} ${result.state}` : `${result.from} ${arrow()} ${result.to}`;
-      success(`${result.backend}: ${detail}`);
-    } else {
-      info(`${result.backend}: already ${toState}`);
-    }
+  if (!mustMove) info('already in this state');
+
+  for (const result of mirrorResults) {
+    if (result.error) warn(`${result.backend}: ${result.error}`);
+    else if (result.planned) line(`  ${result.backend}: would move to ${result.state ?? toState}`);
+    else if (result.moved) success(`${result.backend}: ${result.remoteRef ?? ''} ${arrow()} ${result.state ?? toState}`.trim());
+    else info(`${result.backend}: already up to date`);
   }
+
+  for (const entry of cascade) {
+    if (entry.planned) info(`would cascade-archive ${entry.kind} ${entry.slug}`);
+    else success(`${entry.kind} ${entry.slug} archived (all children complete)`);
+  }
+
   if (flags.dryRun) line('\n  (dry-run: nothing was written)');
 }

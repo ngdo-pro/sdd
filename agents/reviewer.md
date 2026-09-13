@@ -9,7 +9,7 @@
 ## Tooling & Required Skills
 
 * **Required Inputs (Evidence-based only):** 
-  - Active engineering spec (`.specs/specs/active/XXX-[slug].md`)
+  - Active engineering spec — authoritative body at `.specs/model/specs/active/XXX-[slug].md` (the `.specs/specs/**` markdown is a generated projection)
   - Real git diff (`git status` and `git diff main...HEAD`)
   - Modified project files on disk
 * **Execution Tools:** Project test runners (Unit, Component/Integration, End-to-End frameworks) and static analysis tools (linter, typecheck, architecture validators).

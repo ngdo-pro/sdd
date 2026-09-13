@@ -1,5 +1,5 @@
 import { UsageError } from '../../core/errors.js';
-import { loadConfig, writeConfig, getBackendConfig, assertKnownBackends } from '../../core/config.js';
+import { assertKnownBackends, getBackendConfig, loadConfig, writeConfig } from '../../core/config.js';
 import { heading, info, printJson, success, table } from '../render.js';
 
 /**
@@ -16,15 +16,14 @@ export async function backend({ cwd, positionals, flags }) {
       printJson(config.backends);
       return;
     }
-    heading('Backends');
+    heading('Mirror backends (canonical source of truth: .specs/model/)');
+    if (config.backends.length === 0) {
+      info('No backend registered.');
+      return;
+    }
     table(
-      config.backends.map((entry) => [
-        entry.id,
-        entry.type,
-        entry.enabled ? 'enabled' : 'disabled',
-        entry.required ? 'required' : '',
-      ]),
-      ['id', 'type', 'status', 'flag'],
+      config.backends.map((entry) => [entry.id, entry.type, entry.enabled ? 'enabled' : 'disabled']),
+      ['id', 'type', 'status'],
     );
     return;
   }
@@ -38,10 +37,6 @@ export async function backend({ cwd, positionals, flags }) {
   assertKnownBackends(config, [id]);
 
   const entry = getBackendConfig(config, id);
-  if (entry.required && action === 'disable') {
-    throw new UsageError(`Backend "${id}" is required and cannot be disabled.`);
-  }
-
   entry.enabled = action === 'enable';
   await writeConfig(cwd, config);
 

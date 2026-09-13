@@ -10,46 +10,60 @@ export const VERSION = pkg.version;
 export const HELP = `
   spec — Spec Framework CLI (${VERSION})
 
-  Deterministic mechanics for the Spec-Driven Development pipeline.
-  By default every movement is applied to the local filesystem; when remote
-  backends (Linear, …) are enabled, the same movement is mirrored onto them.
+  Model-first pipeline: canonical artifacts live in .specs/model/ (JSON
+  metadata + markdown body). Every other output — markdown docs, Linear
+  issues — is a generated projection, and the CLI is their only writer.
 
   USAGE
     spec <command> [options]
 
   COMMANDS
-    init                 Bootstrap the .specs/ layout and config.json
-    move <ref>           Transition an artifact between lifecycle states
-    status [<ref>]       Show local state and remote mirrors
+    init                 Bootstrap .specs/model/ + projections + config
+    import               Migrate existing .specs/**/*.md into the model
+    upsert <kind>        Create/update an artifact (body via --from)
+    move <ref>           Transition an artifact state (model + mirrors)
+    done <ref>           Mark delivered, check off parents (--cascade)
+    link <ref>           Set a parent relation in the model
+    render [--check]     Regenerate markdown projections (CI drift guard)
+    model [--write]      Inspect the graph / regenerate index.json
+    status [<ref>]       Model state, derived progress, remote mirrors
     list                 List artifacts (--kind, --state)
-    link <ref>           Register an artifact in its parent document
-    sync [<ref>]         Reconcile local artifacts with remote backends
+    sync [<ref>]         Reconcile remote mirrors (Linear) with the model
     backend <action>     list | enable <id> | disable <id>
-    validate             Check spec-rules.md integrity (paths, invariants)
+    validate             Enforce spec-rules.md (paths, invariants, graph)
 
   OPTIONS
     --to <state>         Target state: planned | active | archived
-    --kind <kind>        Filter by artifact kind: spec | initiative | feature | vision
-    --state <state>      Filter by lifecycle state
-    --backend <id>       Restrict to a backend (repeatable)
-    --feature <ref>      Parent feature (for \`link <spec-ref>\`)
-    --initiative <ref>   Parent initiative (for \`link <feature-ref>\`)
-    --create             Create missing remote artifacts during \`sync\`
-    --dry-run            Preview changes without writing anything
+    --kind <kind>        spec | feature | initiative | vision
+    --slug <slug>        Artifact slug (upsert); specs use NNN-slug
+    --title <title>      Title (upsert)
+    --from <file|->      Body markdown source, "-" reads stdin (upsert)
+    --field Key=Value    Extra metadata field (repeatable, upsert)
+    --feature <ref>      Parent feature (link / upsert)
+    --initiative <slug>  Parent initiative (link / upsert)
+    --state <state>      Filter (list) or initial state (upsert)
+    --cascade            Archive parents whose children are all complete
+    --undo               Reopen an artifact (done)
+    --create             Create missing remote artifacts (sync)
+    --check              Report drift without writing (render)
+    --write              Write index.json (model)
+    --backend <id>       Restrict to a mirror (repeatable)
+    --dry-run            Preview changes without writing
     --json               Machine-readable output
-    --force              Overwrite existing files (init)
+    --force              Overwrite existing material (init, import)
     --cwd <path>         Run against another workspace root
     -h, --help           Show this help
     -v, --version        Show the CLI version
 
   EXAMPLES
     spec init
-    spec move 042 --to active
-    spec move auth-login --kind feature --to archived
-    spec link 042 --feature auth-login
-    spec sync --create --backend linear
-    spec status 042
+    spec upsert spec --slug 042-login --title "Magic link login" --from draft.md
+    spec link 042-login --feature auth-login
+    spec move 042-login --to active
+    spec done 042-login --cascade
+    spec render --check
+    spec import && spec model --write
 
   REFERENCES
-    <ref> accepts a spec ID (042), a slug (042-auth / auth-login) or a path.
+    <ref> accepts an id (042), a slug (042-login / auth-login) or a path.
 `;

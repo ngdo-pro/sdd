@@ -1,3 +1,9 @@
+> **Model-first note (rule 7):** this template describes the **body** of the vision.
+> Only sections 1-4 are authored; `## 5. Strategic Initiatives Roadmap` is **generated** from
+> the initiative artifacts. The `# Product Vision: …` title and blockquote header are generated
+> by `spec upsert vision --from <body-file>`.
+
+
 # Product Vision: [Product Name]
 
 > **Product:** [Product Name]  

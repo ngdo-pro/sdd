@@ -1,10 +1,16 @@
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { createMeta } from '../src/model/schema.js';
+import { saveArtifact } from '../src/model/store.js';
 
 /** Creates an isolated temporary workspace root. */
 export async function makeWorkspace() {
   return mkdtemp(path.join(tmpdir(), 'spec-framework-'));
+}
+
+export async function cleanup(root) {
+  await rm(root, { recursive: true, force: true });
 }
 
 /** Writes a map of `{ 'relative/path': 'content' }` files into a workspace. */
@@ -29,11 +35,44 @@ export async function fileExists(root, relative) {
   }
 }
 
-export async function cleanup(root) {
-  await rm(root, { recursive: true, force: true });
+/**
+ * Seeds canonical model artifacts from plain definitions.
+ * Feature definitions resolve their initiative's state automatically.
+ * @returns {Promise<Array>} the created metadata objects
+ */
+export async function seedModel(root, definitions) {
+  const initiativeStates = new Map();
+  const created = [];
+
+  for (const definition of definitions) {
+    const meta = createMeta({
+      kind: definition.kind,
+      slug: definition.slug,
+      title: definition.title,
+      state: definition.state,
+      relations: definition.relations,
+      fields: definition.fields,
+      progress: definition.progress,
+    });
+    const initiativeState = definition.kind === 'feature'
+      ? initiativeStates.get(definition.relations?.initiative)
+      : undefined;
+    await saveArtifact(root, meta, definition.body ?? '', { initiativeState });
+    if (definition.kind === 'initiative') initiativeStates.set(meta.slug, meta.state);
+    created.push(meta);
+  }
+
+  return created;
 }
 
-/** Canonical fixture matching the framework's on-disk layout. */
+/** Standard three-artifact fixture (initiative → feature → spec). */
+export const MODEL_FIXTURE = [
+  { kind: 'initiative', slug: 'demo', title: 'Demo', state: 'active', body: '## 1. Intent\n\nDemo.\n' },
+  { kind: 'feature', slug: '01-login', title: 'Login', state: 'active', relations: { initiative: 'demo' }, body: '## 1. Problem\n\nLogin.\n' },
+  { kind: 'spec', slug: '042-login', title: 'Magic link', state: 'active', relations: { feature: '01-login' }, body: '## 1. Intent\n\nMagic link.\n' },
+];
+
+/** Markdown projection fixture used by the legacy markdown scanners. */
 export const FIXTURES = {
   '.specs/vision.md': '# Product Vision: Demo\n',
   '.specs/specs/planned/042-login.md':

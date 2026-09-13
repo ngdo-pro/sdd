@@ -1,5 +1,4 @@
 import { BackendError } from '../core/errors.js';
-import { getRemoteRef, setRemoteRef } from '../core/remote-map.js';
 import { DEFAULT_LINEAR_SETTINGS } from '../core/config.js';
 
 const LINEAR_ENDPOINT = 'https://api.linear.app/graphql';
@@ -87,6 +86,8 @@ export default function createLinearBackend({ config, backendConfig }) {
   }
 
   function buildDescription(artifact) {
+    const modelPath = artifact.model?.meta ? `.specs/model/${artifact.model.meta}` : '—';
+    const projection = artifact.projection ? `.specs/${artifact.projection}` : '—';
     return [
       '_Synced by Spec Framework — do not edit structural fields manually._',
       '',
@@ -95,7 +96,8 @@ export default function createLinearBackend({ config, backendConfig }) {
       `| Kind | \`${artifact.kind}\` |`,
       `| ID | \`${artifact.id}\` |`,
       `| Slug | \`${artifact.slug}\` |`,
-      `| Local path | \`${artifact.path}\` |`,
+      `| Model | \`${modelPath}\` |`,
+      `| Projection | \`${projection}\` |`,
     ].join('\n');
   }
 
@@ -161,29 +163,29 @@ export default function createLinearBackend({ config, backendConfig }) {
     /**
      * Applies a lifecycle transition to the linked Linear issue.
      * Creates the issue first when `settings.createOnMove` is enabled.
+     * The remote reference is returned so the caller can persist it in the model.
      */
-    async transition(artifact, toState, { remoteMap, dryRun = false } = {}) {
+    async transition(artifact, toState, { dryRun = false } = {}) {
       const targetName = settings.stateMap?.[toState];
       if (!targetName) {
         throw new BackendError(`No Linear state mapping for framework state "${toState}".`);
       }
 
-      const ref = getRemoteRef(remoteMap, artifact.path, backendId);
+      const ref = artifact.remote?.[backendId] ?? null;
       if (!ref) {
         if (!settings.createOnMove) {
           throw new BackendError(
-            `Local artifact "${artifact.path}" is not linked to Linear. Run \`spec sync ${artifact.slug} --create\`, or set settings.createOnMove=true.`,
+            `Artifact "${artifact.slug}" is not linked to Linear. Run \`spec sync ${artifact.slug} --create\`, or set settings.createOnMove=true.`,
           );
         }
         if (dryRun) return { moved: false, planned: true, action: 'create', state: targetName };
         const created = await createIssue(artifact, artifact.state);
-        setRemoteRef(remoteMap, artifact.path, backendId, created.identifier);
         return { moved: true, action: 'create', remoteRef: created.identifier, state: targetName };
       }
 
       const issue = await fetchIssue(ref);
       if (!issue) {
-        throw new BackendError(`Linear issue "${ref}" not found (mapped from ${artifact.path}).`);
+        throw new BackendError(`Linear issue "${ref}" not found (mapped from ${artifact.slug}).`);
       }
       if ((issue.state?.name ?? '').toLowerCase() === targetName.toLowerCase()) {
         return { moved: false, remoteRef: ref, state: targetName };
@@ -199,13 +201,12 @@ export default function createLinearBackend({ config, backendConfig }) {
       return { moved: true, remoteRef: ref, state: targetName };
     },
 
-    /** Creates the remote issue for an artifact and records the mapping. */
-    async create(artifact, { remoteMap, dryRun = false } = {}) {
-      const existing = getRemoteRef(remoteMap, artifact.path, backendId);
+    /** Creates the remote issue for an artifact, returning its reference. */
+    async create(artifact, { dryRun = false } = {}) {
+      const existing = artifact.remote?.[backendId] ?? null;
       if (existing) return { created: false, remoteRef: existing };
       if (dryRun) return { created: false, planned: true };
       const created = await createIssue(artifact, artifact.state);
-      setRemoteRef(remoteMap, artifact.path, backendId, created.identifier);
       return { created: true, remoteRef: created.identifier };
     },
 

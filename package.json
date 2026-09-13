@@ -1,6 +1,6 @@
 {
   "name": "@nanko/spec-framework",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Universal Spec-Driven Development (SDD) Framework for Antigravity and Claude Code",
   "keywords": [
     "antigravity",
@@ -10,7 +10,8 @@
     "ai-agents",
     "skills",
     "cli",
-    "linear"
+    "linear",
+    "model-first"
   ],
   "author": "Nanko Team",
   "license": "MIT",

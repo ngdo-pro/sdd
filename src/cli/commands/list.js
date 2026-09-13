@@ -1,40 +1,42 @@
-import { loadConfig } from '../../core/config.js';
-import { createBackends, getSourceBackend } from '../../backends/registry.js';
 import { normalizeState } from '../../core/transitions.js';
-import { listArtifacts } from '../../core/artifact.js';
+import { buildGraph } from '../../model/graph.js';
 import { heading, printJson, table, warn } from '../render.js';
+import { loadContext } from '../context.js';
 
-/** `spec list [--kind k] [--state s] [--backend id]` */
+/** `spec list [--kind k] [--state s]` — lists artifacts from the model. */
 export async function list({ cwd, flags }) {
-  const config = await loadConfig(cwd);
-  const backends = await createBackends(cwd, config, { only: flags.backends });
-
-  const remoteOnly = Array.isArray(flags.backends) && flags.backends.length > 0;
-  const target = remoteOnly
-    ? backends[0]
-    : getSourceBackend(backends, config);
+  const { artifacts } = await loadContext(cwd);
 
   const state = flags.state ? normalizeState(flags.state) : undefined;
-  const artifacts = await target.list({ kind: flags.kind, state });
+  const filtered = artifacts
+    .filter((artifact) => (flags.kind ? artifact.kind === flags.kind : true))
+    .filter((artifact) => (state ? artifact.state === state : true))
+    .sort((a, b) => `${a.kind}:${a.slug}`.localeCompare(`${b.kind}:${b.slug}`));
 
   if (flags.json) {
-    printJson(artifacts);
+    printJson(filtered);
     return;
   }
 
-  heading(`${artifacts.length} artifact(s) via ${target.id}`);
-  if (artifacts.length === 0) {
+  heading(`${filtered.length} artifact(s)`);
+  if (filtered.length === 0) {
     warn('Nothing found.');
     return;
   }
 
-  const rows = artifacts.map((artifact) => [
-    artifact.kind,
-    artifact.id,
-    artifact.state ?? '—',
-    (artifact.title ?? '').slice(0, 60),
-  ]);
-  table(rows, ['kind', 'id', 'state', 'title']);
+  const graph = buildGraph(artifacts);
+  table(
+    filtered.map((artifact) => {
+      const progress = graph.progressOf(artifact.slug);
+      return [
+        artifact.kind,
+        artifact.id,
+        artifact.state ?? '—',
+        graph.isComplete(artifact) ? '✔' : '·',
+        progress.children > 0 ? `${progress.completed}/${progress.children}` : '',
+        (artifact.title ?? '').slice(0, 50),
+      ];
+    }),
+    ['kind', 'id', 'state', 'done', 'children', 'title'],
+  );
 }
-
-export { listArtifacts };

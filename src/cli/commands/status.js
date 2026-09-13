@@ -1,57 +1,64 @@
-import { loadConfig } from '../../core/config.js';
-import { createBackends, getSourceBackend } from '../../backends/registry.js';
-import { loadRemoteMap, getRemoteRef } from '../../core/remote-map.js';
-import { listArtifacts } from '../../core/artifact.js';
 import { STATES } from '../../core/paths.js';
-import { heading, info, line, printJson, table } from '../render.js';
+import { findByRef } from '../../model/store.js';
+import { buildGraph } from '../../model/graph.js';
+import { heading, info, printJson, table } from '../render.js';
+import { loadContext } from '../context.js';
 
-/** `spec status [<ref>]` — shows local state plus every remote mirror. */
+/** `spec status [<ref>]` — model state, derived progress and remote mirrors. */
 export async function status({ cwd, positionals, flags }) {
-  const config = await loadConfig(cwd);
-  const backends = await createBackends(cwd, config, { only: flags.backends });
-  const source = getSourceBackend(backends, config);
-  const remoteBackends = backends.filter((backend) => backend.remote);
-  const remoteMap = await loadRemoteMap(cwd);
+  const { config, artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
+  const graph = buildGraph(artifacts);
   const reference = positionals[0];
 
   if (reference) {
-    const artifact = await source.resolve(reference, { kind: flags.kind });
-    const mirrors = remoteBackends.map((backend) => ({
+    const artifact = findByRef(artifacts, reference, { kind: flags.kind });
+    const progress = graph.progressOf(artifact.slug);
+    const mirrorStates = config.backends.map((backend) => ({
       backend: backend.id,
-      ref: getRemoteRef(remoteMap, artifact.path, backend.id) ?? '—',
+      enabled: backend.enabled,
+      ref: artifact.remote?.[backend.id] ?? '—',
     }));
 
     if (flags.json) {
-      printJson({ artifact, mirrors });
+      printJson({ artifact, progress, mirrors: mirrorStates });
       return;
     }
 
-    heading(`${artifact.kind}: ${artifact.title ?? artifact.slug}`);
-    info(`slug    ${artifact.slug}`);
-    info(`state   ${artifact.state ?? 'n/a'}`);
-    info(`path    ${artifact.path}`);
-    for (const mirror of mirrors) info(`${mirror.backend.padEnd(8)}${mirror.ref}`);
+    heading(`${artifact.kind}: ${artifact.title}`);
+    info(`slug      ${artifact.slug}`);
+    info(`id        ${artifact.id}`);
+    info(`state     ${artifact.state ?? 'n/a'}`);
+    info(`complete  ${graph.isComplete(artifact) ? 'yes' : 'no'}${progress.children > 0 ? ` (${progress.completed}/${progress.children} children)` : ''}`);
+    info(`meta      .specs/model/${artifact.model.meta}`);
+    info(`body      .specs/model/${artifact.model.body}`);
+    info(`projection .specs/${artifact.projection}`);
+    for (const mirror of mirrorStates) {
+      info(`${mirror.backend.padEnd(9)} ${mirror.ref}${mirror.enabled ? '' : ' (disabled)'}`);
+    }
     return;
   }
 
-  const artifacts = await listArtifacts(cwd, { kind: flags.kind });
   const counts = STATES.map((state) => [
     state,
-    String(artifacts.filter((artifact) => artifact.state === state).length),
+    artifacts.filter((artifact) => artifact.state === state).length,
   ]);
 
   if (flags.json) {
-    printJson({ total: artifacts.length, byState: Object.fromEntries(counts), backends: config.backends });
+    printJson({
+      sourceOfTruth: config.sourceOfTruth,
+      total: artifacts.length,
+      byState: Object.fromEntries(counts),
+      backends: config.backends,
+      mirrors: mirrors.map((mirror) => mirror.id),
+    });
     return;
   }
 
   heading('Spec Framework status');
-  info(`source of truth   ${config.sourceOfTruth}`);
-  info(`backends          ${config.backends.map((backend) => `${backend.id}${backend.enabled ? '' : ' (off)'}`).join(', ')}`);
-  if (remoteBackends.length > 0) {
-    const linked = artifacts.filter((artifact) => remoteBackends.some((backend) => getRemoteRef(remoteMap, artifact.path, backend.id)));
-    info(`remote mirrors    ${linked.length}/${artifacts.length} artifacts linked`);
-  }
-  line('');
-  table(counts, ['state', 'artifacts']);
+  info(`source of truth  ${config.sourceOfTruth} (.specs/model/)`);
+  info(`projections      markdown ${config.projections?.markdown === false ? 'off' : 'on'}`);
+  info(`mirrors          ${config.backends.length === 0 ? 'none' : config.backends.map((backend) => `${backend.id}${backend.enabled ? '' : ' (off)'}`).join(', ')}`);
+  const linked = artifacts.filter((artifact) => Object.keys(artifact.remote ?? {}).length > 0);
+  if (linked.length > 0) info(`linked remotely  ${linked.length}/${artifacts.length}`);
+  table([...counts, ['total', artifacts.length]], ['state', 'artifacts']);
 }

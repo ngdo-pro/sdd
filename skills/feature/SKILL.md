@@ -1,59 +1,49 @@
 ---
 name: feature
-description: Frame a discrete functional or technical feature in .specs/initiatives/active/[initiative]/[feature].md, ready for technical spec.
+description: Frame a discrete functional or technical feature and persist it into the canonical model, linked to its initiative.
 ---
 
 # Skill: feature
 
-Use this skill when the user wants to define or frame a discrete feature within an active initiative (`/feature [initiative] [feature-slug]`).
+Use this skill when the user wants to define or frame a discrete feature within an initiative (`/feature [initiative] [feature-slug]`).
 
-All generated feature documents (`.specs/initiatives/active/[initiative]/[feature-slug].md`) and user discussions must be authored in the user's language.
+All generated feature content must be authored in the user's language.
 
-A **Feature** represents a concrete, cohesive unit of user experience or technical capability ideally sized for **1 engineering Spec Delta** (a few days of implementation).
+A **Feature** represents a concrete, cohesive unit of user experience or technical capability ideally sized for **1 engineering Spec Delta** (a few days of implementation). The document must remain concise (**1 page maximum**), visual, and behavior-oriented.
 
-The document must remain concise (**1 page maximum**), visual, and behavior-oriented.
+> **Model-first (Rule 7):** the feature lives in `.specs/model/initiatives/<initiative-state>/<initiative>/<feature-state>/<feature>.json` + `<feature>.md`. Markdown under `.specs/initiatives/` is generated.
 
 ---
 
 ## Procedure
 
 ### 1. Immersion
-1. Read the parent initiative's overview in `.specs/initiatives/active/[initiative]/README.md` (or `.specs/initiatives/planned/[initiative]/README.md`).
-2. Inspect active domain knowledge in `.specs/knowledge/domains/[domain]/` to understand current behavior.
+1. Read the parent initiative: `spec status [initiative] --kind initiative`.
+2. Inspect active domain knowledge in `.specs/knowledge/domains/[domain]/` (hand-authored, not part of the model).
+3. Check for duplicates: `spec list --kind feature`.
 
 ### 2. Exhaustive Interaction & Invariants Interview (via `ask_question`)
 Clarify all interaction specifics, edge cases, and constraints without artificial question caps:
-* **Trigger & Wireframe:** How does the user/system initiate the action? What does the interaction look like visually (inline editing, popover, canvas connector)?
-* **Functional Invariants:** What are the non-negotiable integrity rules (`INV-1`, `INV-2`...)? What happens on edge cases, empty states, or invalid inputs?
-* **Out of Scope:** What elements are deliberately deferred to ensure rapid, focused delivery?
-* **Scope Slicing:** If the interaction complexity reveals multiple distinct user workflows, sub-states, or conflicting goals, proactively propose splitting into multiple smaller features.
+* **Trigger & Wireframe:** how is the action initiated? What does the interaction look like visually?
+* **Functional Invariants:** non-negotiable integrity rules (`INV-1`, `INV-2`...)? Behavior on edge cases, empty states, invalid inputs?
+* **Out of Scope:** what is deliberately deferred to ensure focused delivery?
+* **Scope Slicing:** if complexity reveals multiple distinct workflows, propose splitting into smaller features.
 
-### 3. Generate Feature Document
-1. Locate the parent initiative directory (`.specs/initiatives/active/[initiative]/` or `.specs/initiatives/planned/[initiative]/`). Ensure its `planned/` subfolder exists.
-2. Instantiate `templates/FEATURE_TEMPLATE.md` in `.specs/initiatives/[initiative-dir]/planned/[feature-slug].md`.
-3. Complete thoroughly in the user's language:
-   - 2-sentence Problem & Trigger.
-   - Precise ASCII wireframe.
-   - 3-step nominal user flow (*Happy Path*: Trigger, Interaction, Validation).
-   - Numbered functional invariants (`INV-1`, `INV-2`...).
-   - Strict Out-of-Scope boundaries.
-4. Update the feature roadmap in the parent initiative's `README.md`:
-   - Link to the newly framed feature: `[`planned/[feature-slug].md`](./planned/[feature-slug].md)`.
-   - Update its state indicator (e.g., `*(Framed ✅ — Ready for `/spec`)*`).
+### 3. Persist Through the CLI
+1. Write the **body** (sections 1-5 following `templates/FEATURE_TEMPLATE.md`) to a scratch file, e.g. `.specs/.draft-[feature-slug].md`.
+   * **Do not author `## 6. Implementation Spec(s)`** — it is generated from the specs linked to this feature.
+   * Do not write the header/metadata block (`# Feature:`, `> **Parent Initiative:**`, `> **Status:**`) — the renderer generates it from the model.
+2. Commit it to the model, linking the parent initiative in the same call:
+   ```bash
+   spec upsert feature --slug [feature-slug] --title "[Feature Name]" \
+        --initiative [initiative-slug] --state planned --from .specs/.draft-[feature-slug].md
+   ```
+3. Delete the scratch file.
+4. If the relation was not set at creation time, register it explicitly:
+   ```bash
+   spec link [feature-slug] --initiative [initiative-slug]
+   ```
+   The parent initiative's `## 4. Feature Roadmap` is regenerated automatically.
 
 ### 4. Next Step
 Propose generating the corresponding technical engineering spec via `/spec [domain] [topic]`.
-
----
-
-## Deterministic Mechanics (Rule 7)
-
-Register the feature in its parent initiative via the CLI so remote backends stay
-synchronized:
-
-```bash
-spec link [feature-slug] --initiative [initiative-slug]
-```
-
-If the CLI is unavailable, fall back to editing the initiative `README.md` roadmap
-manually and explicitly warn the user that remote backends were not updated.

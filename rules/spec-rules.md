@@ -45,18 +45,25 @@ These rules apply universally to all agents operating within the **Spec Framewor
 
 ---
 
-## 7. Deterministic Mechanics via CLI Rule
-* **Single source of movement:** All lifecycle movements (activating, archiving, relocating artifacts between `planned/`, `active/` and `archive/`, updating `Status:` headers, wiring parent↔child references) MUST go through the `spec` CLI rather than ad-hoc file moves:
-  - `spec move <ref> --to <planned|active|archived>` — transition an artifact.
-  - `spec link <spec-ref> --feature <ref>` — register a spec in its parent feature.
-  - `spec sync [<ref>] [--create]` — reconcile local artifacts with remote backends.
-* **Why:** the CLI applies each movement to *every enabled backend*. A raw `mv`
-  would silently desynchronize remote mirrors (e.g. Linear issues).
-* **Local-first source of truth:** The local filesystem is always the canonical
-  source of truth. Remote backends (Linear, GitHub, …) are **mirrors**; never
-  author the sole copy of an artifact remotely.
-* **Backend resolution:** Backends are declared in `.specs/config.json` and
-  resolved through the adapter port documented in `extensions/README.md`. New
-  backends are plugins and MUST respect `--dry-run` idempotency.
-* **Read-only inspection:** `spec status`, `spec list` and `spec validate`
-  (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.
+## 7. Model-First & Single-Writer Rule
+* **Canonical model:** The single source of truth is `.specs/model/` — one JSON metadata file plus one markdown body file per artifact:
+  - `vision.json` / `vision.md`
+  - `specs/<state>/XXX-slug.{json,md}`
+  - `initiatives/<state>/<slug>/<slug>.{json,md}` (initiative) and `…/<feature-state>/<feature>.{json,md}`
+* **Everything else is generated:** markdown documents under `.specs/` and remote issues (Linear, …) are **projections**. Never hand-edit a projection or a remote issue as a primary copy — edit the model and re-project.
+* **Single writer (CLI):** all model mutations go through the `spec` CLI. Never write model files by hand, and never `mv` projections:
+  - `spec upsert <kind> --slug <slug> --from <file>` — author/update an artifact.
+  - `spec link <ref> --feature|--initiative <parent>` — set graph relations.
+  - `spec move <ref> --to <state>` — lifecycle transition (model + mirrors).
+  - `spec done <ref> --cascade` — mark delivered, archive, propagate upwards.
+  - `spec render [--check]` — regenerate projections (`--check` is the CI drift guard).
+  - `spec import` — one-shot migration of legacy markdown into the model.
+* **Generated sections:** the following sections are derived from the graph and must never be authored inside a body — the renderer appends them:
+  - initiative `## 4. Feature Roadmap`
+  - feature `## 6. Implementation Spec(s)`
+  - vision `## 5. Strategic Initiatives Roadmap`
+  The header/metadata block (title, `Status:`, `Parent Initiative:`, spec `## Metadata`) is likewise generated from the model.
+* **Derived completion:** an artifact is complete when its children are all complete (leaf artifact ⇒ its `progress.done` flag). `spec done --cascade` archives every unfinished parent whose children are complete — this is the only sanctioned way to propagate completion upwards.
+* **Local-first source of truth:** `.specs/model/` is canonical and versioned; remote backends are **mirrors**. Never author the sole copy of an artifact remotely.
+* **Backend resolution:** mirrors are declared in `.specs/config.json` and resolved through the adapter port documented in `extensions/README.md`. Extensions MUST respect `--dry-run` and be idempotent.
+* **Read-only inspection:** `spec status`, `spec list`, `spec model` and `spec validate` (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.
