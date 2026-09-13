@@ -1,6 +1,6 @@
 # Domaine : Workspace Management (workspace-management) — Modèles de Données
 
-> **Mission :** Modèle canonique sans état, stocké en fichiers : quatre kinds d'artefacts (métadonnée JSON + corps markdown) reliés par `relations` et indexés dans `index.json` v3 — aucun datastore SQL, aucune table.
+> **Mission :** Modèle canonique sans état, stocké en fichiers : quatre kinds d'artefacts (métadonnée JSON + corps markdown) reliés par `relations` et indexés dans `index.json` v3 — projections markdown sous `.specs/generated/` (100 % générées, purgées et régénérées par le CLI) ; aucun datastore SQL, aucune table.
 > **Conventions Transversales :**
 > * Identifiants : `id` de spec = compteur séquentiel global 3–4 chiffres (jamais réutilisé) ; initiative et feature utilisent leur slug comme id.
 > * Audit : chaque métadonnée porte `createdAt` / `updatedAt` ; toute écriture passe par le CLI (zéro édition manuelle).
@@ -14,8 +14,14 @@
   * `initiative` : jalon stratégique — `initiatives/<slug>/<slug>.{json,md}`.
   * `feature` : tranche livrable — `initiatives/<init>/features/<slug>/<slug>.{json,md}`.
   * `spec` : delta d'ingénierie — `…/specs/<id>.{json,md}` (nom de fichier = id seul).
+* **Projections générées (`generated/` — 100 % CLI, jamais éditées à la main, purge des orphelins au `render`) :**
+  * `vision` → `generated/vision.md` (une seule vision — le double racine est tombé avec la feature `02`).
+  * `initiative` → `generated/initiatives/<slug>/README.md`.
+  * `feature` → `generated/initiatives/<initiative>/features/<slug>.md` (aplatie au niveau initiative).
+  * `spec` → `generated/initiatives/<initiative>/specs/<id>.md` (nom de fichier = id seul, listes triées par id).
 * **Frontières & Délégations :**
-  * `knowledge/` (`decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4).
+  * `knowledge/` (`decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
+  * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge + sweep hérité, suppressions listées et prévisualisables).
   * `config.json` : configuration du CLI, hors modèle.
 
 ---
@@ -75,4 +81,4 @@ erDiagram
 3. **Règles d'Immutabilité & Conservation :**
    * Slug et chemin dérivé immuables ; la relocation n'a lieu qu'au changement de `relations` (`spec link`) — jamais sur un changement d'état (INV-2).
    * `move` mute `state` + `updatedAt` in situ ; transitions légales : `planned → active|archived`, `active → planned|archived`, `archived → active`.
-   * *Interim :* `index.json` vit sous `.specs/canonical/` avec préfixes `meta`/`body` = `.specs/canonical/…` et `projection` = `.specs/…` (chemins v2) jusqu'à la feature `02-generated-namespace`.
+   * `index.json` vit sous `.specs/canonical/` : préfixes `meta`/`body` = `.specs/canonical/…`, `projection` = `.specs/generated/…` (reciblage de la feature `02` — format v3 inchangé, pas de version 4). Un `move` régénère la projection au même chemin — plus aucun renommage de projection (fin des répertoires d'état).

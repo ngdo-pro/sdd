@@ -48,8 +48,8 @@
 
 - [x] **`01-canonical-tree`**: Arborescence canonique v3  
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/01-canonical-tree.md`](./features/01-canonical-tree.md)  *(Archived ✅)*
-- [ ] **`02-generated-namespace`**: Namespace generated/  
-  ↳ *Feature:* [`generated/initiatives/layout-v3/features/02-generated-namespace.md`](./features/02-generated-namespace.md)  *(Framed ✅ — Ready for `/spec`)*
+- [x] **`02-generated-namespace`**: Namespace generated/  
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/02-generated-namespace.md`](./features/02-generated-namespace.md)  *(Archived ✅)*
 - [ ] **`03-sdd-migration`**: Racine .sdd et migration idempotente  
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/03-sdd-migration.md`](./features/03-sdd-migration.md)  *(Framed ✅ — Ready for `/spec`)*
 - [ ] **`04-static-site`**: Site statique optionnel  

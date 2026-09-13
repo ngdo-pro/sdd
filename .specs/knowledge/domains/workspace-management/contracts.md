@@ -9,10 +9,11 @@
 
 * **Contrats gérés dans ce domaine :**
   * Commandes de cycle de vie : `init`, `upsert`, `move`, `done`, `link`.
-  * Contrats de lecture / audit : `status`, `list`, `model`, `validate`, `render --check`.
-  * Format généré consommable : `.specs/canonical/index.json` (version 3).
+  * Contrats de lecture / audit : `status`, `list`, `model`, `validate`, `render` (`--check`, `--dry-run`).
+  * Contrat de rendu : `spec render` — projections markdown écrites exclusivement sous `.specs/generated/`, purge des orphelins + ancien arbre hérité listée, prévisualisable via `--dry-run`.
+  * Format généré consommable : `.specs/canonical/index.json` (version 3 — champ `projection` reciblé vers `.specs/generated/…`).
 * **Contrats délégués à d'autres domaines :**
-  * *Import de markdown legacy :* `spec import` — gelé, obsolète après cutover (feature `03`).
+  * *Import de markdown legacy :* `spec import` — gelé, obsolète après cutover (rework `spec migrate`, feature `03`).
   * *Mirroring distant :* `sync`, `backend` — le modèle canonique reste la seule vérité.
 
 ---
@@ -21,13 +22,13 @@
 
 | Commande | Contrat d'entrée | Effet garanti | Erreur (exit ≠ 0, rien d'écrit) |
 |---|---|---|---|
-| `spec init` | `--force` | Crée exactement `.specs/`, `canonical/`, `config.json` | — |
-| `spec upsert <kind>` | `--slug`, `--title`, `--from`, `--field` ; **spec exige `--feature`** | Écrit métadonnée + corps à l'emplacement canonique définitif ; dirs à la volée | `UsageError` sans `--feature` |
-| `spec move <ref>` | `--to planned\|active\|archived`, `--dry-run` | Mute `state` in situ ; régénère index + projections (zéro mv) | `TransitionError` si illégale |
+| `spec init` | `--force` | Crée exactement `.specs/`, `canonical/`, `config.json` — `generated/` n'est pas pré-alloué (il naît au premier rendu) | — |
+| `spec upsert <kind>` | `--slug`, `--title`, `--from`, `--field` ; **spec exige `--feature`** | Écrit métadonnée + corps à l'emplacement canonique définitif ; dirs à la volée ; projections régénérées sous `generated/` | `UsageError` sans `--feature` |
+| `spec move <ref>` | `--to planned\|active\|archived`, `--dry-run` | Mute `state` in situ ; régénère index + projections **au même chemin** (zéro mv, zéro rename) | `TransitionError` si illégale |
 | `spec done <ref>` | `--cascade`, `--undo`, `--dry-run` | `progress.done` + archivage ; cascade sur parents dont tous les enfants sont complets | `ResolutionError` |
 | `spec link <ref>` | `--feature <ref>` / `--initiative <slug>` | Écrit `relations` ; relocation des fichiers si le parent change (descendants inclus pour une feature) | `ResolutionError` |
-| `spec validate` | `--json` | Applique `portable-paths`, `invariant-traceability`, `canonical-layout`, `spec-id-uniqueness`, `graph-integrity` | exit 1 si finding(s) |
-| `spec render --check` | `--dry-run` | Détecte tout drift modèle → projections | exit 1 si drift |
+| `spec render` | `--check` (lecture seule), `--dry-run` | Écrit les projections attendues sous `.specs/generated/` (dirs à la volée) ; purge les orphelins de `generated/` + l'arbre hérité (`specs/`, `initiatives/`, `vision.md`) ; table des changements `created` / `updated` / `removed` ; `--dry-run` : mêmes calculs sans aucune écriture, sortie terminée par `(dry-run: nothing was written)` ; `projections.markdown: false` : aucune projection markdown écrite (index régénéré) | `--check` : exit 1 sur tout drift (`stale`, `missing`, `unexpected`) — couverture limitée à `generated/` |
+| `spec validate` | `--json` | Applique `portable-paths`, `invariant-traceability`, `canonical-layout`, `spec-id-uniqueness`, `graph-integrity`, `root-layout` (racine `.specs/` exhaustive : `config.json`, `canonical/`, `generated/`, `knowledge/` — dotfiles tolérés, `generated/` permise sans être exigée) | exit 1 si finding(s) |
 | `spec model` | `--write` | Inspecte le graphe / régénère `index.json` | — |
 
 ---
@@ -39,21 +40,22 @@
 ```json
 {
   "kind": "spec",
-  "id": "001",
-  "slug": "001-canonical-layout",
-  "title": "Layout canonique v3",
+  "id": "002",
+  "slug": "002-generated-projections",
+  "title": "Projections sous generated/",
   "state": "active",
-  "meta": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.json",
-  "body": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.md",
-  "projection": ".specs/specs/active/001-canonical-layout.md",
-  "relations": { "feature": "01-canonical-tree", "initiative": "layout-v3" },
-  "progress": { "done": false, "children": 1, "completedChildren": 0, "complete": false },
+  "meta": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.json",
+  "body": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.md",
+  "projection": ".specs/generated/initiatives/layout-v3/specs/002.md",
+  "relations": { "feature": "02-generated-namespace", "initiative": "layout-v3" },
+  "progress": { "done": false, "children": 0, "completedChildren": 0, "complete": false },
   "remote": {}
 }
 ```
 
-* Conventions de nommage : fichiers de spec = **`<id>.{json,md}`** (id seul, sans suffixe — cf. tech.md §6, ne pas « réparer ») ; grammaire de résolution `<ref>` : id nu (`042`), slug (`042-login`), chemin — inchangée.
-* *Interim :* le champ `projection` pointe les chemins v2 (dirs d'état) jusqu'à la feature `02-generated-namespace`.
+* **Format :** version 3 **inchangée** — seul le champ `projection` est reciblé vers `.specs/generated/…` (basculé par la feature `02` ; pas de version 4). Préfixes `meta`/`body` inchangés (`.specs/canonical/…`).
+* **Grammaire des chemins de projection (namespace `generated/`) :** vision → `generated/vision.md` (une seule vision) ; initiative → `generated/initiatives/<slug>/README.md` ; feature → `generated/initiatives/<initiative>/features/<slug>.md` (aplatie au niveau initiative) ; spec → `generated/initiatives/<initiative>/specs/<id>.md` (nom de fichier = id seul, listes triées par id). Aucun segment d'état : un `spec move` régénère la projection au même chemin.
+* **Conventions de nommage :** fichiers de spec = **`<id>.{json,md}`** (id seul, sans suffixe) ; grammaire de résolution `<ref>` : id nu (`042`), slug (`042-login`), chemin — inchangée.
 
 ---
 
@@ -64,4 +66,5 @@
 | Mauvais usage / option manquante (ex. `upsert spec` sans `--feature`) | `UsageError` | Aucun fichier écrit |
 | Ref inconnue ou ambiguë | `ResolutionError` | Aucun fichier écrit |
 | Transition d'état illégale ou état cible inconnu | `TransitionError` (liste les transitions permises) | Aucun fichier écrit |
-| Violation de règles (`validate`, `render --check`) | findings + exit 1 | Lecture seule, aucun effet de bord |
+| Drift de projections (`render --check`) : `stale`, `missing` ou `unexpected` sous `generated/` | findings listés, exit 1 | Lecture seule — `knowledge/` et les chemins hérités hors `generated/` ne sont jamais inspectés |
+| Violation de règles (`validate`) | findings + exit 1 (dont `root-layout` pour toute entrée parasite de la racine `.specs/`) | Lecture seule, aucun effet de bord |

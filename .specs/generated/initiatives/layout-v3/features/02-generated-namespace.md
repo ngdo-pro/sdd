@@ -1,7 +1,7 @@
 # Feature: Namespace generated/
 
 > **Parent Initiative:** `layout-v3`  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Author(s):** TBD  
 > **Last Updated:** 2026-09-13  
 
@@ -48,5 +48,5 @@ Livraison : 2ᵉ de l'initiative (après 01, avant 03).
 
 ## 6. Implementation Spec(s)
 
-- [ ] **`002-generated-projections`** : Projections sous generated/  
+- [x] **`002-generated-projections`** : Projections sous generated/  
   ↳ *Spec:* [`generated/initiatives/layout-v3/specs/002.md`](../specs/002.md)

@@ -4,7 +4,7 @@
   "id": "002",
   "slug": "002-generated-projections",
   "title": "Projections sous generated/",
-  "state": "active",
+  "state": "archived",
   "relations": {
     "feature": "02-generated-namespace",
     "initiative": "layout-v3"
@@ -16,7 +16,7 @@
   },
   "remote": {},
   "progress": {
-    "done": false
+    "done": true
   },
   "createdAt": "2026-09-13",
   "updatedAt": "2026-09-13"

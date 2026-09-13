@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T09:16:28.749Z",
+  "generatedAt": "2026-09-13T09:28:22.521Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -28,7 +28,7 @@
       "id": "02-generated-namespace",
       "slug": "02-generated-namespace",
       "title": "Namespace generated/",
-      "state": "planned",
+      "state": "archived",
       "meta": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.json",
       "body": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.md",
       "projection": ".specs/generated/initiatives/layout-v3/features/02-generated-namespace.md",
@@ -38,8 +38,8 @@
       "progress": {
         "done": false,
         "children": 1,
-        "completedChildren": 0,
-        "complete": false
+        "completedChildren": 1,
+        "complete": true
       },
       "remote": {}
     },
@@ -96,7 +96,7 @@
       "progress": {
         "done": false,
         "children": 4,
-        "completedChildren": 1,
+        "completedChildren": 2,
         "complete": false
       },
       "remote": {}
@@ -127,7 +127,7 @@
       "id": "002",
       "slug": "002-generated-projections",
       "title": "Projections sous generated/",
-      "state": "active",
+      "state": "archived",
       "meta": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.json",
       "body": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.md",
       "projection": ".specs/generated/initiatives/layout-v3/specs/002.md",
@@ -136,10 +136,10 @@
         "initiative": "layout-v3"
       },
       "progress": {
-        "done": false,
+        "done": true,
         "children": 0,
         "completedChildren": 0,
-        "complete": false
+        "complete": true
       },
       "remote": {}
     },
