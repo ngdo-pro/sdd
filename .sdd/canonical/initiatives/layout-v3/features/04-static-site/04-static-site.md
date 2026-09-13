@@ -31,3 +31,9 @@ Livraison : déferrable — dernière de l'initiative (les features 01–03 dél
 * Serveur local de prévisualisation.
 * Édition ou commentaire via le site (lecture seule).
 * L'écriture du `.gitignore` racine (posée par le script de setup).
+
+---
+
+## 6. Sortie du Scope (2026-09-13)
+
+**Cette feature est sortie du scope de l'initiative `layout-v3` sans livraison.** Le rendu de consommation HTML est reporté vers une future initiative dédiée (« consommation », à cadrer quand le besoin se présentera). Le périmètre layout v3 est soldé à 3/3 features livrées (specs 001-003, clean-room APPROVED). Un premier delivery de cette feature avait été livré puis intégralement reverté (commits `bafcefc` → `e2d29a7`) pour préserver la traçabilité code ↔ spec.

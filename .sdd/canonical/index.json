@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T11:23:08.962Z",
+  "generatedAt": "2026-09-13T13:56:42.654Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -68,7 +68,7 @@
       "id": "04-static-site",
       "slug": "04-static-site",
       "title": "Site statique optionnel",
-      "state": "planned",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.json",
       "body": ".sdd/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.md",
       "projection": ".sdd/generated/initiatives/layout-v3/features/04-static-site.md",
@@ -79,7 +79,7 @@
         "done": false,
         "children": 0,
         "completedChildren": 0,
-        "complete": false
+        "complete": true
       },
       "remote": {}
     },
@@ -88,7 +88,7 @@
       "id": "layout-v3",
       "slug": "layout-v3",
       "title": "SDD Layout v3",
-      "state": "planned",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/layout-v3/layout-v3.json",
       "body": ".sdd/canonical/initiatives/layout-v3/layout-v3.md",
       "projection": ".sdd/generated/initiatives/layout-v3/README.md",
@@ -96,8 +96,8 @@
       "progress": {
         "done": false,
         "children": 4,
-        "completedChildren": 3,
-        "complete": false
+        "completedChildren": 4,
+        "complete": true
       },
       "remote": {}
     },

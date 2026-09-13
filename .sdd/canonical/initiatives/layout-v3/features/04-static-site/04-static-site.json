@@ -4,7 +4,7 @@
   "id": "04-static-site",
   "slug": "04-static-site",
   "title": "Site statique optionnel",
-  "state": "planned",
+  "state": "archived",
   "relations": {
     "initiative": "layout-v3"
   },

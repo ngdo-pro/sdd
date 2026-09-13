@@ -3,7 +3,7 @@
 > **Type:** Architecture / Tech  
 > **Initiative Slug:** `layout-v3`  
 > **Owner:** TBD  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Started:** 2026-09-13  
 
 ---
@@ -52,5 +52,5 @@
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/02-generated-namespace.md`](./features/02-generated-namespace.md)  *(Archived ✅)*
 - [x] **`03-sdd-migration`**: Racine .sdd et migration idempotente  
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/03-sdd-migration.md`](./features/03-sdd-migration.md)  *(Archived ✅)*
-- [ ] **`04-static-site`**: Site statique optionnel  
-  ↳ *Feature:* [`generated/initiatives/layout-v3/features/04-static-site.md`](./features/04-static-site.md)  *(Framed ✅ — Ready for `/spec`)*
+- [x] **`04-static-site`**: Site statique optionnel  
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/04-static-site.md`](./features/04-static-site.md)  *(Archived ✅)*
