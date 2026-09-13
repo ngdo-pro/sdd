@@ -1,9 +1,9 @@
 {
-  "version": 2,
+  "version": 3,
   "kind": "feature",
-  "id": "04-static-site",
-  "slug": "04-static-site",
-  "title": "Site statique optionnel",
+  "id": "02-generated-namespace",
+  "slug": "02-generated-namespace",
+  "title": "Namespace generated/",
   "state": "planned",
   "relations": {
     "initiative": "layout-v3"

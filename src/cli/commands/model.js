@@ -5,7 +5,7 @@ import { heading, info, printJson, success, table } from '../render.js';
 
 /**
  * `spec model [--json] [--write]` — inspects the artifact graph.
- * `--write` regenerates `.specs/model/index.json`.
+ * `--write` regenerates `.specs/canonical/index.json`.
  */
 export async function model({ cwd, flags }) {
   const artifacts = await loadModel(cwd);
@@ -13,7 +13,7 @@ export async function model({ cwd, flags }) {
 
   if (flags.write) {
     await writeIndex(cwd, artifacts);
-    if (!flags.json) success('Wrote .specs/model/index.json');
+    if (!flags.json) success('Wrote .specs/canonical/index.json');
   }
 
   if (flags.json) {
@@ -23,7 +23,7 @@ export async function model({ cwd, flags }) {
 
   const graph = buildGraph(artifacts);
   heading(`Model: ${artifacts.length} artifact(s)`);
-  info(`index: .specs/model/index.json${flags.write ? '' : ' (use --write to regenerate)'}`);
+  info(`index: .specs/canonical/index.json${flags.write ? '' : ' (use --write to regenerate)'}`);
 
   const rows = artifacts
     .slice()

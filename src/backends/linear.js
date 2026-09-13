@@ -86,7 +86,7 @@ export default function createLinearBackend({ config, backendConfig }) {
   }
 
   function buildDescription(artifact) {
-    const modelPath = artifact.model?.meta ? `.specs/model/${artifact.model.meta}` : '—';
+    const modelPath = artifact.model?.meta ? `.specs/canonical/${artifact.model.meta}` : '—';
     const projection = artifact.projection ? `.specs/${artifact.projection}` : '—';
     return [
       '_Synced by Spec Framework — do not edit structural fields manually._',

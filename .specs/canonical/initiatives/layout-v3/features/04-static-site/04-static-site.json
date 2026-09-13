@@ -1,9 +1,9 @@
 {
-  "version": 2,
+  "version": 3,
   "kind": "feature",
-  "id": "03-sdd-migration",
-  "slug": "03-sdd-migration",
-  "title": "Racine .sdd et migration idempotente",
+  "id": "04-static-site",
+  "slug": "04-static-site",
+  "title": "Site statique optionnel",
   "state": "planned",
   "relations": {
     "initiative": "layout-v3"

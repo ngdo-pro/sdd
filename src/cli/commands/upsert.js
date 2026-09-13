@@ -29,8 +29,31 @@ function parseFieldFlags(entries = []) {
 }
 
 /**
+ * Resolves the parent feature of a spec and derives `relations.initiative`
+ * from it. The canonical path is not derivable without a fully linked parent,
+ * so any failure aborts before a single byte is written.
+ */
+function requireParentFeature(artifacts, featureRef) {
+  if (!featureRef) {
+    throw new UsageError('spec requires --feature <ref> (its canonical path derives from the parent feature).');
+  }
+  let parent;
+  try {
+    parent = findByRef(artifacts, featureRef, { kind: 'feature' });
+  } catch (error) {
+    throw new UsageError(`No feature found for "${featureRef}" — nothing was written. (${error.message})`);
+  }
+  if (!parent.relations?.initiative) {
+    throw new UsageError(`Feature "${parent.slug}" has no parent initiative; run \`spec link ${parent.slug} --initiative <slug>\` first.`);
+  }
+  return parent;
+}
+
+/**
  * `spec upsert <kind> --slug <slug> [--from <file|->] …`
- * Creates or updates an artifact in the canonical model, then re-projects.
+ * Creates or updates an artifact at its definitive canonical location, then
+ * re-projects. Specs must be attached to their parent feature (`--feature`);
+ * `relations.initiative` is always derived from it.
  */
 export async function upsert({ cwd, positionals, flags }) {
   const kind = positionals[0] ?? flags.kind;
@@ -49,6 +72,8 @@ export async function upsert({ cwd, positionals, flags }) {
     existing = null;
   }
 
+  const parent = kind === 'spec' ? requireParentFeature(artifacts, flags.feature) : null;
+
   const sourceBody = await readSource(flags.from);
   const fields = parseFieldFlags(flags.field);
   const state = flags.state ? normalizeState(flags.state) : undefined;
@@ -60,18 +85,20 @@ export async function upsert({ cwd, positionals, flags }) {
     ...base,
     title: flags.title ?? base.title,
     state: kind === 'vision' ? null : (state ?? base.state ?? 'planned'),
-    relations: {
-      ...base.relations,
-      ...(flags.feature ? { feature: flags.feature } : {}),
-      ...(flags.initiative ? { initiative: flags.initiative } : {}),
-    },
+    relations: kind === 'spec'
+      ? { feature: parent.slug, initiative: parent.relations.initiative }
+      : {
+        ...base.relations,
+        ...(flags.feature ? { feature: flags.feature } : {}),
+        ...(flags.initiative ? { initiative: flags.initiative } : {}),
+      },
     fields: { ...base.fields, ...fields },
     progress: { ...base.progress, ...(flags.done ? { done: true } : {}) },
     body: sourceBody ?? base.body ?? '',
     updatedAt: new Date().toISOString().slice(0, 10),
   };
 
-  const persisted = await persistArtifact(cwd, artifacts, updated, { previous: existing?.model });
+  const persisted = await persistArtifact(cwd, updated, { previous: existing?.model });
   await refresh(cwd, [...artifacts.filter((entry) => entry.slug !== persisted.slug || entry.kind !== persisted.kind), persisted]);
 
   if (flags.json) {

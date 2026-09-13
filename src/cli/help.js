@@ -10,15 +10,16 @@ export const VERSION = pkg.version;
 export const HELP = `
   spec — Spec Framework CLI (${VERSION})
 
-  Model-first pipeline: canonical artifacts live in .specs/model/ (JSON
-  metadata + markdown body). Every other output — markdown docs, Linear
-  issues — is a generated projection, and the CLI is their only writer.
+  Model-first pipeline: canonical artifacts live in .specs/canonical/ (JSON
+  metadata + markdown body, stateless layout — lifecycle lives in metadata).
+  Every other output — markdown docs, Linear issues — is a generated
+  projection, and the CLI is their only writer.
 
   USAGE
     spec <command> [options]
 
   COMMANDS
-    init                 Bootstrap .specs/model/ + projections + config
+    init                 Bootstrap .specs/canonical/ + config (nothing else)
     import               Migrate existing .specs/**/*.md into the model
     upsert <kind>        Create/update an artifact (body via --from)
     move <ref>           Transition an artifact state (model + mirrors)

@@ -54,7 +54,7 @@ flowchart TD
 | **Macro Framing (Initiative)** | `agents/product-designer.md` | `skills/initiative/SKILL.md` | `.specs/model/initiatives/planned/[slug]/[slug].{json,md}` (+ generated `README.md`) |
 | **Micro Framing (Feature)** | `agents/product-designer.md` | `skills/feature/SKILL.md` | `.specs/model/initiatives/…/[feature-slug].{json,md}` |
 | **Critical Audit & Blind Spots** | `agents/product-challenger.md` | Vision & Scale Filters | Objections report & Consolidated invariants |
-| **Architectural Trade-offs** | `product-orchestrator` | `skills/new-pdr/SKILL.md` / `skills/new-adr/SKILL.md` | `.specs/decisions/product/` or `architecture/` |
+| **Architectural Trade-offs** | `product-orchestrator` | `skills/new-pdr/SKILL.md` / `skills/new-adr/SKILL.md` | `.specs/knowledge/decisions/product/` or `architecture/` |
 
 ---
 

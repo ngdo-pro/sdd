@@ -3,7 +3,7 @@ import { createBackends } from '../backends/registry.js';
 import { renderProjections } from '../render/projections.js';
 import { writeIndex } from '../model/index.js';
 import { buildGraph, cascadeCandidates } from '../model/graph.js';
-import { initiativeStateFor, loadModel, moveArtifact, saveArtifact } from '../model/store.js';
+import { loadModel, moveArtifact, saveArtifact } from '../model/store.js';
 import { projectionRelativePath } from '../model/layout.js';
 
 /** Loads config, the canonical model and the enabled mirror backends. */
@@ -14,22 +14,17 @@ export async function loadContext(cwd, { only } = {}) {
   return { config, artifacts, mirrors };
 }
 
-export function initiativeStateOf(artifacts, artifact) {
-  const slug = artifact.kind === 'initiative' ? artifact.slug : artifact.relations?.initiative;
-  return slug ? initiativeStateFor(artifacts, slug) : undefined;
-}
-
 /**
- * Persists an artifact into the model (relocating files if its state changed)
- * and returns the refreshed record.
+ * Persists an artifact into the canonical model (relocating files only when
+ * its `relations` changed) and returns the refreshed record. No lifecycle
+ * state is threaded: paths are stateless.
  */
-export async function persistArtifact(cwd, artifacts, artifact, { previous } = {}) {
-  const initiativeState = initiativeStateOf(artifacts, artifact);
-  const paths = await saveArtifact(cwd, artifact, artifact.body, { initiativeState, previous });
+export async function persistArtifact(cwd, artifact, { previous } = {}) {
+  const paths = await saveArtifact(cwd, artifact, artifact.body, { previous });
   return {
     ...artifact,
     model: { directory: paths.dir, meta: paths.meta, body: paths.body },
-    projection: projectionRelativePath(artifact, { initiativeState }),
+    projection: projectionRelativePath(artifact),
   };
 }
 
@@ -60,9 +55,7 @@ export async function runCascade(cwd, artifacts, { dryRun = false } = {}) {
     if (candidates.length === 0) break;
 
     for (const { artifact } of candidates) {
-      const moved = await moveArtifact(cwd, artifact, 'archived', {
-        initiativeState: initiativeStateOf(artifacts, artifact),
-      });
+      const moved = await moveArtifact(cwd, artifact, 'archived');
       const index = artifacts.findIndex((entry) => entry.slug === artifact.slug && entry.kind === artifact.kind);
       if (index !== -1) artifacts[index] = moved;
       archived.push({ slug: moved.slug, kind: moved.kind });

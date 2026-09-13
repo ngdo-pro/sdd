@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T07:58:41.063Z",
+  "generatedAt": "2026-09-13T08:30:29.807Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -9,8 +9,8 @@
       "slug": "01-canonical-tree",
       "title": "Arborescence canonique v3",
       "state": "planned",
-      "meta": ".specs/model/initiatives/planned/layout-v3/planned/01-canonical-tree.json",
-      "body": ".specs/model/initiatives/planned/layout-v3/planned/01-canonical-tree.md",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.md",
       "projection": ".specs/initiatives/planned/layout-v3/planned/01-canonical-tree.md",
       "relations": {
         "initiative": "layout-v3"
@@ -29,8 +29,8 @@
       "slug": "02-generated-namespace",
       "title": "Namespace generated/",
       "state": "planned",
-      "meta": ".specs/model/initiatives/planned/layout-v3/planned/02-generated-namespace.json",
-      "body": ".specs/model/initiatives/planned/layout-v3/planned/02-generated-namespace.md",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.md",
       "projection": ".specs/initiatives/planned/layout-v3/planned/02-generated-namespace.md",
       "relations": {
         "initiative": "layout-v3"
@@ -49,8 +49,8 @@
       "slug": "03-sdd-migration",
       "title": "Racine .sdd et migration idempotente",
       "state": "planned",
-      "meta": ".specs/model/initiatives/planned/layout-v3/planned/03-sdd-migration.json",
-      "body": ".specs/model/initiatives/planned/layout-v3/planned/03-sdd-migration.md",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.md",
       "projection": ".specs/initiatives/planned/layout-v3/planned/03-sdd-migration.md",
       "relations": {
         "initiative": "layout-v3"
@@ -69,8 +69,8 @@
       "slug": "04-static-site",
       "title": "Site statique optionnel",
       "state": "planned",
-      "meta": ".specs/model/initiatives/planned/layout-v3/planned/04-static-site.json",
-      "body": ".specs/model/initiatives/planned/layout-v3/planned/04-static-site.md",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.md",
       "projection": ".specs/initiatives/planned/layout-v3/planned/04-static-site.md",
       "relations": {
         "initiative": "layout-v3"
@@ -89,8 +89,8 @@
       "slug": "layout-v3",
       "title": "SDD Layout v3",
       "state": "planned",
-      "meta": ".specs/model/initiatives/planned/layout-v3/layout-v3.json",
-      "body": ".specs/model/initiatives/planned/layout-v3/layout-v3.md",
+      "meta": ".specs/canonical/initiatives/layout-v3/layout-v3.json",
+      "body": ".specs/canonical/initiatives/layout-v3/layout-v3.md",
       "projection": ".specs/initiatives/planned/layout-v3/README.md",
       "relations": {},
       "progress": {
@@ -106,12 +106,13 @@
       "id": "001",
       "slug": "001-canonical-layout",
       "title": "Layout canonique v3",
-      "state": "planned",
-      "meta": ".specs/model/specs/planned/001-canonical-layout.json",
-      "body": ".specs/model/specs/planned/001-canonical-layout.md",
-      "projection": ".specs/specs/planned/001-canonical-layout.md",
+      "state": "active",
+      "meta": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.json",
+      "body": ".specs/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.md",
+      "projection": ".specs/specs/active/001-canonical-layout.md",
       "relations": {
-        "feature": "01-canonical-tree"
+        "feature": "01-canonical-tree",
+        "initiative": "layout-v3"
       },
       "progress": {
         "done": false,
@@ -127,8 +128,8 @@
       "slug": "vision",
       "title": "SDD Framework",
       "state": null,
-      "meta": ".specs/model/vision.json",
-      "body": ".specs/model/vision.md",
+      "meta": ".specs/canonical/vision.json",
+      "body": ".specs/canonical/vision.md",
       "projection": ".specs/vision.md",
       "relations": {},
       "progress": {

@@ -1,45 +1,45 @@
 import { STATE_DIRS } from '../core/paths.js';
 
-/** Path of the state directory for a canonical state. */
+/** Path of the state directory for a canonical state (interim v2 projections). */
 export function stateDirOf(state) {
   return state ? STATE_DIRS[state] : null;
 }
 
-function requireInitiative(meta) {
-  const slug = meta.relations?.initiative;
-  if (!slug) {
-    throw new Error(`${meta.kind} "${meta.slug}" is missing relations.initiative (required to locate its files).`);
+function requireRelation(meta, relation) {
+  const value = meta.relations?.[relation];
+  if (!value) {
+    throw new Error(`${meta.kind} "${meta.slug}" is missing relations.${relation} (required to locate its files).`);
   }
-  return slug;
+  return value;
 }
 
 /**
- * Model-relative POSIX paths for an artifact's canonical files.
+ * Canonical model-relative POSIX paths for an artifact's files. The layout is
+ * stateless: paths derive exclusively from slugs/ids and `relations` — no
+ * lifecycle segment ever appears (INV-1).
  * @returns {{ dir: string, meta: string, body: string }}
  */
-export function modelRelativePaths(meta, { initiativeState } = {}) {
-  const dir = STATE_DIRS[meta.state];
-
+export function modelRelativePaths(meta) {
   switch (meta.kind) {
     case 'vision':
       return { dir: '', meta: 'vision.json', body: 'vision.md' };
-    case 'spec':
-      return {
-        dir: `specs/${dir}`,
-        meta: `specs/${dir}/${meta.slug}.json`,
-        body: `specs/${dir}/${meta.slug}.md`,
-      };
     case 'initiative':
       return {
-        dir: `initiatives/${dir}/${meta.slug}`,
-        meta: `initiatives/${dir}/${meta.slug}/${meta.slug}.json`,
-        body: `initiatives/${dir}/${meta.slug}/${meta.slug}.md`,
+        dir: `initiatives/${meta.slug}`,
+        meta: `initiatives/${meta.slug}/${meta.slug}.json`,
+        body: `initiatives/${meta.slug}/${meta.slug}.md`,
       };
     case 'feature': {
-      const initiativeSlug = requireInitiative(meta);
-      const initState = STATE_DIRS[initiativeState ?? 'planned'];
-      const base = `initiatives/${initState}/${initiativeSlug}/${dir}`;
+      const initiativeSlug = requireRelation(meta, 'initiative');
+      const base = `initiatives/${initiativeSlug}/features/${meta.slug}`;
       return { dir: base, meta: `${base}/${meta.slug}.json`, body: `${base}/${meta.slug}.md` };
+    }
+    case 'spec': {
+      const initiativeSlug = requireRelation(meta, 'initiative');
+      const featureSlug = requireRelation(meta, 'feature');
+      const base = `initiatives/${initiativeSlug}/features/${featureSlug}/specs`;
+      // File name is the bare id (INV-5): specs are nested, not state-bucketed.
+      return { dir: base, meta: `${base}/${meta.id}.json`, body: `${base}/${meta.id}.md` };
     }
     default:
       throw new Error(`Unknown artifact kind "${meta.kind}".`);
@@ -48,6 +48,9 @@ export function modelRelativePaths(meta, { initiativeState } = {}) {
 
 /**
  * Projection-relative POSIX path (the generated markdown humans read).
+ * UNCHANGED interim v2 convention (state-encoded) until feature 02 ships the
+ * `generated/` namespace. No caller threads `initiativeState` anymore: feature
+ * projections default to the `planned` initiative segment.
  * @returns {string}
  */
 export function projectionRelativePath(meta, { initiativeState } = {}) {
@@ -61,7 +64,7 @@ export function projectionRelativePath(meta, { initiativeState } = {}) {
     case 'initiative':
       return `initiatives/${dir}/${meta.slug}/README.md`;
     case 'feature': {
-      const initiativeSlug = requireInitiative(meta);
+      const initiativeSlug = requireRelation(meta, 'initiative');
       const initState = STATE_DIRS[initiativeState ?? 'planned'];
       return `initiatives/${initState}/${initiativeSlug}/${dir}/${meta.slug}.md`;
     }

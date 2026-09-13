@@ -1,12 +1,13 @@
 {
-  "version": 2,
+  "version": 3,
   "kind": "spec",
   "id": "001",
   "slug": "001-canonical-layout",
   "title": "Layout canonique v3",
-  "state": "planned",
+  "state": "active",
   "relations": {
-    "feature": "01-canonical-tree"
+    "feature": "01-canonical-tree",
+    "initiative": "layout-v3"
   },
   "fields": {
     "Domain": "`.specs/knowledge/domains/workspace-management/`",

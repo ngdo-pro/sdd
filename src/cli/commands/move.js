@@ -2,11 +2,11 @@ import { UsageError } from '../../core/errors.js';
 import { assertTransition, normalizeState } from '../../core/transitions.js';
 import { findByRef, moveArtifact } from '../../model/store.js';
 import { arrow, heading, info, line, printJson, success, warn } from '../render.js';
-import { initiativeStateOf, loadContext, persistArtifact, refresh, runCascade } from '../context.js';
+import { loadContext, persistArtifact, refresh, runCascade } from '../context.js';
 
 /**
- * `spec move <ref> --to <state>` — the core movement, applied to the canonical
- * model first and then mirrored onto every enabled remote backend.
+ * `spec move <ref> --to <state>` — a metadata-only lifecycle transition
+ * (zero files relocated), mirrored onto every enabled remote backend.
  */
 export async function move({ cwd, positionals, flags }) {
   const reference = positionals[0];
@@ -41,8 +41,8 @@ export async function move({ cwd, positionals, flags }) {
 
   if (!flags.dryRun) {
     moved = mustMove
-      ? await moveArtifact(cwd, next, toState, { initiativeState: initiativeStateOf(artifacts, artifact) })
-      : await persistArtifact(cwd, artifacts, next, { previous: artifact.model });
+      ? await moveArtifact(cwd, next, toState)
+      : await persistArtifact(cwd, next, { previous: artifact.model });
 
     const index = artifacts.findIndex((entry) => entry.slug === artifact.slug && entry.kind === artifact.kind);
     if (index !== -1) artifacts[index] = moved;

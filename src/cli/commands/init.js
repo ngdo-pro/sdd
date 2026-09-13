@@ -2,7 +2,7 @@ import { configPath, ensureDir, exists, standardLayout } from '../../core/paths.
 import { defaultConfig, writeConfig } from '../../core/config.js';
 import { info, success } from '../render.js';
 
-/** `spec init` — bootstraps `.specs/model/`, projections and the config. */
+/** `spec init` — bootstraps `.specs/canonical/` and the config. Creates nothing else. */
 export async function init({ cwd, flags }) {
   for (const dir of standardLayout(cwd)) {
     await ensureDir(dir);

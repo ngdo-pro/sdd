@@ -21,8 +21,8 @@ flowchart TD
     
     subgraph Arbitrages Structurants
         B & C & M & T --> DEC{"Décision structurante ?"}
-        DEC -->|Choix Produit / UX| PDR["/new-pdr<br>(decisions/product/)"]
-        DEC -->|Choix Technique / Stack| ADR["/new-adr<br>(decisions/architecture/)"]
+        DEC -->|Choix Produit / UX| PDR["/new-pdr<br>(knowledge/decisions/product/)"]
+        DEC -->|Choix Technique / Stack| ADR["/new-adr<br>(knowledge/decisions/architecture/)"]
         DEC -->|Standard| CLOSE["Clôture & Archivage"]
         PDR --> CLOSE
         ADR --> CLOSE
@@ -48,8 +48,8 @@ flowchart TD
 | `skills/sync-contracts/SKILL.md` | `.specs/knowledge/domains/[domain]/contracts.md` | `DOMAIN_CONTRACTS_TEMPLATE.md` (OpenAPI specs & validation schemas) |
 | `skills/sync-models/SKILL.md` | `.specs/knowledge/domains/[domain]/models.md` | `DOMAIN_MODELS_TEMPLATE.md` (Datastore schemas, ERD, Entities) |
 | `skills/sync-tech/SKILL.md` | `.specs/knowledge/domains/[domain]/tech.md` | `DOMAIN_TECH_TEMPLATE.md` (Stack, patterns, security invariants) |
-| `skills/new-pdr/SKILL.md` | `.specs/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
-| `skills/new-adr/SKILL.md` | `.specs/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
+| `skills/new-pdr/SKILL.md` | `.specs/knowledge/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
+| `skills/new-adr/SKILL.md` | `.specs/knowledge/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
 | `skills/sync-knowledge/SKILL.md` | Complete Knowledge Base & Archives | Master pipeline coordinator |
 
 ---

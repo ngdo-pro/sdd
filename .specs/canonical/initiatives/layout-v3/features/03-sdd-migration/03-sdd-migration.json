@@ -1,9 +1,9 @@
 {
-  "version": 2,
+  "version": 3,
   "kind": "feature",
-  "id": "02-generated-namespace",
-  "slug": "02-generated-namespace",
-  "title": "Namespace generated/",
+  "id": "03-sdd-migration",
+  "slug": "03-sdd-migration",
+  "title": "Racine .sdd et migration idempotente",
   "state": "planned",
   "relations": {
     "initiative": "layout-v3"

@@ -1,7 +1,7 @@
 import { STATE_DIRS, parseSpecSlug } from '../core/paths.js';
 
-/** Current canonical model metadata version. */
-export const META_VERSION = 2;
+/** Current canonical model metadata version (v3 = stateless canonical layout). */
+export const META_VERSION = 3;
 
 const DEFAULT_FIELDS = {
   initiative: { 'Initiative Slug': null, Owner: 'TBD' },
@@ -43,7 +43,7 @@ export function createMeta({
 
   const id = deriveId(kind, slug);
   if (kind === 'spec' && !id) {
-    throw new Error(`Spec slug "${slug}" must start with a 3-digit id (e.g. 042-login).`);
+    throw new Error(`Spec slug "${slug}" must start with a 3- or 4-digit id (e.g. 042-login).`);
   }
 
   return {

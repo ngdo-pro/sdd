@@ -128,18 +128,23 @@ test('importMarkdown reconstructs the model from markdown documents', async () =
 
     const results = await importMarkdown(root);
     assert.equal(results.filter((entry) => entry.status === 'imported').length, 3);
-    assert.equal(await fileExists(root, '.specs/model/specs/active/042-login.json'), true);
+    // v3: the frozen importer writes to the canonical store, spec file = id.
+    assert.equal(
+      await fileExists(root, '.specs/canonical/initiatives/demo/features/01-login/specs/042.json'),
+      true,
+    );
 
     const artifacts = await loadModel(root);
     const spec = findByRef(artifacts, '042');
     assert.equal(spec.title, 'Magic link login');
     assert.equal(spec.state, 'active');
     assert.equal(spec.relations.feature, '01-login');
+    assert.equal(spec.relations.initiative, 'demo');
     assert.equal(spec.fields['Change Type'], '`New Capability`');
 
     const feature = findByRef(artifacts, '01-login', { kind: 'feature' });
     assert.equal(feature.relations.initiative, 'demo');
-    assert.equal(feature.model.meta, 'initiatives/active/demo/planned/01-login.json');
+    assert.equal(feature.model.meta, 'initiatives/demo/features/01-login/01-login.json');
   } finally {
     await cleanup(root);
   }
@@ -148,16 +153,20 @@ test('importMarkdown reconstructs the model from markdown documents', async () =
 test('importMarkdown preserves existing model files unless forced', async () => {
   const root = await makeWorkspace();
   try {
-    await writeFiles(root, { '.specs/specs/active/042-login.md': SPEC_DOC });
+    await writeFiles(root, {
+      '.specs/initiatives/active/demo/README.md': INITIATIVE_DOC,
+      '.specs/initiatives/active/demo/planned/01-login.md': FEATURE_DOC,
+      '.specs/specs/active/042-login.md': SPEC_DOC,
+    });
 
     const first = await importMarkdown(root);
-    assert.equal(first[0].status, 'imported');
+    assert.equal(first.filter((entry) => entry.status === 'imported').length, 3);
 
     const second = await importMarkdown(root);
-    assert.equal(second[0].status, 'skipped');
+    assert.equal(second.every((entry) => entry.status === 'skipped'), true);
 
     const forced = await importMarkdown(root, { force: true });
-    assert.equal(forced[0].status, 'imported');
+    assert.equal(forced.filter((entry) => entry.status === 'imported').length, 3);
   } finally {
     await cleanup(root);
   }

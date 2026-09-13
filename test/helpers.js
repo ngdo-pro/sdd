@@ -36,12 +36,11 @@ export async function fileExists(root, relative) {
 }
 
 /**
- * Seeds canonical model artifacts from plain definitions.
- * Feature definitions resolve their initiative's state automatically.
+ * Seeds canonical model artifacts from plain definitions, written straight to
+ * their definitive canonical location (stateless layout — relations only).
  * @returns {Promise<Array>} the created metadata objects
  */
 export async function seedModel(root, definitions) {
-  const initiativeStates = new Map();
   const created = [];
 
   for (const definition of definitions) {
@@ -54,11 +53,7 @@ export async function seedModel(root, definitions) {
       fields: definition.fields,
       progress: definition.progress,
     });
-    const initiativeState = definition.kind === 'feature'
-      ? initiativeStates.get(definition.relations?.initiative)
-      : undefined;
-    await saveArtifact(root, meta, definition.body ?? '', { initiativeState });
-    if (definition.kind === 'initiative') initiativeStates.set(meta.slug, meta.state);
+    await saveArtifact(root, meta, definition.body ?? '');
     created.push(meta);
   }
 
@@ -69,7 +64,14 @@ export async function seedModel(root, definitions) {
 export const MODEL_FIXTURE = [
   { kind: 'initiative', slug: 'demo', title: 'Demo', state: 'active', body: '## 1. Intent\n\nDemo.\n' },
   { kind: 'feature', slug: '01-login', title: 'Login', state: 'active', relations: { initiative: 'demo' }, body: '## 1. Problem\n\nLogin.\n' },
-  { kind: 'spec', slug: '042-login', title: 'Magic link', state: 'active', relations: { feature: '01-login' }, body: '## 1. Intent\n\nMagic link.\n' },
+  {
+    kind: 'spec',
+    slug: '042-login',
+    title: 'Magic link',
+    state: 'active',
+    relations: { feature: '01-login', initiative: 'demo' },
+    body: '## 1. Intent\n\nMagic link.\n',
+  },
 ];
 
 /** Markdown projection fixture used by the legacy markdown scanners. */

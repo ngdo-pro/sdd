@@ -58,4 +58,4 @@ Livraison : 1ʳᵉ de l'initiative (avant 02 et 03).
 ## 6. Implementation Spec(s)
 
 - [ ] **`001-canonical-layout`** : Layout canonique v3  
-  ↳ *Spec:* [`specs/planned/001-canonical-layout.md`](../../../../specs/planned/001-canonical-layout.md)
+  ↳ *Spec:* [`specs/active/001-canonical-layout.md`](../../../../specs/active/001-canonical-layout.md)

@@ -3,12 +3,12 @@ import { canTransition } from '../../core/transitions.js';
 import { findByRef, moveArtifact } from '../../model/store.js';
 import { buildGraph } from '../../model/graph.js';
 import { arrow, heading, info, printJson, success } from '../render.js';
-import { initiativeStateOf, loadContext, persistArtifact, refresh, runCascade } from '../context.js';
+import { loadContext, persistArtifact, refresh, runCascade } from '../context.js';
 
 /**
- * `spec done <ref>` — marks an artifact delivered and archives it, then
- * optionally archives parents whose children are all complete (`--cascade`).
- * `--undo` reopens it.
+ * `spec done <ref>` — marks an artifact delivered and archives it (metadata
+ * only, no relocation), then optionally archives parents whose children are
+ * all complete (`--cascade`). `--undo` reopens it.
  */
 export async function done({ cwd, positionals, flags }) {
   const reference = positionals[0];
@@ -28,15 +28,13 @@ export async function done({ cwd, positionals, flags }) {
   const transitions = [];
 
   if (!flags.dryRun) {
-    persisted = await persistArtifact(cwd, artifacts, updated, { previous: artifact.model });
+    persisted = await persistArtifact(cwd, updated, { previous: artifact.model });
 
     // Completing archives the artifact; reopening brings it back to active.
     const desiredState = flags.undo ? 'active' : 'archived';
     if (persisted.state && persisted.state !== desiredState && canTransition(persisted.state, desiredState)) {
       const before = persisted.state;
-      persisted = await moveArtifact(cwd, persisted, desiredState, {
-        initiativeState: initiativeStateOf(artifacts, persisted),
-      });
+      persisted = await moveArtifact(cwd, persisted, desiredState);
       transitions.push(`${before} ${arrow()} ${desiredState}`);
     }
 

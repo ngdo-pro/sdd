@@ -94,7 +94,14 @@ test('cascadeCandidates includes parents that were never explicitly activated', 
     await seedModel(root, [
       { kind: 'initiative', slug: 'demo', title: 'Demo', state: 'planned' },
       { kind: 'feature', slug: '01-login', title: 'Login', state: 'planned', relations: { initiative: 'demo' } },
-      { kind: 'spec', slug: '042-login', title: 'Magic link', state: 'active', relations: { feature: '01-login' }, progress: { done: true } },
+      {
+        kind: 'spec',
+        slug: '042-login',
+        title: 'Magic link',
+        state: 'active',
+        relations: { feature: '01-login', initiative: 'demo' },
+        progress: { done: true },
+      },
     ]);
     const slugs = cascadeCandidates(buildGraph(await loadModel(root))).map((entry) => entry.artifact.slug).sort();
     assert.deepEqual(slugs, ['01-login', 'demo']);

@@ -25,8 +25,8 @@ export const DEFAULT_LINEAR_SETTINGS = {
 };
 
 /**
- * Baseline configuration. The canonical model (`.specs/model/`) is always the
- * source of truth; `backends` only lists optional remote mirrors.
+ * Baseline configuration. The canonical model (`.specs/canonical/`) is always
+ * the source of truth; `backends` only lists optional remote mirrors.
  */
 export function defaultConfig() {
   return {

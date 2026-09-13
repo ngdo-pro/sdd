@@ -54,7 +54,7 @@ export async function sync({ cwd, positionals, flags }) {
 
   if (!flags.dryRun) {
     for (const artifact of dirty) {
-      await persistArtifact(cwd, artifacts, artifact, { previous: artifact.model });
+      await persistArtifact(cwd, artifact, { previous: artifact.model });
     }
     await refresh(cwd, artifacts);
   }

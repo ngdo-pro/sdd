@@ -29,8 +29,8 @@ export async function status({ cwd, positionals, flags }) {
     info(`id        ${artifact.id}`);
     info(`state     ${artifact.state ?? 'n/a'}`);
     info(`complete  ${graph.isComplete(artifact) ? 'yes' : 'no'}${progress.children > 0 ? ` (${progress.completed}/${progress.children} children)` : ''}`);
-    info(`meta      .specs/model/${artifact.model.meta}`);
-    info(`body      .specs/model/${artifact.model.body}`);
+    info(`meta      .specs/canonical/${artifact.model.meta}`);
+    info(`body      .specs/canonical/${artifact.model.body}`);
     info(`projection .specs/${artifact.projection}`);
     for (const mirror of mirrorStates) {
       info(`${mirror.backend.padEnd(9)} ${mirror.ref}${mirror.enabled ? '' : ' (disabled)'}`);
@@ -55,7 +55,7 @@ export async function status({ cwd, positionals, flags }) {
   }
 
   heading('Spec Framework status');
-  info(`source of truth  ${config.sourceOfTruth} (.specs/model/)`);
+  info(`source of truth  ${config.sourceOfTruth} (.specs/canonical/)`);
   info(`projections      markdown ${config.projections?.markdown === false ? 'off' : 'on'}`);
   info(`mirrors          ${config.backends.length === 0 ? 'none' : config.backends.map((backend) => `${backend.id}${backend.enabled ? '' : ' (off)'}`).join(', ')}`);
   const linked = artifacts.filter((artifact) => Object.keys(artifact.remote ?? {}).length > 0);

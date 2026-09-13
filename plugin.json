@@ -7,7 +7,7 @@
     "command": "spec",
     "entry": "bin/spec.js"
   },
-  "model": ".specs/model",
+  "model": ".specs/canonical",
   "projections": ".specs",
   "extensions": "extensions"
 }

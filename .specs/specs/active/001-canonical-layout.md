@@ -5,6 +5,7 @@
 * **Change Type:** `Refactor`
 * **Complexity:** `Large`
 * **Feature:** `01-canonical-tree`
+* **Initiative:** `layout-v3`
 
 ---
 
@@ -222,23 +223,23 @@ Chaque invariant de la feature `01-canonical-tree` (INV-1…INV-7) est couvert p
 
 ## 7. Sequential Execution Plan
 
-- [ ] **Phase 1: Fondations & contrats de données**
-  - [ ] `src/core/paths.js` : `CANONICAL_DIRNAME`, `KNOWLEDGE_DIRNAME`, `canonicalRoot`, `knowledgeRoot`, `standardLayout` minimal, `parseSpecSlug` `\d{3,4}` (conserver `STATE_DIRS`/`STATE_BY_DIR` pour les projections interim).
-  - [ ] `src/model/schema.js` : `META_VERSION = 3`.
-  - [ ] Tests unitaires layout/parse dans `test/canonical-layout.test.js` (@unit U1–U5).
+- [x] **Phase 1: Fondations & contrats de données**
+  - [x] `src/core/paths.js` : `CANONICAL_DIRNAME`, `KNOWLEDGE_DIRNAME`, `canonicalRoot`, `knowledgeRoot`, `standardLayout` minimal, `parseSpecSlug` `\d{3,4}` (conserver `STATE_DIRS`/`STATE_BY_DIR` pour les projections interim).
+  - [x] `src/model/schema.js` : `META_VERSION = 3`.
+  - [x] Tests unitaires layout/parse dans `test/canonical-layout.test.js` (@unit U1–U5).
 
-- [ ] **Phase 2: Cœur logique & interfaces CLI**
-  - [ ] `src/model/layout.js` : `modelRelativePaths(meta)` sans état ; `projectionRelativePath` inchangé.
-  - [ ] `src/model/store.js` : `loadModel` walk canonical/, `saveArtifact` (relocation sur relations seul), `moveArtifact` sans relocation, suppression `initiativeStateFor`.
-  - [ ] `src/model/index.js` : index v3 dans `.specs/canonical/index.json` ; `src/cli/context.js` sans threading `initiativeState`.
-  - [ ] Commandes : `init` (minimal), `upsert` (spec exige `--feature`, dérive `initiative`), `move`/`done` (zéro mv), `link` (dérive + relocation descendants), `validate` (règles `canonical-layout`, `spec-id-uniqueness`), chaînes d'affichage (`status`, `model`, `backend`, `help`, `linear.js`, `config.js`).
-  - [ ] Tests composant (@component C1–C9) + adaptation `test/helpers.js`, `test/model-store.test.js`, `test/render.test.js`, `test/graph.test.js`, `test/config.test.js`.
+- [x] **Phase 2: Cœur logique & interfaces CLI**
+  - [x] `src/model/layout.js` : `modelRelativePaths(meta)` sans état ; `projectionRelativePath` inchangé.
+  - [x] `src/model/store.js` : `loadModel` walk canonical/, `saveArtifact` (relocation sur relations seul), `moveArtifact` sans relocation, suppression `initiativeStateFor`.
+  - [x] `src/model/index.js` : index v3 dans `.specs/canonical/index.json` ; `src/cli/context.js` sans threading `initiativeState`.
+  - [x] Commandes : `init` (minimal), `upsert` (spec exige `--feature`, dérive `initiative`), `move`/`done` (zéro mv), `link` (dérive + relocation descendants), `validate` (règles `canonical-layout`, `spec-id-uniqueness`), chaînes d'affichage (`status`, `model`, `backend`, `help`, `linear.js`, `config.js`).
+  - [x] Tests composant (@component C1–C9) + adaptation `test/helpers.js`, `test/model-store.test.js`, `test/render.test.js`, `test/graph.test.js`, `test/config.test.js`.
 
-- [ ] **Phase 3: Cutover one-shot, E2E & quality gates**
-  - [ ] Migration one-shot du workspace de ce repo : `model/**` → `canonical/**` (re-nesting features/specs, renommage `specs/<id>`), `decisions/**` → `knowledge/decisions/**`, suppression des répertoires d'état vides et de l'ancien `.specs/model/`, régénération index + projections.
-  - [ ] Repointer les skills/agents écrivains : `skills/new-adr/SKILL.md`, `skills/new-pdr/SKILL.md`, `skills/sync-knowledge/SKILL.md`, `agents/knowledge-orchestrator.md`, `agents/product-orchestrator.md` (chemins `knowledge/decisions/…`).
-  - [ ] Tests E2E (@integration I1–I4, @e2e E1–E2) dans `test/cli.test.js` + `test/canonical-layout.test.js`.
-  - [ ] Exécuter 100 % des gates : `npm test` (93+ tests verts), `spec validate` exit 0, `spec render --check` sans drift.
+- [x] **Phase 3: Cutover one-shot, E2E & quality gates**
+  - [x] Migration one-shot du workspace de ce repo : `model/**` → `canonical/**` (re-nesting features/specs, renommage `specs/<id>`), `decisions/**` → `knowledge/decisions/**`, suppression des répertoires d'état vides et de l'ancien `.specs/model/`, régénération index + projections.
+  - [x] Repointer les skills/agents écrivains : `skills/new-adr/SKILL.md`, `skills/new-pdr/SKILL.md`, `skills/sync-knowledge/SKILL.md`, `agents/knowledge-orchestrator.md`, `agents/product-orchestrator.md` (chemins `knowledge/decisions/…`).
+  - [x] Tests E2E (@integration I1–I4, @e2e E1–E2) dans `test/cli.test.js` + `test/canonical-layout.test.js`.
+  - [x] Exécuter 100 % des gates : `npm test` (93+ tests verts), `spec validate` exit 0, `spec render --check` sans drift.
 
 ---
 

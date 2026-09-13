@@ -1,13 +1,6 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import {
-  STATE_DIRS,
-  STATE_BY_DIR,
-  STATES,
-  ensureDir,
-  exists,
-  modelRoot,
-} from '../core/paths.js';
+import { canonicalRoot, ensureDir } from '../core/paths.js';
 import { modelRelativePaths, projectionRelativePath } from './layout.js';
 import { normalizeMeta, serializeMeta } from './schema.js';
 import { ResolutionError } from '../core/errors.js';
@@ -32,71 +25,71 @@ async function readBodyOrEmpty(file) {
   }
 }
 
-async function hydrate(root, metaRel, bodyRel, { initiativeState } = {}) {
+function safeProjection(meta) {
+  try {
+    return projectionRelativePath(meta);
+  } catch {
+    // Relations are incomplete (un-derivable path): `validate` reports it as a
+    // graph-integrity finding; the artifact still loads for inspection.
+    return null;
+  }
+}
+
+/** Hydrates a model record from its on-disk metadata/body pair. */
+async function hydrate(root, metaRel, bodyRel) {
   const meta = normalizeMeta(await readJson(path.join(root, metaRel)), null);
   const body = await readBodyOrEmpty(path.join(root, bodyRel));
   return {
     ...meta,
     body,
-    model: { directory: modelRelPathsFor(meta, initiativeState).dir, meta: metaRel, body: bodyRel },
-    projection: projectionRelativePath(meta, { initiativeState }),
+    model: { directory: path.posix.dirname(metaRel) === '.' ? '' : path.posix.dirname(metaRel), meta: metaRel, body: bodyRel },
+    projection: safeProjection(meta),
   };
 }
 
-function modelRelPathsFor(meta, initiativeState) {
-  return modelRelativePaths(meta, { initiativeState });
-}
-
 /**
- * Loads every canonical artifact from `.specs/model/`.
+ * Loads every canonical artifact from `.specs/canonical/` (recursive walk of
+ * `initiatives/**`, vision at the root). The layout is stateless: whatever a
+ * file's directory says, its identity comes from the metadata itself.
  * @returns {Promise<Array>} hydrated artifacts (metadata + body + paths)
  */
 export async function loadModel(cwd) {
-  const root = modelRoot(cwd);
+  const root = canonicalRoot(cwd);
   const artifacts = [];
 
   if (await exists(path.join(root, 'vision.json'))) {
     artifacts.push(await hydrate(root, 'vision.json', 'vision.md'));
   }
 
-  for (const state of STATES) {
-    const stateDir = STATE_DIRS[state];
-    const specsDir = path.join(root, 'specs', stateDir);
-    for (const entry of await readdirSafe(specsDir)) {
+  const initiativesDir = path.join(root, 'initiatives');
+  async function walk(directory) {
+    for (const entry of await readdirSafe(directory)) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+        continue;
+      }
       if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-      const base = entry.name.replace(/\.json$/, '');
-      artifacts.push(await hydrate(root, `specs/${stateDir}/${base}.json`, `specs/${stateDir}/${base}.md`));
-    }
-
-    const initiativesDir = path.join(root, 'initiatives', stateDir);
-    for (const initiativeEntry of await readdirSafe(initiativesDir)) {
-      if (!initiativeEntry.isDirectory()) continue;
-      const slug = initiativeEntry.name;
-      const initiativeMeta = `initiatives/${stateDir}/${slug}/${slug}.json`;
-      if (await exists(path.join(root, initiativeMeta))) {
-        artifacts.push(await hydrate(root, initiativeMeta, `initiatives/${stateDir}/${slug}/${slug}.md`));
-      }
-
-      for (const featureEntry of await readdirSafe(path.join(initiativesDir, slug))) {
-        const featureState = STATE_BY_DIR[featureEntry.name];
-        if (!featureEntry.isDirectory() || !featureState) continue;
-        const featureDir = path.join(initiativesDir, slug, featureEntry.name);
-        for (const file of await readdirSafe(featureDir)) {
-          if (!file.isFile() || !file.name.endsWith('.json')) continue;
-          const base = file.name.replace(/\.json$/, '');
-          const metaRel = `initiatives/${stateDir}/${slug}/${featureEntry.name}/${base}.json`;
-          artifacts.push(await hydrate(root, metaRel, metaRel.replace(/\.json$/, '.md'), { initiativeState: state }));
-        }
-      }
+      const metaRel = toPosixRelative(root, absolute);
+      artifacts.push(await hydrate(root, metaRel, metaRel.replace(/\.json$/, '.md')));
     }
   }
+  await walk(initiativesDir);
 
   return artifacts;
 }
 
-/** Returns the lifecycle state of an initiative by slug, or undefined. */
-export function initiativeStateFor(artifacts, slug) {
-  return artifacts.find((artifact) => artifact.kind === 'initiative' && artifact.slug === slug)?.state;
+function toPosixRelative(root, absolute) {
+  return absolute.slice(root.length + 1).split(path.sep).join('/');
+}
+
+async function exists(target) {
+  try {
+    await fsp.access(target);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Resolves a reference (id, slug, or model/projection path) into an artifact. */
@@ -134,7 +127,7 @@ async function removeFile(root, relative) {
   await pruneEmptyDirs(root, path.dirname(absolute));
 }
 
-/** Removes empty directories upwards, never touching the model root. */
+/** Removes empty directories upwards, never touching the canonical root. */
 async function pruneEmptyDirs(root, directory) {
   let current = directory;
   while (current.startsWith(root) && current !== root) {
@@ -145,13 +138,14 @@ async function pruneEmptyDirs(root, directory) {
 }
 
 /**
- * Persists metadata + body at the canonical location, relocating the files when
- * the artifact's state changed (`previous` carries the old model paths).
+ * Persists metadata + body at the canonical location, creating directories on
+ * demand (INV-3). Files are relocated only when `relations` changed — never
+ * for a lifecycle transition (`previous` carries the old model paths).
  * @returns {Promise<{ dir: string, meta: string, body: string }>}
  */
-export async function saveArtifact(cwd, meta, body, { initiativeState, previous } = {}) {
-  const root = modelRoot(cwd);
-  const paths = modelRelativePaths(meta, { initiativeState });
+export async function saveArtifact(cwd, meta, body, { previous } = {}) {
+  const root = canonicalRoot(cwd);
+  const paths = modelRelativePaths(meta);
   const metaAbsolute = path.join(root, paths.meta);
   const bodyAbsolute = path.join(root, paths.body);
 
@@ -169,28 +163,28 @@ export async function saveArtifact(cwd, meta, body, { initiativeState, previous 
   return paths;
 }
 
-/** Moves an artifact to another lifecycle state and returns the updated record. */
-export async function moveArtifact(cwd, artifact, toState, { initiativeState } = {}) {
+/**
+ * Moves an artifact to another lifecycle state: mutates `state` + `updatedAt`
+ * in place (INV-2) — zero files are relocated, index and projections are
+ * regenerated by the callers.
+ */
+export async function moveArtifact(cwd, artifact, toState) {
   const nextMeta = {
     ...artifact,
     state: toState,
     updatedAt: new Date().toISOString().slice(0, 10),
   };
-  const paths = await saveArtifact(cwd, nextMeta, artifact.body, {
-    initiativeState,
-    previous: artifact.model,
-  });
+  const paths = await saveArtifact(cwd, nextMeta, artifact.body, { previous: artifact.model });
   return {
     ...nextMeta,
     model: { directory: paths.dir, meta: paths.meta, body: paths.body },
-    projection: projectionRelativePath(nextMeta, { initiativeState }),
+    projection: projectionRelativePath(nextMeta),
   };
 }
 
 /** Deletes an artifact from the canonical store. */
 export async function deleteArtifact(cwd, artifact) {
-  const root = modelRoot(cwd);
+  const root = canonicalRoot(cwd);
   await removeFile(root, artifact.model?.meta);
   await removeFile(root, artifact.model?.body);
 }
-

@@ -73,7 +73,9 @@ test('initiative documents render the feature roadmap', async () => {
     const rendered = renderDocument(graph.bySlug.get('demo'), graph);
     assert.match(rendered, /## 4\. Feature Roadmap/);
     assert.match(rendered, /- \[ \] \*\*`01-login`\*\*: Login/);
-    assert.match(rendered, /\(\.\/active\/01-login\.md\)/);
+    // Interim v2 projections: features default to the `planned` initiative
+    // segment (no initiative-state threading since the v3 layout).
+    assert.match(rendered, /\(\.\.\/\.\.\/planned\/demo\/active\/01-login\.md\)/);
   } finally {
     await cleanup(root);
   }

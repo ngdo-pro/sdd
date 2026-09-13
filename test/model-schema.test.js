@@ -11,6 +11,7 @@ test('slugify produces portable slugs', () => {
 
 test('deriveId extracts the numeric id for specs only', () => {
   assert.equal(deriveId('spec', '042-login'), '042');
+  assert.equal(deriveId('spec', '1042-beyond'), '1042');
   assert.equal(deriveId('feature', '01-login'), '01-login');
   assert.equal(deriveId('spec', 'login'), null);
 });
@@ -21,11 +22,13 @@ test('createMeta applies sane defaults and preserves the spec id', () => {
   assert.equal(meta.state, 'planned');
   assert.deepEqual(meta.remote, {});
   assert.equal(meta.progress.done, false);
-  assert.equal(meta.version, 2);
+  assert.equal(meta.version, 3);
 });
 
-test('createMeta rejects spec slugs without a 3-digit prefix', () => {
+test('createMeta rejects spec slugs without a 3- or 4-digit prefix', () => {
   assert.throws(() => createMeta({ kind: 'spec', slug: 'login' }));
+  assert.throws(() => createMeta({ kind: 'spec', slug: '42-short' }));
+  assert.throws(() => createMeta({ kind: 'spec', slug: '10442-long' }));
 });
 
 test('createMeta keeps vision stateless', () => {
@@ -44,29 +47,39 @@ test('serializeMeta drops runtime-only keys', () => {
 test('normalizeMeta tolerates partial input', () => {
   const meta = normalizeMeta({ kind: 'spec', slug: '042-a', title: 'A' }, '042-a');
   assert.equal(meta.state, 'planned');
-  assert.equal(meta.version, 2);
+  assert.equal(meta.version, 3);
 });
 
-test('layout maps every kind to model and projection paths', () => {
-  const spec = createMeta({ kind: 'spec', slug: '042-login', state: 'active' });
+test('layout maps every kind to stateless canonical paths and interim v2 projections', () => {
+  const spec = createMeta({
+    kind: 'spec',
+    slug: '042-login',
+    state: 'active',
+    relations: { feature: '01-login', initiative: 'demo' },
+  });
   assert.deepEqual(modelRelativePaths(spec), {
-    dir: 'specs/active',
-    meta: 'specs/active/042-login.json',
-    body: 'specs/active/042-login.md',
+    dir: 'initiatives/demo/features/01-login/specs',
+    meta: 'initiatives/demo/features/01-login/specs/042.json',
+    body: 'initiatives/demo/features/01-login/specs/042.md',
   });
   assert.equal(projectionRelativePath(spec), 'specs/active/042-login.md');
 
   const initiative = createMeta({ kind: 'initiative', slug: 'demo', state: 'planned' });
+  assert.equal(modelRelativePaths(initiative).meta, 'initiatives/demo/demo.json');
   assert.equal(projectionRelativePath(initiative), 'initiatives/planned/demo/README.md');
 
   const feature = createMeta({ kind: 'feature', slug: '01-login', state: 'archived', relations: { initiative: 'demo' } });
-  assert.equal(modelRelativePaths(feature, { initiativeState: 'active' }).meta, 'initiatives/active/demo/archive/01-login.json');
-  assert.equal(projectionRelativePath(feature, { initiativeState: 'active' }), 'initiatives/active/demo/archive/01-login.md');
+  assert.equal(modelRelativePaths(feature).meta, 'initiatives/demo/features/01-login/01-login.json');
+  assert.equal(projectionRelativePath(feature), 'initiatives/planned/demo/archive/01-login.md');
 });
 
-test('layout requires an initiative relation for features', () => {
+test('layout requires relations for features and specs', () => {
   const feature = createMeta({ kind: 'feature', slug: '01-login' });
+  assert.throws(() => modelRelativePaths(feature));
   assert.throws(() => projectionRelativePath(feature));
+
+  const spec = createMeta({ kind: 'spec', slug: '042-a', relations: { feature: '01-b' } });
+  assert.throws(() => modelRelativePaths(spec));
 });
 
 test('stateDirOf maps canonical states to directory names', () => {

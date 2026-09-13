@@ -16,7 +16,7 @@ export async function backend({ cwd, positionals, flags }) {
       printJson(config.backends);
       return;
     }
-    heading('Mirror backends (canonical source of truth: .specs/model/)');
+    heading('Mirror backends (canonical source of truth: .specs/canonical/)');
     if (config.backends.length === 0) {
       info('No backend registered.');
       return;

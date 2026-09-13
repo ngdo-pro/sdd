@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   findByRef,
-  initiativeStateFor,
   loadModel,
   moveArtifact,
   saveArtifact,
@@ -22,23 +21,14 @@ test('loadModel reads metadata and bodies from the canonical store', async () =>
     assert.equal(spec.id, '042');
     assert.equal(spec.state, 'active');
     assert.equal(spec.body.trim(), '## 1. Intent\n\nMagic link.');
-    assert.equal(spec.model.meta, 'specs/active/042-login.json');
+    // Stateless layout: no lifecycle segment, file name = bare id.
+    assert.equal(spec.model.meta, 'initiatives/demo/features/01-login/specs/042.json');
+    assert.equal(spec.model.directory, 'initiatives/demo/features/01-login/specs');
+    // Interim v2 projection convention is unchanged.
     assert.equal(spec.projection, 'specs/active/042-login.md');
 
     const feature = artifacts.find((artifact) => artifact.kind === 'feature');
-    assert.equal(feature.model.meta, 'initiatives/active/demo/active/01-login.json');
-  } finally {
-    await cleanup(root);
-  }
-});
-
-test('initiativeStateFor resolves the parent state used to locate features', async () => {
-  const root = await makeWorkspace();
-  try {
-    await seedModel(root, MODEL_FIXTURE);
-    const artifacts = await loadModel(root);
-    assert.equal(initiativeStateFor(artifacts, 'demo'), 'active');
-    assert.equal(initiativeStateFor(artifacts, 'nope'), undefined);
+    assert.equal(feature.model.meta, 'initiatives/demo/features/01-login/01-login.json');
   } finally {
     await cleanup(root);
   }
@@ -53,7 +43,10 @@ test('findByRef resolves ids, slugs, suffixes and paths', async () => {
     assert.equal(findByRef(artifacts, '042').slug, '042-login');
     assert.equal(findByRef(artifacts, '042-login').slug, '042-login');
     assert.equal(findByRef(artifacts, 'login', { kind: 'feature' }).slug, '01-login');
-    assert.equal(findByRef(artifacts, '.specs/model/specs/active/042-login.json').slug, '042-login');
+    assert.equal(
+      findByRef(artifacts, '.specs/canonical/initiatives/demo/features/01-login/specs/042.json').slug,
+      '042-login',
+    );
     assert.equal(findByRef(artifacts, 'demo', { kind: 'initiative' }).slug, 'demo');
   } finally {
     await cleanup(root);
@@ -73,33 +66,68 @@ test('findByRef reports unknown and ambiguous references', async () => {
   }
 });
 
-test('moveArtifact relocates metadata and body across state directories', async () => {
+test('moveArtifact mutates the state in place without relocating a file', async () => {
   const root = await makeWorkspace();
   try {
     await seedModel(root, MODEL_FIXTURE);
     const artifacts = await loadModel(root);
     const spec = findByRef(artifacts, '042');
+    const before = `${spec.model.meta}\n${spec.model.body}`;
 
     const moved = await moveArtifact(root, spec, 'archived');
     assert.equal(moved.state, 'archived');
-    assert.equal(moved.model.meta, 'specs/archive/042-login.json');
+    assert.equal(`${moved.model.meta}\n${moved.model.body}`, before);
 
     const reloaded = await loadModel(root);
     assert.equal(reloaded.filter((artifact) => artifact.kind === 'spec').length, 1);
     assert.equal(findByRef(reloaded, '042').state, 'archived');
+    assert.equal(findByRef(reloaded, '042').model.meta, 'initiatives/demo/features/01-login/specs/042.json');
   } finally {
     await cleanup(root);
   }
 });
 
-test('saveArtifact prunes the previous location when the path changes', async () => {
+test('saveArtifact relocates files only when relations change', async () => {
   const root = await makeWorkspace();
   try {
-    const meta = createMeta({ kind: 'spec', slug: '042-login', state: 'planned' });
+    const meta = createMeta({
+      kind: 'spec',
+      slug: '042-login',
+      state: 'planned',
+      relations: { feature: '01-a', initiative: 'i1' },
+    });
+    const first = await saveArtifact(root, meta, 'body');
+    assert.equal(first.meta, 'initiatives/i1/features/01-a/specs/042.json');
+
+    const second = await saveArtifact(
+      root,
+      { ...meta, relations: { feature: '01-b', initiative: 'i2' } },
+      'body',
+      { previous: first },
+    );
+    assert.equal(second.meta, 'initiatives/i2/features/01-b/specs/042.json');
+
+    const artifacts = await loadModel(root);
+    assert.equal(artifacts.length, 1);
+    assert.equal(artifacts[0].model.meta, 'initiatives/i2/features/01-b/specs/042.json');
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('saveArtifact keeps files in place across lifecycle states', async () => {
+  const root = await makeWorkspace();
+  try {
+    const meta = createMeta({
+      kind: 'spec',
+      slug: '042-login',
+      state: 'planned',
+      relations: { feature: '01-a', initiative: 'i1' },
+    });
     const first = await saveArtifact(root, meta, 'body');
     const second = await saveArtifact(root, { ...meta, state: 'active' }, 'body', { previous: first });
 
-    assert.equal(second.meta, 'specs/active/042-login.json');
+    assert.equal(second.meta, first.meta);
     const artifacts = await loadModel(root);
     assert.equal(artifacts.length, 1);
   } finally {
@@ -107,11 +135,11 @@ test('saveArtifact prunes the previous location when the path changes', async ()
   }
 });
 
-test('loadModel ignores an empty or missing model directory', async () => {
+test('loadModel ignores an empty or missing canonical directory', async () => {
   const root = await makeWorkspace();
   try {
     assert.deepEqual(await loadModel(root), []);
-    await writeFiles(root, { '.specs/model/README.md': 'nothing here\n' });
+    await writeFiles(root, { '.specs/canonical/README.md': 'nothing here\n' });
     assert.deepEqual(await loadModel(root), []);
   } finally {
     await cleanup(root);

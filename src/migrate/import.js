@@ -1,10 +1,17 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import { listFeatures, listInitiatives, listSpecs } from '../core/artifact.js';
-import { SPECS_DIRNAME, exists, modelRoot } from '../core/paths.js';
+import { SPECS_DIRNAME, canonicalRoot, exists } from '../core/paths.js';
+import { modelRelativePaths } from '../model/layout.js';
 import { createMeta } from '../model/schema.js';
 import { saveArtifact } from '../model/store.js';
 import { extractSpecSlugs, parseArtifactDocument } from './parse.js';
+
+// FROZEN v2 scanner, kept on minimal life-support until the feature 03
+// rework (`spec migrate`): it still READS the legacy v2 markdown layout, but
+// writes through the stateless v3 store, so specs need a fully derived
+// `relations` (feature + initiative) and the skip-check resolves canonical
+// paths. Do not grow this file.
 
 async function readFileSafe(file) {
   try {
@@ -28,18 +35,18 @@ export async function importMarkdown(cwd, { force = false } = {}) {
   const initiatives = await listInitiatives(cwd);
   const features = await listFeatures(cwd);
 
-  const initiativeStates = new Map(initiatives.map((initiative) => [initiative.slug, initiative.state]));
-
-  // Features reference their specs in the generated `## 6.` section — reuse that
-  // to rebuild the spec → feature relation the model needs.
+  // Features reference their specs in the generated `## 6.` section — reuse
+  // that to rebuild the spec → feature → initiative relations the model needs.
   const specToFeature = new Map();
   for (const feature of features) {
     const content = await readFileSafe(path.join(cwd, feature.path));
     for (const slug of extractSpecSlugs(content)) specToFeature.set(slug, feature.slug);
   }
+  const featureToInitiative = new Map(
+    features.map((feature) => [feature.slug, feature.meta?.initiative ?? null]),
+  );
 
   const results = [];
-  const root = modelRoot(cwd);
 
   async function persist({ kind, slug, title, state, relations }, parsed) {
     const candidate = createMeta({
@@ -50,19 +57,20 @@ export async function importMarkdown(cwd, { force = false } = {}) {
       relations: pruneNulls(relations ?? {}),
       fields: parsed.fields,
     });
-    const relativeMeta = kind === 'vision'
-      ? 'vision.json'
-      : kind === 'spec'
-        ? `specs/${state === 'archived' ? 'archive' : state === 'active' ? 'active' : 'planned'}/${slug}.json`
-        : null;
 
-    if (!force && relativeMeta && (await exists(path.join(root, relativeMeta)))) {
+    let relativeMeta = null;
+    try {
+      relativeMeta = modelRelativePaths(candidate).meta;
+    } catch {
+      relativeMeta = null; // un-derivable (incomplete relations): always import
+    }
+
+    if (!force && relativeMeta && (await exists(path.join(canonicalRoot(cwd), relativeMeta)))) {
       results.push({ slug, kind, status: 'skipped' });
       return;
     }
 
-    const initiativeState = kind === 'feature' ? initiativeStates.get(relations?.initiative) : undefined;
-    await saveArtifact(cwd, candidate, parsed.body, { initiativeState });
+    await saveArtifact(cwd, candidate, parsed.body);
     results.push({ slug, kind, status: 'imported' });
   }
 
@@ -96,13 +104,14 @@ export async function importMarkdown(cwd, { force = false } = {}) {
 
   for (const spec of specs) {
     const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, spec.path)), 'spec');
+    const featureSlug = specToFeature.get(spec.slug) ?? null;
     await persist(
       {
         kind: 'spec',
         slug: spec.slug,
         title: spec.slug,
         state: spec.state,
-        relations: { feature: specToFeature.get(spec.slug) ?? null },
+        relations: { feature: featureSlug, initiative: featureToInitiative.get(featureSlug) ?? null },
       },
       parsed,
     );

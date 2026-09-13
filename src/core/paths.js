@@ -4,7 +4,17 @@ import fsp from 'node:fs/promises';
 /** Root directory holding every specification artifact (projections). */
 export const SPECS_DIRNAME = '.specs';
 
-/** Canonical model store (JSON metadata + markdown bodies). */
+/** Canonical model store: stateless tree, lifecycle lives in metadata only. */
+export const CANONICAL_DIRNAME = 'canonical';
+
+/** Authored knowledge: decisions ({architecture,product}) and domains. */
+export const KNOWLEDGE_DIRNAME = 'knowledge';
+
+/**
+ * Legacy v2 model store (`model/` with state-encoded paths).
+ * Only referenced by the frozen import scanner (`src/migrate/**`); scheduled
+ * for removal with the feature 03 rework. Never read by the v3 model.
+ */
 export const MODEL_DIRNAME = 'model';
 
 /** Generated manifest mapping artifact ids to their model files. */
@@ -36,51 +46,44 @@ export const KINDS = ['vision', 'initiative', 'feature', 'spec'];
 /** Kinds that own a lifecycle state (and therefore support transitions). */
 export const STATEFUL_KINDS = ['initiative', 'feature', 'spec'];
 
-const SPEC_SLUG_RE = /^(\d{3})-(.+)$/;
+const SPEC_SLUG_RE = /^(\d{3,4})-(.+)$/;
 
 export function specsRoot(cwd) {
   return path.join(cwd, SPECS_DIRNAME);
 }
 
+export function canonicalRoot(cwd) {
+  return path.join(cwd, SPECS_DIRNAME, CANONICAL_DIRNAME);
+}
+
+export function knowledgeRoot(cwd) {
+  return path.join(cwd, SPECS_DIRNAME, KNOWLEDGE_DIRNAME);
+}
+
+/** Legacy v2 model root — kept for the frozen `src/migrate/**` scanner only. */
 export function modelRoot(cwd) {
   return path.join(cwd, SPECS_DIRNAME, MODEL_DIRNAME);
 }
 
 export function indexFilePath(cwd) {
-  return path.join(modelRoot(cwd), INDEX_FILENAME);
+  return path.join(canonicalRoot(cwd), INDEX_FILENAME);
 }
 
 export function configPath(cwd) {
   return path.join(specsRoot(cwd), CONFIG_FILENAME);
 }
 
-/** Directory layout bootstrapped by `spec init`. */
+/**
+ * Directory layout bootstrapped by `spec init`: nothing but the root and the
+ * canonical store. Every other directory is created on demand (INV-3).
+ */
 export function standardLayout(cwd) {
-  const specs = specsRoot(cwd);
-  const model = modelRoot(cwd);
-  return [
-    specs,
-    model,
-    path.join(model, 'specs', 'planned'),
-    path.join(model, 'specs', 'active'),
-    path.join(model, 'specs', 'archive'),
-    path.join(model, 'initiatives', 'planned'),
-    path.join(model, 'initiatives', 'active'),
-    path.join(model, 'initiatives', 'archive'),
-    path.join(specs, 'specs', 'planned'),
-    path.join(specs, 'specs', 'active'),
-    path.join(specs, 'specs', 'archive'),
-    path.join(specs, 'initiatives', 'planned'),
-    path.join(specs, 'initiatives', 'active'),
-    path.join(specs, 'initiatives', 'archive'),
-    path.join(specs, 'decisions', 'product'),
-    path.join(specs, 'decisions', 'architecture'),
-    path.join(specs, 'knowledge', 'domains'),
-  ];
+  return [specsRoot(cwd), canonicalRoot(cwd)];
 }
 
 /**
- * Splits a spec slug into its 3-digit id and remainder.
+ * Splits a spec slug into its id (3 or 4 digits — ids beyond 999 are allowed)
+ * and remainder.
  * @returns {{ id: string, suffix: string } | null}
  */
 export function parseSpecSlug(slug) {

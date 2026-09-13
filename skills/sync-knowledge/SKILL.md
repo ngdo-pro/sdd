@@ -29,8 +29,8 @@ All updated knowledge documents must be maintained in the user's language.
 
 3. **Identify & Formalize Structural Decisions (PDR / ADR):**
    * Scan the delivered delta for non-trivial trade-offs:
-     - **Product / Ergonomic Decision (PDR):** → `.specs/decisions/product/PDR-XXX-[slug].md` via `templates/PDR_TEMPLATE.md`.
-     - **Technical / Architectural Decision (ADR):** → `.specs/decisions/architecture/ADR-XXX-[slug].md` via `templates/ADR_TEMPLATE.md`.
+     - **Product / Ergonomic Decision (PDR):** → `.specs/knowledge/decisions/product/PDR-XXX-[slug].md` via `templates/PDR_TEMPLATE.md`.
+     - **Technical / Architectural Decision (ADR):** → `.specs/knowledge/decisions/architecture/ADR-XXX-[slug].md` via `templates/ADR_TEMPLATE.md`.
    * Ask the user if any ambiguity remains.
 
 4. **Complete & Cascate Through the CLI:**
