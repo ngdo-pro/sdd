@@ -12,7 +12,7 @@ Use this skill to update the functional living documentation of a domain (`/sync
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/specs/active/[id]*.md` and identify its target domain (`[domain]`).
+   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
    * Read the existing domain behavior document `.specs/knowledge/domains/[domain]/behavior.md`.
    * If `behavior.md` does not exist, initialize it from `templates/DOMAIN_BEHAVIOR_TEMPLATE.md`.
 

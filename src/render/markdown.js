@@ -136,7 +136,9 @@ function renderVisionRoadmap(artifact, graph) {
       continue;
     }
     for (const entry of entries) {
-      const target = linkTarget('vision.md', entry.projection);
+      // Links derive from projection paths — no hardcoded `vision.md` (the
+      // generated/ paths are self-describing).
+      const target = linkTarget(artifact.projection, entry.projection);
       lines.push(`- ${checkbox(graph.isComplete(entry))} **\`${entry.slug}\`**: ${entry.title}  `);
       lines.push(`  ↳ *Initiative:* [\`${entry.projection}\`](${target})`);
     }

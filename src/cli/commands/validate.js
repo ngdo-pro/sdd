@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import { canonicalRoot } from '../../core/paths.js';
+import { ALLOWED_ROOT_ENTRIES, canonicalRoot, specsRoot } from '../../core/paths.js';
 import { findPortablePathViolations, uncoveredInvariants } from '../../core/rules.js';
 import { modelRelativePaths } from '../../model/layout.js';
 import { heading, info, printJson, success, warn } from '../render.js';
@@ -39,6 +39,23 @@ async function findLifecycleDirs(cwd) {
 
 function toRepoRelative(cwd, absolute) {
   return `.specs/canonical/${absolute.slice(canonicalRoot(cwd).length + 1).split(path.sep).join('/')}`;
+}
+
+/**
+ * INV-1: the `.specs/` root is exhaustive — only `config.json`, `canonical/`,
+ * `generated/` and `knowledge/` may live there. Dotfiles (`.DS_Store`,
+ * `.gitkeep`) are tolerated; `generated/` and `knowledge/` are permitted
+ * without being required.
+ */
+async function findRootLayoutViolations(cwd) {
+  const violations = [];
+  for (const entry of await readdirSafe(specsRoot(cwd))) {
+    if (entry.name.startsWith('.')) continue;
+    if (ALLOWED_ROOT_ENTRIES.includes(entry.name)) continue;
+    const label = entry.isDirectory() ? `${entry.name}/` : entry.name;
+    violations.push(`unexpected root entry "${label}" (allowed: ${ALLOWED_ROOT_ENTRIES.join(', ')})`);
+  }
+  return violations;
 }
 
 /**
@@ -103,6 +120,10 @@ export async function validate({ cwd, flags }) {
 
   for (const violation of await findLifecycleDirs(cwd)) {
     findings.push({ artifact: 'canonical tree', rule: 'canonical-layout', detail: violation });
+  }
+
+  for (const violation of await findRootLayoutViolations(cwd)) {
+    findings.push({ artifact: '.specs/', rule: 'root-layout', detail: violation });
   }
 
   // INV-5: with the nested tree, spec id uniqueness is no longer guaranteed by

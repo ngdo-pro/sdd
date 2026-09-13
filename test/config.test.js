@@ -76,6 +76,28 @@ test('loadConfig falls back to defaults and reads an on-disk config', async () =
   }
 });
 
+test('[U5][INV-4] loadConfig tolerates a missing projections.markdown', async () => {
+  const root = await makeWorkspace();
+  try {
+    // A config.json without the `projections` key at all → markdown enabled.
+    await writeFiles(root, { '.specs/config.json': JSON.stringify({ version: 2, sourceOfTruth: 'model' }) });
+    assert.equal((await loadConfig(root)).projections.markdown, true);
+
+    // An explicit false is honoured.
+    await writeFiles(root, {
+      '.specs/config.json': JSON.stringify({ version: 2, projections: { markdown: false } }),
+    });
+    assert.equal((await loadConfig(root)).projections.markdown, false);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('normalizeConfig defaults projections.markdown to true when absent', () => {
+  assert.equal(normalizeConfig({}).projections.markdown, true);
+  assert.equal(normalizeConfig({ projections: { markdown: false } }).projections.markdown, false);
+});
+
 test('loadConfig rejects malformed JSON', async () => {
   const root = await makeWorkspace();
   try {

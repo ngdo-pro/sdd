@@ -7,7 +7,7 @@ description: Implement code changes, execute migrations, and pass quality gates 
 
 Use this skill when the user requests implementing an approved engineering specification (`/build-spec [id]`).
 
-> **Model-first (Rule 7):** the spec lives in `.specs/model/specs/<state>/XXX-slug.{json,md}`. The projection `.specs/specs/<state>/XXX-slug.md` and the parent feature's `## 6.` section are generated — never edit them.
+> **Model-first (Rule 7):** the spec lives in `.specs/model/specs/<state>/XXX-slug.{json,md}`. The projection `.specs/generated/initiatives/[initiative]/specs/[id].md` and the parent feature's `## 6.` section are generated — never edit them.
 
 ---
 

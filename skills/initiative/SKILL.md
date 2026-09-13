@@ -15,7 +15,7 @@ An **Initiative** represents a major strategic theme (quarterly or multi-feature
 
 It must not exceed **1 to 2 pages**, and aims primarily to align the overarching intent, establish the target system mental model/ASCII diagram, and lay out the **Feature Roadmap** (which is generated).
 
-> **Model-first (Rule 7):** the initiative lives in `.specs/model/initiatives/<state>/<slug>/<slug>.json` + `<slug>.md`. Markdown under `.specs/initiatives/` is generated.
+> **Model-first (Rule 7):** the initiative lives in `.specs/model/initiatives/<state>/<slug>/<slug>.json` + `<slug>.md`. Markdown under `.specs/generated/initiatives/` is generated.
 
 ---
 

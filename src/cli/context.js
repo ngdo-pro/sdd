@@ -28,10 +28,19 @@ export async function persistArtifact(cwd, artifact, { previous } = {}) {
   };
 }
 
-/** Regenerates every markdown projection and the index manifest. */
-export async function refresh(cwd, artifacts, { check = false } = {}) {
-  const projections = await renderProjections(cwd, artifacts, { check });
-  if (!check) await writeIndex(cwd, artifacts);
+/**
+ * Regenerates every markdown projection and the index manifest. The config
+ * drives markdown projections: `projections.markdown === false` writes no
+ * projection at all (the index is still regenerated, except in check mode).
+ * A `null` config falls back to `loadConfig` — the CLI tolerates a config.json
+ * without the `projections` key (defaults to enabled, INV-4).
+ */
+export async function refresh(cwd, artifacts, { check = false, dryRun = false, config = null } = {}) {
+  const active = config ?? await loadConfig(cwd);
+  const projections = active.projections?.markdown === false
+    ? []
+    : await renderProjections(cwd, artifacts, { check, dryRun });
+  if (!check && !dryRun) await writeIndex(cwd, artifacts);
   return projections;
 }
 

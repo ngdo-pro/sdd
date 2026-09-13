@@ -269,9 +269,9 @@ test('[C1][INV-3] loadModel discovers the nested canonical tree', async () => {
     assert.equal(byKind.initiative.model.meta, 'initiatives/demo/demo.json');
     assert.equal(byKind.feature.model.meta, 'initiatives/demo/features/01-login/01-login.json');
     assert.equal(byKind.spec.model.meta, 'initiatives/demo/features/01-login/specs/042.json');
-    // Interim v2 projection convention still holds.
-    assert.equal(byKind.spec.projection, 'specs/active/042-login.md');
-    assert.equal(byKind.feature.projection, 'initiatives/planned/demo/active/01-login.md');
+    // Projections live under the flattened generated/ namespace.
+    assert.equal(byKind.spec.projection, 'generated/initiatives/demo/specs/042.md');
+    assert.equal(byKind.feature.projection, 'generated/initiatives/demo/features/01-login.md');
   } finally {
     await cleanup(root);
   }
@@ -300,9 +300,9 @@ test('[C2][INV-2] spec move plans the mutation without relocating files', async 
 
     const index = JSON.parse(await fsp.readFile(path.join(canonicalRoot(root), 'index.json'), 'utf8'));
     assert.equal(index.artifacts.find((entry) => entry.slug === '042-login').state, 'active');
-    // Projections keep the interim v2 convention (state-encoded path segment).
-    assert.equal(await fileExists(root, '.specs/specs/active/042-login.md'), true);
-    assert.equal(await fileExists(root, '.specs/specs/planned/042-login.md'), false);
+    // Projections keep the same generated/ path — states never rename files.
+    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
+    assert.equal(await fileExists(root, '.specs/specs'), false);
   } finally {
     await cleanup(root);
   }
@@ -463,14 +463,14 @@ test('[C8][INV-1][INV-6] re-parenting a feature relocates it and every descendan
   }
 });
 
-test('[C9][INV-1] interim v2 projections and the canonical index coexist', async () => {
+test('[C9][INV-1] generated/ projections and the canonical index coexist', async () => {
   const root = await makeWorkspace();
   try {
     await seedModel(root, MODEL_FIXTURE);
     const artifacts = await loadModel(root);
     await silently(() => render(ctx(root)));
 
-    assert.equal(await fileExists(root, '.specs/initiatives/active/demo/README.md'), true);
+    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/README.md'), true);
     assert.equal(await fileExists(root, '.specs/canonical/index.json'), true);
 
     const drift = await exitCodeOf(() => render(ctx(root, [], { check: true })));

@@ -9,9 +9,9 @@
 ## Tooling & Required Skills
 
 * **Required Inputs:** 
-  - Drafted Feature document (`.specs/initiatives/active/[initiative]/[feature].md`)
-  - Parent Initiative document (`.specs/initiatives/active/[initiative]/README.md`)
-* **Authoritative Reference:** `.specs/vision.md` (pillars and guardrails)
+  - Drafted Feature document (`.specs/generated/initiatives/[initiative]/features/[feature].md`)
+  - Parent Initiative document (`.specs/generated/initiatives/[initiative]/README.md`)
+* **Authoritative Reference:** `.specs/generated/vision.md` (pillars and guardrails)
 * **Questioning Method:** Targeted, argumentation-backed questions with explicit choice options.
 * **Decision Formalization:** Propose structuring major trade-offs via `skills/new-pdr/SKILL.md` (Product) or `skills/new-adr/SKILL.md` (Architecture/Tech).
 
@@ -22,7 +22,7 @@
 When reviewing a drafted Feature, the Challenger systematically applies five critical evaluation filters:
 
 ### Filter 1: Vision & Guardrails Alignment (*Vision Check*)
-* Does this feature uphold the tenets of `.specs/vision.md` (e.g., *DSL as single source of truth, semantic rigor*)?
+* Does this feature uphold the tenets of `.specs/generated/vision.md` (e.g., *DSL as single source of truth, semantic rigor*)?
 * Does it risk drifting into any forbidden anti-patterns (e.g., structureless throwaway whiteboard, disguised project management tool)?
 
 ### Filter 2: Interaction Edge Cases & Empty States (*Edge Cases*)

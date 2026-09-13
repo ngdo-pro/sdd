@@ -4,7 +4,7 @@
 >
 > **Language Rule:** All generated specification content must be written in the user's language.
 >
-> **Model-First (Rule 7):** the spec is stored in `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). `.specs/specs/**` is a **generated projection** — never hand-edited.
+> **Model-First (Rule 7):** the spec is stored in `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). `.specs/generated/**` is a **generated projection** — never hand-edited.
 
 ---
 

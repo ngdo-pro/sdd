@@ -1,12 +1,20 @@
+import { loadConfig } from '../../core/config.js';
 import { loadModel } from '../../model/store.js';
+import { writeIndex } from '../../model/index.js';
 import { refresh } from '../context.js';
 import { heading, info, printJson, success, table, warn } from '../render.js';
 
+const DRIFT_STATUSES = new Set(['stale', 'missing', 'unexpected']);
+
 /**
- * `spec render [--check]` — regenerates every markdown projection (and the
- * index) from the canonical model. With `--check`, reports drift and exits 1.
+ * `spec render [--check] [--dry-run]` — regenerates every markdown projection
+ * under `.specs/generated/` (and the index) from the canonical model.
+ * `--check` is the read-only CI guard over `generated/` (exit 1 on stale,
+ * missing or unexpected). `--dry-run` previews the full write plan — the v2
+ * cutover sweep included — without writing anything.
  */
 export async function render({ cwd, flags }) {
+  const config = await loadConfig(cwd);
   const artifacts = await loadModel(cwd);
 
   if (artifacts.length === 0) {
@@ -14,8 +22,30 @@ export async function render({ cwd, flags }) {
     return;
   }
 
-  const results = await refresh(cwd, artifacts, { check: flags.check });
-  const drifted = results.filter((entry) => entry.status === 'stale' || entry.status === 'missing');
+  if (config.projections?.markdown === false) {
+    // No markdown projection is written or verified; the index is still
+    // regenerated (except in check/dry-run modes, which write nothing).
+    if (!flags.check && !flags.dryRun) await writeIndex(cwd, artifacts);
+    if (flags.json) {
+      printJson({ check: Boolean(flags.check), results: [] });
+      return;
+    }
+    heading('Markdown projections are disabled (`projections.markdown: false`)');
+    info(flags.check
+      ? 'Nothing to check — 0 projection verified.'
+      : flags.dryRun
+        ? '(dry-run: nothing was written)'
+        : 'Only the index was regenerated; no markdown projection was written.');
+    return;
+  }
+
+  // `--check` takes precedence: it is read-only, so a concurrent --dry-run is meaningless.
+  const results = await refresh(cwd, artifacts, {
+    check: flags.check,
+    dryRun: Boolean(flags.dryRun) && !flags.check,
+    config,
+  });
+  const drifted = results.filter((entry) => DRIFT_STATUSES.has(entry.status));
 
   if (flags.json) {
     printJson({ check: flags.check, results });
@@ -32,6 +62,15 @@ export async function render({ cwd, flags }) {
     for (const entry of drifted) warn(`${entry.path} is ${entry.status}`);
     info(`${drifted.length} projection(s) out of date. Run \`spec render\`.`);
     process.exitCode = 1;
+    return;
+  }
+
+  if (flags.dryRun) {
+    heading(`Planned ${results.length} projection change(s)`);
+    const changed = results.filter((entry) => entry.status !== 'unchanged');
+    if (changed.length === 0) info('Everything already up to date.');
+    else table(changed.map((entry) => [entry.kind, entry.slug, entry.status, entry.path]), ['kind', 'slug', 'status', 'path']);
+    info('(dry-run: nothing was written)');
     return;
   }
 

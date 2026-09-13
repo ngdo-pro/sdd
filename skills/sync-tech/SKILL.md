@@ -12,7 +12,7 @@ Use this skill to update the technical architecture and patterns documentation o
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/specs/active/[id]*.md` and identify its target domain (`[domain]`).
+   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
    * Read `.specs/knowledge/domains/[domain]/tech.md` (or initialize from `templates/DOMAIN_TECH_TEMPLATE.md`).
 
 2. **Extract Technical Deltas:**

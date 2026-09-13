@@ -11,7 +11,7 @@ All generated vision content must be authored in the user's language.
 
 The Product Vision is the project's **foundational constitution**. It must remain concise (1 page maximum), impactful, purely product-focused (zero engineering jargon), and serve as an authoritative north star to settle trade-offs.
 
-> **Model-first (Rule 7):** the vision lives in `.specs/model/vision.json` (metadata) + `.specs/model/vision.md` (body). `.specs/vision.md` is a **generated projection** — never edit it.
+> **Model-first (Rule 7):** the vision lives in `.specs/model/vision.json` (metadata) + `.specs/model/vision.md` (body). `.specs/generated/vision.md` is a **generated projection** — never edit it.
 
 ---
 
@@ -49,7 +49,7 @@ Conduct an interactive interview through targeted questions covering the 4 manif
    ```bash
    spec upsert vision --title "[Product Name]" --from .specs/.draft-vision.md
    ```
-3. Delete the scratch file. The CLI regenerates `.specs/vision.md` and the index automatically.
+3. Delete the scratch file. The CLI regenerates `.specs/generated/vision.md` and the index automatically.
 
 ### 4. Confirmation
 Present a concise summary of the validated trade-offs in the user's language, and confirm the roadmap section was regenerated.

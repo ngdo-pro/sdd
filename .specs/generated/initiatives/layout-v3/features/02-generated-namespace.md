@@ -49,4 +49,4 @@ Livraison : 2ᵉ de l'initiative (après 01, avant 03).
 ## 6. Implementation Spec(s)
 
 - [ ] **`002-generated-projections`** : Projections sous generated/  
-  ↳ *Spec:* [`specs/planned/002-generated-projections.md`](../../../../specs/planned/002-generated-projections.md)
+  ↳ *Spec:* [`generated/initiatives/layout-v3/specs/002.md`](../specs/002.md)

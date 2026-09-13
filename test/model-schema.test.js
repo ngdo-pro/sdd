@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMeta, normalizeMeta, serializeMeta, slugify, deriveId } from '../src/model/schema.js';
-import { stateDirOf, modelRelativePaths, projectionRelativePath } from '../src/model/layout.js';
+import { modelRelativePaths, projectionRelativePath } from '../src/model/layout.js';
 
 test('slugify produces portable slugs', () => {
   assert.equal(slugify('Magic Link Login!'), 'magic-link-login');
@@ -50,7 +50,10 @@ test('normalizeMeta tolerates partial input', () => {
   assert.equal(meta.version, 3);
 });
 
-test('layout maps every kind to stateless canonical paths and interim v2 projections', () => {
+test('layout maps every kind to stateless canonical paths and generated/ projections', () => {
+  const vision = createMeta({ kind: 'vision', slug: 'vision' });
+  assert.equal(projectionRelativePath(vision), 'generated/vision.md');
+
   const spec = createMeta({
     kind: 'spec',
     slug: '042-login',
@@ -62,15 +65,19 @@ test('layout maps every kind to stateless canonical paths and interim v2 project
     meta: 'initiatives/demo/features/01-login/specs/042.json',
     body: 'initiatives/demo/features/01-login/specs/042.md',
   });
-  assert.equal(projectionRelativePath(spec), 'specs/active/042-login.md');
+  // Flat under the initiative, file name = bare id — no state segment.
+  assert.equal(projectionRelativePath(spec), 'generated/initiatives/demo/specs/042.md');
 
   const initiative = createMeta({ kind: 'initiative', slug: 'demo', state: 'planned' });
   assert.equal(modelRelativePaths(initiative).meta, 'initiatives/demo/demo.json');
-  assert.equal(projectionRelativePath(initiative), 'initiatives/planned/demo/README.md');
+  assert.equal(projectionRelativePath(initiative), 'generated/initiatives/demo/README.md');
 
   const feature = createMeta({ kind: 'feature', slug: '01-login', state: 'archived', relations: { initiative: 'demo' } });
   assert.equal(modelRelativePaths(feature).meta, 'initiatives/demo/features/01-login/01-login.json');
-  assert.equal(projectionRelativePath(feature), 'initiatives/planned/demo/archive/01-login.md');
+  assert.equal(projectionRelativePath(feature), 'generated/initiatives/demo/features/01-login.md');
+
+  // The projection signature no longer threads any option.
+  assert.equal(projectionRelativePath.length, 1);
 });
 
 test('layout requires relations for features and specs', () => {
@@ -80,9 +87,5 @@ test('layout requires relations for features and specs', () => {
 
   const spec = createMeta({ kind: 'spec', slug: '042-a', relations: { feature: '01-b' } });
   assert.throws(() => modelRelativePaths(spec));
-});
-
-test('stateDirOf maps canonical states to directory names', () => {
-  assert.equal(stateDirOf('archived'), 'archive');
-  assert.equal(stateDirOf(null), null);
+  assert.throws(() => projectionRelativePath(spec));
 });

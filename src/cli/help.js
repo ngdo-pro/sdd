@@ -12,8 +12,8 @@ export const HELP = `
 
   Model-first pipeline: canonical artifacts live in .specs/canonical/ (JSON
   metadata + markdown body, stateless layout — lifecycle lives in metadata).
-  Every other output — markdown docs, Linear issues — is a generated
-  projection, and the CLI is their only writer.
+  Every other output — markdown docs under .specs/generated/, Linear issues —
+  is a generated projection, and the CLI is their only writer.
 
   USAGE
     spec <command> [options]
@@ -25,7 +25,8 @@ export const HELP = `
     move <ref>           Transition an artifact state (model + mirrors)
     done <ref>           Mark delivered, check off parents (--cascade)
     link <ref>           Set a parent relation in the model
-    render [--check]     Regenerate markdown projections (CI drift guard)
+    render [--check]     Regenerate .specs/generated/ projections (CI drift
+                         guard); preview the write plan with --dry-run
     model [--write]      Inspect the graph / regenerate index.json
     status [<ref>]       Model state, derived progress, remote mirrors
     list                 List artifacts (--kind, --state)

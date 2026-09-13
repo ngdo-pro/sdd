@@ -11,7 +11,7 @@ All generated feature content must be authored in the user's language.
 
 A **Feature** represents a concrete, cohesive unit of user experience or technical capability ideally sized for **1 engineering Spec Delta** (a few days of implementation). The document must remain concise (**1 page maximum**), visual, and behavior-oriented.
 
-> **Model-first (Rule 7):** the feature lives in `.specs/model/initiatives/<initiative-state>/<initiative>/<feature-state>/<feature>.json` + `<feature>.md`. Markdown under `.specs/initiatives/` is generated.
+> **Model-first (Rule 7):** the feature lives in `.specs/model/initiatives/<initiative-state>/<initiative>/<feature-state>/<feature>.json` + `<feature>.md`. Markdown under `.specs/generated/initiatives/` is generated.
 
 ---
 

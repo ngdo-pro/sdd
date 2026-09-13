@@ -1,8 +1,16 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import { ensureDir, exists, specsRoot, toPosix } from '../core/paths.js';
+import { ensureDir, exists, generatedRoot, specsRoot, toPosix } from '../core/paths.js';
 import { buildGraph } from '../model/graph.js';
 import { renderDocument } from './markdown.js';
+
+/**
+ * Markdown horizons owned by the render step: the `generated/` namespace plus
+ * the legacy v2 tree (`specs/`, `initiatives/`, `vision.md`). The three v2
+ * entries are only a transitional cutover sweep — no expected projection
+ * lives there anymore; they are retired with the feature 03 rework.
+ */
+const MANAGED = ['generated', 'specs', 'initiatives', 'vision.md'];
 
 async function readdirSafe(directory) {
   try {
@@ -21,8 +29,7 @@ async function readIfExists(file) {
 }
 
 /** Collects every markdown file under `directory`, as specs-root-relative POSIX paths. */
-async function collectMarkdown(cwd, directory) {
-  const root = specsRoot(cwd);
+async function collectMarkdown(root, directory) {
   const found = [];
 
   async function walk(current) {
@@ -37,63 +44,83 @@ async function collectMarkdown(cwd, directory) {
   return found;
 }
 
-/** Removes empty directories bottom-up, stopping at the specs root. */
-async function pruneEmptyDirectories(cwd, directory) {
-  const root = specsRoot(cwd);
-  const entries = await readdirSafe(directory);
-
-  for (const entry of entries) {
-    if (entry.isDirectory()) await pruneEmptyDirectories(cwd, path.join(directory, entry.name));
+/**
+ * Removes empty directories bottom-up within a managed subtree, stopping at
+ * `baseDirectory` — the traversed root itself is never removed, and the walk
+ * never climbs above the horizon it started from (watchout §6).
+ */
+async function pruneEmptyDirectories(directory, baseDirectory) {
+  for (const entry of await readdirSafe(directory)) {
+    if (entry.isDirectory()) await pruneEmptyDirectories(path.join(directory, entry.name), baseDirectory);
   }
 
-  if (directory === root) return;
+  if (directory === baseDirectory) return;
   if ((await readdirSafe(directory)).length === 0) await fsp.rm(directory, { recursive: true, force: true });
 }
 
 /**
- * Deletes framework-managed markdown that is no longer a projected artifact
- * (e.g. the previous location of a moved artefact). Knowledge and decision
- * documents are never touched.
+ * Deletes framework-managed markdown that is no longer a projected artifact:
+ * orphans under `generated/` plus the legacy v2 tree swept during the cutover
+ * (git is the safety net). With `dryRun`, the removals are only listed.
+ * Knowledge and canonical documents are never touched.
  */
-async function pruneStaleProjections(cwd, expected) {
+async function pruneStaleProjections(cwd, expected, { dryRun = false } = {}) {
   const root = specsRoot(cwd);
-  const managed = ['specs', 'initiatives', 'vision.md'];
   const removed = [];
 
   const candidates = [];
-  for (const relative of managed) {
+  for (const relative of MANAGED) {
     const absolute = path.join(root, relative);
-    if (await exists(absolute)) {
-      const stats = await fsp.stat(absolute);
-      if (stats.isDirectory()) candidates.push(...await collectMarkdown(cwd, absolute));
-      else if (relative.endsWith('.md')) candidates.push(relative);
-    }
+    if (!(await exists(absolute))) continue;
+    const stats = await fsp.stat(absolute);
+    if (stats.isDirectory()) candidates.push(...await collectMarkdown(root, absolute));
+    else if (relative.endsWith('.md')) candidates.push(relative);
   }
 
   for (const relative of candidates) {
     if (expected.has(relative)) continue;
-    await fsp.rm(path.join(root, relative), { force: true });
+    if (!dryRun) await fsp.rm(path.join(root, relative), { force: true });
     removed.push(relative);
   }
 
+  if (dryRun) return removed;
+
+  // Empty-directory pruning stays inside each managed horizon: `generated/`
+  // itself is preserved (it is a valid root entry), while the transient v2
+  // directories disappear entirely once swept.
+  await pruneEmptyDirectories(generatedRoot(cwd), generatedRoot(cwd));
   for (const directory of ['specs', 'initiatives']) {
-    await pruneEmptyDirectories(cwd, path.join(root, directory));
+    await pruneEmptyDirectories(path.join(root, directory), root);
   }
 
   return removed;
 }
 
 /**
- * Regenerates every markdown projection under `.specs/` from the model.
- * With `check`, nothing is written and drift is reported instead.
+ * Markdown files under `generated/` that the model no longer projects. With
+ * `check` they are reported as drift (`unexpected`) instead of being deleted;
+ * the v2 sweep is a write-only behaviour and is never inspected here.
+ */
+async function collectUnexpectedProjections(cwd, expected) {
+  const root = specsRoot(cwd);
+  const generated = await collectMarkdown(root, generatedRoot(cwd));
+  return generated.filter((relative) => !expected.has(relative));
+}
+
+/**
+ * Regenerates every markdown projection under `.specs/generated/` from the
+ * model. With `check`, nothing is written and drift is reported instead
+ * (stale, missing, unexpected — `generated/` only). With `dryRun`, the full
+ * write plan (cutover sweep included) is computed without touching the disk.
  * @returns {Promise<Array<{ slug: string, kind: string, status: string, path: string }>>}
  */
-export async function renderProjections(cwd, artifacts, { check = false, prune = true } = {}) {
+export async function renderProjections(cwd, artifacts, { check = false, prune = true, dryRun = false } = {}) {
   const graph = buildGraph(artifacts);
   const root = specsRoot(cwd);
   const results = [];
 
   for (const artifact of artifacts) {
+    if (!artifact.projection) continue; // un-derivable path — reported by `validate` (graph-integrity)
     const target = path.join(root, artifact.projection);
     const content = renderDocument(artifact, graph);
     const current = await readIfExists(target);
@@ -102,6 +129,8 @@ export async function renderProjections(cwd, artifacts, { check = false, prune =
       results.push({ slug: artifact.slug, kind: artifact.kind, status: 'unchanged', path: artifact.projection });
       continue;
     }
+
+    const status = current === null ? 'created' : 'updated';
     if (check) {
       results.push({
         slug: artifact.slug,
@@ -111,22 +140,26 @@ export async function renderProjections(cwd, artifacts, { check = false, prune =
       });
       continue;
     }
-
-    await ensureDir(path.dirname(target));
-    await fsp.writeFile(target, content, 'utf8');
-    results.push({
-      slug: artifact.slug,
-      kind: artifact.kind,
-      status: current === null ? 'created' : 'updated',
-      path: artifact.projection,
-    });
+    if (!dryRun) {
+      await ensureDir(path.dirname(target));
+      await fsp.writeFile(target, content, 'utf8');
+    }
+    results.push({ slug: artifact.slug, kind: artifact.kind, status, path: artifact.projection });
   }
 
-  if (!check && prune) {
-    const expected = new Set(artifacts.map((artifact) => artifact.projection));
-    const removed = await pruneStaleProjections(cwd, expected);
-    for (const relative of removed) {
-      results.push({ slug: relative, kind: 'orphan', status: 'removed', path: relative });
+  const expected = new Set(artifacts.filter((artifact) => artifact.projection).map((artifact) => artifact.projection));
+
+  if (prune) {
+    if (check) {
+      // `--check` only covers `generated/`: unexpected files are reported, the
+      // v2 sweep stays a write-only behaviour (arbitrated, watchout §6).
+      for (const relative of await collectUnexpectedProjections(cwd, expected)) {
+        results.push({ slug: relative, kind: 'orphan', status: 'unexpected', path: relative });
+      }
+    } else {
+      for (const relative of await pruneStaleProjections(cwd, expected, { dryRun })) {
+        results.push({ slug: relative, kind: 'orphan', status: 'removed', path: relative });
+      }
     }
   }
 

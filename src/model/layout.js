@@ -1,9 +1,4 @@
-import { STATE_DIRS } from '../core/paths.js';
-
-/** Path of the state directory for a canonical state (interim v2 projections). */
-export function stateDirOf(state) {
-  return state ? STATE_DIRS[state] : null;
-}
+import { GENERATED_DIRNAME } from '../core/paths.js';
 
 function requireRelation(meta, relation) {
   const value = meta.relations?.[relation];
@@ -47,26 +42,28 @@ export function modelRelativePaths(meta) {
 }
 
 /**
- * Projection-relative POSIX path (the generated markdown humans read).
- * UNCHANGED interim v2 convention (state-encoded) until feature 02 ships the
- * `generated/` namespace. No caller threads `initiativeState` anymore: feature
- * projections default to the `planned` initiative segment.
+ * Projection-relative POSIX path under the `generated/` namespace — every
+ * markdown projection lives there, vision included. Paths derive from slugs/
+ * ids and `relations` alone: no lifecycle segment ever appears, so a `spec
+ * move` regenerates content at the same path instead of renaming files.
+ * Features and specs are flattened at the initiative level to optimise
+ * reading; spec file names are the bare id (INV-5, uniqueness enforced by
+ * the `spec-id-uniqueness` rule).
  * @returns {string}
  */
-export function projectionRelativePath(meta, { initiativeState } = {}) {
-  const dir = STATE_DIRS[meta.state];
-
+export function projectionRelativePath(meta) {
   switch (meta.kind) {
     case 'vision':
-      return 'vision.md';
-    case 'spec':
-      return `specs/${dir}/${meta.slug}.md`;
+      return `${GENERATED_DIRNAME}/vision.md`;
+    case 'spec': {
+      const initiativeSlug = requireRelation(meta, 'initiative');
+      return `${GENERATED_DIRNAME}/initiatives/${initiativeSlug}/specs/${meta.id}.md`;
+    }
     case 'initiative':
-      return `initiatives/${dir}/${meta.slug}/README.md`;
+      return `${GENERATED_DIRNAME}/initiatives/${meta.slug}/README.md`;
     case 'feature': {
       const initiativeSlug = requireRelation(meta, 'initiative');
-      const initState = STATE_DIRS[initiativeState ?? 'planned'];
-      return `initiatives/${initState}/${initiativeSlug}/${dir}/${meta.slug}.md`;
+      return `${GENERATED_DIRNAME}/initiatives/${initiativeSlug}/features/${meta.slug}.md`;
     }
     default:
       throw new Error(`Unknown artifact kind "${meta.kind}".`);

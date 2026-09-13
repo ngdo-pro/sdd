@@ -47,10 +47,10 @@
 *Ordered sequence of discrete features planned for this initiative:*
 
 - [x] **`01-canonical-tree`**: Arborescence canonique v3  
-  ↳ *Feature:* [`initiatives/planned/layout-v3/archive/01-canonical-tree.md`](./archive/01-canonical-tree.md)  *(Archived ✅)*
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/01-canonical-tree.md`](./features/01-canonical-tree.md)  *(Archived ✅)*
 - [ ] **`02-generated-namespace`**: Namespace generated/  
-  ↳ *Feature:* [`initiatives/planned/layout-v3/planned/02-generated-namespace.md`](./planned/02-generated-namespace.md)  *(Framed ✅ — Ready for `/spec`)*
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/02-generated-namespace.md`](./features/02-generated-namespace.md)  *(Framed ✅ — Ready for `/spec`)*
 - [ ] **`03-sdd-migration`**: Racine .sdd et migration idempotente  
-  ↳ *Feature:* [`initiatives/planned/layout-v3/planned/03-sdd-migration.md`](./planned/03-sdd-migration.md)  *(Framed ✅ — Ready for `/spec`)*
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/03-sdd-migration.md`](./features/03-sdd-migration.md)  *(Framed ✅ — Ready for `/spec`)*
 - [ ] **`04-static-site`**: Site statique optionnel  
-  ↳ *Feature:* [`initiatives/planned/layout-v3/planned/04-static-site.md`](./planned/04-static-site.md)  *(Framed ✅ — Ready for `/spec`)*
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/04-static-site.md`](./features/04-static-site.md)  *(Framed ✅ — Ready for `/spec`)*

@@ -4,7 +4,7 @@
   "id": "002",
   "slug": "002-generated-projections",
   "title": "Projections sous generated/",
-  "state": "planned",
+  "state": "active",
   "relations": {
     "feature": "02-generated-namespace",
     "initiative": "layout-v3"

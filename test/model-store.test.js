@@ -24,8 +24,8 @@ test('loadModel reads metadata and bodies from the canonical store', async () =>
     // Stateless layout: no lifecycle segment, file name = bare id.
     assert.equal(spec.model.meta, 'initiatives/demo/features/01-login/specs/042.json');
     assert.equal(spec.model.directory, 'initiatives/demo/features/01-login/specs');
-    // Interim v2 projection convention is unchanged.
-    assert.equal(spec.projection, 'specs/active/042-login.md');
+    // Projection lives under the flattened generated/ namespace.
+    assert.equal(spec.projection, 'generated/initiatives/demo/specs/042.md');
 
     const feature = artifacts.find((artifact) => artifact.kind === 'feature');
     assert.equal(feature.model.meta, 'initiatives/demo/features/01-login/01-login.json');

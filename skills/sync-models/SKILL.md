@@ -12,7 +12,7 @@ Use this skill to update the living data models and database schema documentatio
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/specs/active/[id]*.md` and identify its target domain (`[domain]`).
+   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
    * Read `.specs/knowledge/domains/[domain]/models.md` (or initialize from `templates/DOMAIN_MODELS_TEMPLATE.md`).
 
 2. **Extract Data Model Deltas:**

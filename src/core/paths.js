@@ -11,6 +11,13 @@ export const CANONICAL_DIRNAME = 'canonical';
 export const KNOWLEDGE_DIRNAME = 'knowledge';
 
 /**
+ * Generated namespace: every markdown projection the CLI renders from the
+ * model lives here — authored (`canonical/`, `knowledge/`) and generated
+ * become visually disjoint trees.
+ */
+export const GENERATED_DIRNAME = 'generated';
+
+/**
  * Legacy v2 model store (`model/` with state-encoded paths).
  * Only referenced by the frozen import scanner (`src/migrate/**`); scheduled
  * for removal with the feature 03 rework. Never read by the v3 model.
@@ -59,6 +66,18 @@ export function canonicalRoot(cwd) {
 export function knowledgeRoot(cwd) {
   return path.join(cwd, SPECS_DIRNAME, KNOWLEDGE_DIRNAME);
 }
+
+export function generatedRoot(cwd) {
+  return path.join(cwd, SPECS_DIRNAME, GENERATED_DIRNAME);
+}
+
+/**
+ * Exhaustive `.specs/` root (INV-1): any other entry is a `root-layout`
+ * violation. `generated/` is allowed but never required (a workspace with
+ * `projections.markdown: false` or an empty model stays valid). `site/` will
+ * be appended by the feature 04-static-site.
+ */
+export const ALLOWED_ROOT_ENTRIES = ['config.json', CANONICAL_DIRNAME, GENERATED_DIRNAME, KNOWLEDGE_DIRNAME];
 
 /** Legacy v2 model root — kept for the frozen `src/migrate/**` scanner only. */
 export function modelRoot(cwd) {

@@ -9,7 +9,7 @@
 ## Tooling & Required Skills
 
 * **Primary Skill:** `skills/build-spec/SKILL.md` (`/build-spec [XXX]`)
-* **Required Input:** Engineering specification (`.specs/specs/planned/XXX-[slug].md` or `active/XXX-[slug].md`)
+* **Required Input:** Engineering specification (`.specs/generated/initiatives/[initiative]/specs/[id].md`)
 * **Governing Rules:** `rules/spec-rules.md` (portability, strict adherence to file inventory)
 * **Execution Tools:** Code editing tools, local build/typecheck commands, and database migration runners.
 
@@ -19,7 +19,7 @@
 
 1. **Execute the `build-spec` Skill Protocol:**
    - Strictly follow the instructions in `skills/build-spec/SKILL.md`.
-   - Read the authoritative body from `.specs/model/specs/active/XXX-*.md` (the `.specs/specs/**` markdown is a generated projection).
+   - Read the authoritative body from `.specs/model/specs/active/XXX-*.md` (the `.specs/generated/**` markdown is a generated projection).
    - Adhere to the phased sequential execution plan (Section 7 of the spec).
    - Only create or modify files explicitly declared in the Inventory (Section 3.1).
 

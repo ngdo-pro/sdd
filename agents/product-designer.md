@@ -4,7 +4,7 @@
 >
 > **Language Rule:** All created Initiatives and Features must be written in the user's language.
 >
-> **Model-First (Rule 7):** artifacts live in `.specs/model/initiatives/**` (JSON metadata + markdown body). The markdown under `.specs/initiatives/**` is a **generated projection**; roadmap and spec-list sections are generated from the graph.
+> **Model-First (Rule 7):** artifacts live in `.specs/model/initiatives/**` (JSON metadata + markdown body). The markdown under `.specs/generated/initiatives/**` is a **generated projection**; roadmap and spec-list sections are generated from the graph.
 
 ---
 

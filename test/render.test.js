@@ -7,10 +7,10 @@ import { loadModel } from '../src/model/store.js';
 import { makeWorkspace, cleanup, seedModel, readWorkspaceFile, MODEL_FIXTURE } from './helpers.js';
 
 test('linkTarget produces document-relative POSIX links', () => {
-  assert.equal(linkTarget('specs/active/042-a.md', 'specs/active/043-b.md'), './043-b.md');
+  assert.equal(linkTarget('generated/initiatives/demo/specs/042-a.md', 'generated/initiatives/demo/specs/043-b.md'), './043-b.md');
   assert.equal(
-    linkTarget('initiatives/active/demo/README.md', 'initiatives/active/demo/planned/01-a.md'),
-    './planned/01-a.md',
+    linkTarget('generated/initiatives/demo/features/01-a.md', 'generated/initiatives/demo/specs/042-a.md'),
+    '../specs/042-a.md',
   );
 });
 
@@ -24,7 +24,7 @@ test('spec documents render a title and a Metadata block', () => {
     fields: { Domain: '`.specs/knowledge/domains/auth/`' },
     relations: { feature: '01-login' },
     body: '## 1. Intent\n\nAdd login.',
-    projection: 'specs/active/042-login.md',
+    projection: 'generated/initiatives/demo/specs/042.md',
   };
   const rendered = renderDocument(artifact, buildGraph([artifact]));
   assert.match(rendered, /^# Spec: 042 - Magic link/m);
@@ -43,7 +43,8 @@ test('feature documents render the generated spec list from relations', async ()
 
     assert.match(rendered, /## 6\. Implementation Spec\(s\)/);
     assert.match(rendered, /- \[ \] \*\*`042-login`\*\* : Magic link/);
-    assert.match(rendered, /\(\.\.\/\.\.\/\.\.\/\.\.\/specs\/active\/042-login\.md\)/);
+    // Flattened generated tree: the spec lives at the initiative level.
+    assert.match(rendered, /\(\.\.\/specs\/042\.md\)/);
   } finally {
     await cleanup(root);
   }
@@ -73,9 +74,8 @@ test('initiative documents render the feature roadmap', async () => {
     const rendered = renderDocument(graph.bySlug.get('demo'), graph);
     assert.match(rendered, /## 4\. Feature Roadmap/);
     assert.match(rendered, /- \[ \] \*\*`01-login`\*\*: Login/);
-    // Interim v2 projections: features default to the `planned` initiative
-    // segment (no initiative-state threading since the v3 layout).
-    assert.match(rendered, /\(\.\.\/\.\.\/planned\/demo\/active\/01-login\.md\)/);
+    // Flattened generated tree: features live directly under the initiative.
+    assert.match(rendered, /\(\.\/features\/01-login\.md\)/);
   } finally {
     await cleanup(root);
   }
@@ -118,7 +118,7 @@ test('renderProjections writes files and reports drift under check', async () =>
     const first = await renderProjections(root, artifacts);
     assert.equal(first.every((entry) => entry.status === 'created'), true);
 
-    const content = await readWorkspaceFile(root, '.specs/initiatives/active/demo/README.md');
+    const content = await readWorkspaceFile(root, '.specs/generated/initiatives/demo/README.md');
     assert.match(content, /# Initiative: Demo/);
 
     const clean = await renderProjections(root, artifacts, { check: true });

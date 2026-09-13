@@ -12,7 +12,7 @@ Use this skill to update the living API contracts documentation of a domain (`/s
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/specs/active/[id]*.md` and identify its target domain (`[domain]`).
+   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
    * Read `.specs/knowledge/domains/[domain]/contracts.md` (or initialize from `templates/DOMAIN_CONTRACTS_TEMPLATE.md`).
 
 2. **Extract Interface Deltas:**

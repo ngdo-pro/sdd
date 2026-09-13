@@ -9,9 +9,9 @@ Use this skill when the user requests designing, specifying, or framing an engin
 
 All generated specification content must be authored in the user's language.
 
-A spec is stored as `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). The markdown under `.specs/specs/` is a **generated projection**.
+A spec is stored as `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). The markdown under `.specs/generated/` is a **generated projection** (spec bodies are flattened at `generated/initiatives/[initiative]/specs/[id].md`).
 
-> **Model-first (Rule 7):** never edit `.specs/specs/**` and never write model files by hand — always go through the `spec` CLI.
+> **Model-first (Rule 7):** never edit `.specs/generated/**` and never write model files by hand — always go through the `spec` CLI.
 
 ---
 

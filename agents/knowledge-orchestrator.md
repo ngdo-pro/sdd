@@ -10,7 +10,7 @@
 
 ```mermaid
 flowchart TD
-    SPEC["Approved Spec (specs/active/XXX.md)"] --> ORCH["Knowledge Orchestrator (/sync-knowledge)"]
+    SPEC["Approved Spec (generated/initiatives/[initiative]/specs/[id].md)"] --> ORCH["Knowledge Orchestrator (/sync-knowledge)"]
     
     subgraph Synchronisation Multi-Piliers
         ORCH --> B["1. /sync-behavior<br>(behavior.md)"]
@@ -29,7 +29,7 @@ flowchart TD
     end
     
     subgraph Clôture & Rétroaction
-        CLOSE --> ARCH["Déplacement spec vers specs/archive/"]
+        CLOSE --> ARCH["Spec archivée (projection régénérée sous generated/)"]
         CLOSE --> FEAT["Mise à jour statut Feature dans l'initiative"]
         CLOSE --> INIT{"Toutes features livrées ?"}
         INIT -->|Oui| ARCH_INIT["Archivage de l'initiative"]
@@ -71,7 +71,7 @@ flowchart TD
    - Propagate completion **only** through the CLI: `spec done [id] --cascade`.
      * marks the spec `progress.done`, archives it, then archives every unfinished parent whose children are complete,
      * regenerates all affected projections (feature `## 6.`, initiative `## 4.`, vision `## 5.`), the index and the Linear mirrors.
-   - Never `mv` or edit a projection by hand: `.specs/specs/**` and `.specs/initiatives/**` are generated from `.specs/model/`.
+   - Never `mv` or edit a projection by hand: `.specs/generated/**` is generated from the canonical model.
    - Use `spec render --check` to confirm no projection drifted from the model.
 
 ---

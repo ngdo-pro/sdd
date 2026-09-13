@@ -37,7 +37,7 @@ flowchart LR
 
 1. **Technical Spec Generation:**
    - Consume a qualified Feature.
-   - Delegate writing the engineering spec (`SPEC_TEMPLATE.md` in `.specs/specs/planned/XXX-[slug].md`) to `spec-writer`.
+   - Delegate writing the engineering spec (`SPEC_TEMPLATE.md`, projection at `.specs/generated/initiatives/[initiative]/specs/[id].md`) to `spec-writer`.
    - Ensure all feature invariants map directly to `INV-X` and Gherkin scenarios.
 
 2. **Mandatory User Approval Gate:**
