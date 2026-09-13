@@ -1,12 +1,15 @@
 import { findByRef } from '../../model/store.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { heading, line, printJson, success, warn } from '../render.js';
 import { loadContext, persistArtifact, refresh } from '../context.js';
 
 /**
  * `spec sync [<ref>]` — reconciles remote mirrors with the canonical model.
  * Creates missing remote artifacts (`--create`) and realigns their state.
+ * Writes are locked during a pending migration (INV-5).
  */
 export async function sync({ cwd, positionals, flags }) {
+  if (!flags.dryRun) assertNoCoexistence(cwd);
   const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
 
   if (mirrors.length === 0) {

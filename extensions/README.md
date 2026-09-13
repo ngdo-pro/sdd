@@ -1,14 +1,14 @@
 # Extensions — Pluggable Mirror Backends
 
-The Spec Framework is **model-first**: `.specs/model/` is the canonical source of
+The Spec Framework is **model-first**: `.sdd/canonical/` is the canonical source of
 truth, and every other surface is a projection. Mirror backends project the model
 onto remote systems (Linear, GitHub Issues, Jira, Notion…) and receive the same
 deterministic *movements* through the `spec` CLI.
 
 ```text
-  skills / agents ──(decide)──▶  spec CLI  ──(movement)──▶  MODEL (.specs/model/)  ← canonical
+  skills / agents ──(decide)──▶  spec CLI  ──(movement)──▶  MODEL (.sdd/canonical/)  ← canonical
                                   (execute)                        │
-                                                                   ├─▶ markdown projections (.specs/)
+                                                                   ├─▶ markdown projections (.sdd/generated/)
                                                                    └─▶ mirror backends
                                                                         ├─ linear   (built-in)
                                                                         └─ <your id> (extension)
@@ -78,7 +78,7 @@ Every backend speaks the same artifact shape (hydrated from the model):
 4. Enable it in the consuming project:
 
    ```bash
-   spec backend enable <your-id>     # or edit .specs/config.json
+   spec backend enable <your-id>     # or edit .sdd/config.json
    spec status                       # verify it is picked up
    ```
 

@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "003",
+  "slug": "003-sdd-migration",
+  "title": "Racine .sdd et migration idempotente",
+  "state": "active",
+  "relations": {
+    "feature": "03-sdd-migration",
+    "initiative": "layout-v3"
+  },
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/workspace-management/`",
+    "Change Type": "`Refactor`",
+    "Complexity": "`Large`"
+  },
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

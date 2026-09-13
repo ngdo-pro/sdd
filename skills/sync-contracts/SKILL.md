@@ -1,6 +1,6 @@
 ---
 name: sync-contracts
-description: Synchronize API contracts, endpoints, and validation schemas from a delivered specification into .specs/knowledge/domains/[domain]/contracts.md.
+description: Synchronize API contracts, endpoints, and validation schemas from a delivered specification into .sdd/knowledge/domains/[domain]/contracts.md.
 ---
 
 # Skill: sync-contracts
@@ -12,8 +12,8 @@ Use this skill to update the living API contracts documentation of a domain (`/s
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
-   * Read `.specs/knowledge/domains/[domain]/contracts.md` (or initialize from `templates/DOMAIN_CONTRACTS_TEMPLATE.md`).
+   * Read the delivered specification `.sdd/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
+   * Read `.sdd/knowledge/domains/[domain]/contracts.md` (or initialize from `templates/DOMAIN_CONTRACTS_TEMPLATE.md`).
 
 2. **Extract Interface Deltas:**
    * **Formal OpenAPI Spec (`openapi.yaml`):** Add or update route definitions (`[METHOD] /...`), operationIds, parameters, request body schemas, response payloads, and HTTP error statuses according to OpenAPI 3.1.
@@ -21,5 +21,5 @@ Use this skill to update the living API contracts documentation of a domain (`/s
    * **Consumer Validation Models:** Document client-side or consumer validation schemas in the project's consumer language (e.g. Zod, Pydantic, JSON Schema, protobuf, or typed structs).
 
 3. **Save & Report:**
-   * Write updated content to `.specs/knowledge/domains/[domain]/contracts.md`.
+   * Write updated content to `.sdd/knowledge/domains/[domain]/contracts.md`.
    * Return a concise summary of endpoints and schemas synchronized.

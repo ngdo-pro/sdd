@@ -1,8 +1,11 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 
-/** Root directory holding every specification artifact (projections). */
-export const SPECS_DIRNAME = '.specs';
+/**
+ * Root directory holding every specification artifact — canonical model,
+ * authored knowledge and generated projections.
+ */
+export const SPECS_DIRNAME = '.sdd';
 
 /** Canonical model store: stateless tree, lifecycle lives in metadata only. */
 export const CANONICAL_DIRNAME = 'canonical';
@@ -17,35 +20,14 @@ export const KNOWLEDGE_DIRNAME = 'knowledge';
  */
 export const GENERATED_DIRNAME = 'generated';
 
-/**
- * Legacy v2 model store (`model/` with state-encoded paths).
- * Only referenced by the frozen import scanner (`src/migrate/**`); scheduled
- * for removal with the feature 03 rework. Never read by the v3 model.
- */
-export const MODEL_DIRNAME = 'model';
-
 /** Generated manifest mapping artifact ids to their model files. */
 export const INDEX_FILENAME = 'index.json';
 
-/** Project-level framework configuration file (relative to `.specs/`). */
+/** Project-level framework configuration file (relative to `.sdd/`). */
 export const CONFIG_FILENAME = 'config.json';
 
 /** Canonical lifecycle states, in order. */
 export const STATES = ['planned', 'active', 'archived'];
-
-/** State → directory name (note: the archived directory is `archive`). */
-export const STATE_DIRS = {
-  planned: 'planned',
-  active: 'active',
-  archived: 'archive',
-};
-
-/** Directory name → canonical state. */
-export const STATE_BY_DIR = {
-  planned: 'planned',
-  active: 'active',
-  archive: 'archived',
-};
 
 /** Every artifact kind known to the framework. */
 export const KINDS = ['vision', 'initiative', 'feature', 'spec'];
@@ -72,17 +54,12 @@ export function generatedRoot(cwd) {
 }
 
 /**
- * Exhaustive `.specs/` root (INV-1): any other entry is a `root-layout`
+ * Exhaustive `.sdd/` root (INV-1): any other entry is a `root-layout`
  * violation. `generated/` is allowed but never required (a workspace with
  * `projections.markdown: false` or an empty model stays valid). `site/` will
  * be appended by the feature 04-static-site.
  */
 export const ALLOWED_ROOT_ENTRIES = ['config.json', CANONICAL_DIRNAME, GENERATED_DIRNAME, KNOWLEDGE_DIRNAME];
-
-/** Legacy v2 model root — kept for the frozen `src/migrate/**` scanner only. */
-export function modelRoot(cwd) {
-  return path.join(cwd, SPECS_DIRNAME, MODEL_DIRNAME);
-}
 
 export function indexFilePath(cwd) {
   return path.join(canonicalRoot(cwd), INDEX_FILENAME);

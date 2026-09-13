@@ -44,7 +44,7 @@ test('findByRef resolves ids, slugs, suffixes and paths', async () => {
     assert.equal(findByRef(artifacts, '042-login').slug, '042-login');
     assert.equal(findByRef(artifacts, 'login', { kind: 'feature' }).slug, '01-login');
     assert.equal(
-      findByRef(artifacts, '.specs/canonical/initiatives/demo/features/01-login/specs/042.json').slug,
+      findByRef(artifacts, '.sdd/canonical/initiatives/demo/features/01-login/specs/042.json').slug,
       '042-login',
     );
     assert.equal(findByRef(artifacts, 'demo', { kind: 'initiative' }).slug, 'demo');
@@ -139,7 +139,7 @@ test('loadModel ignores an empty or missing canonical directory', async () => {
   const root = await makeWorkspace();
   try {
     assert.deepEqual(await loadModel(root), []);
-    await writeFiles(root, { '.specs/canonical/README.md': 'nothing here\n' });
+    await writeFiles(root, { '.sdd/canonical/README.md': 'nothing here\n' });
     assert.deepEqual(await loadModel(root), []);
   } finally {
     await cleanup(root);

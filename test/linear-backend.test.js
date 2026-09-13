@@ -151,7 +151,7 @@ test('create issues an item and returns its identifier without mutating the arti
     assert.equal(create.variables.input.teamId, 'team-1');
     assert.equal(create.variables.input.stateId, 'st-1');
     assert.deepEqual(create.variables.input.labelIds, ['lb-1']);
-    assert.match(create.variables.input.description, /\.specs\//);
+    assert.match(create.variables.input.description, /\.sdd\//);
   } finally {
     restore();
   }

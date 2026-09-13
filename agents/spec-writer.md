@@ -4,7 +4,7 @@
 >
 > **Language Rule:** All generated specification content must be written in the user's language.
 >
-> **Model-First (Rule 7):** the spec is stored in `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). `.specs/generated/**` is a **generated projection** — never hand-edited.
+> **Model-First (Rule 7):** the spec is stored in `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.json` (metadata, stateless) + `<id>.md` (body). `.sdd/generated/**` is a **generated projection** — never hand-edited.
 
 ---
 
@@ -16,16 +16,16 @@
 * **Writing Interface:** `spec upsert spec --slug XXX-[slug] --title … --from <body-file>`
 * **Required Inputs:**
   - Approved Feature (from the model: `spec status <feature-slug> --kind feature`)
-  - Domain Ground Truth (`.specs/knowledge/domains/[domain]/`, **if already existing**)
-  - Global Architecture & Tenets (`.specs/architecture.md`, the vision artifact)
+  - Domain Ground Truth (`.sdd/knowledge/domains/[domain]/`, **if already existing**)
+  - Global Architecture & Tenets (`.sdd/generated/vision.md`, the vision artifact)
 
 ---
 
 ## Responsibilities
 
 1. **Context Immersion & Greenfield Handling (Mandatory First Step):**
-   * **Existing Domain (Brownfield):** Read `.specs/knowledge/domains/[domain]/` thoroughly before writing. Ground the spec strictly on existing reality (active APIs, schemas, components, and test suites) to prevent breaking contracts or duplicating capabilities.
-   * **New Domain or New Project (Greenfield Bootstrap):** If `.specs/knowledge/domains/[domain]/` does not exist yet, recognize this as an **Initial Foundation Spec**. Do not block; instead, design the initial baseline cleanly. Ground truth will be automatically initialized into `knowledge/` upon spec delivery via `/sync-knowledge`.
+   * **Existing Domain (Brownfield):** Read `.sdd/knowledge/domains/[domain]/` thoroughly before writing. Ground the spec strictly on existing reality (active APIs, schemas, components, and test suites) to prevent breaking contracts or duplicating capabilities.
+   * **New Domain or New Project (Greenfield Bootstrap):** If `.sdd/knowledge/domains/[domain]/` does not exist yet, recognize this as an **Initial Foundation Spec**. Do not block; instead, design the initial baseline cleanly. Ground truth will be automatically initialized into `knowledge/` upon spec delivery via `/sync-knowledge`.
 
 2. **Execute the `spec` Skill Protocol:**
    - Execute the step-by-step procedure defined in `skills/spec/SKILL.md`.
@@ -39,7 +39,7 @@
 ---
 
 ## What this agent NEVER does
-* Never ignores existing ground truth when `.specs/knowledge/domains/[domain]/` is present.
+* Never ignores existing ground truth when `.sdd/knowledge/domains/[domain]/` is present.
 * Never blocks or fails when starting a new domain from scratch (Greenfield mode).
 * Never alters the UX, intent, or invariants established in the approved Feature brief.
 * Never writes production application code (reserved for the `implementer`).

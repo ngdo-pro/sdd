@@ -7,7 +7,7 @@ description: Implement code changes, execute migrations, and pass quality gates 
 
 Use this skill when the user requests implementing an approved engineering specification (`/build-spec [id]`).
 
-> **Model-first (Rule 7):** the spec lives in `.specs/model/specs/<state>/XXX-slug.{json,md}`. The projection `.specs/generated/initiatives/[initiative]/specs/[id].md` and the parent feature's `## 6.` section are generated — never edit them.
+> **Model-first (Rule 7):** the spec lives in `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.{json,md}` (stateless layout). The projection `.sdd/generated/initiatives/[initiative]/specs/[id].md` and the parent feature's `## 6.` section are generated — never edit them.
 
 ---
 
@@ -18,7 +18,7 @@ Use this skill when the user requests implementing an approved engineering speci
    spec move [XXX] --to active
    ```
    This performs the model transition, relocates both model files and the projection, and mirrors the movement onto every enabled backend.
-   * **Reading the spec:** `spec status [XXX]` for metadata, then read `.specs/model/specs/active/XXX-*.md` for the **body** (the authoritative content).
+   * **Reading the spec:** `spec status [XXX]` for metadata, then read `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md` for the **body** (the authoritative content).
    * **Inventory & Signatures:** analyze the factorized `tree` (Section 3.1) and key contracts (Section 3.2).
    * **Technical Watchouts:** read **Section 6** before writing any code.
    * **BDD Requirements:** follow the Gherkin scenarios in **Section 8.1** as the implementation roadmap.

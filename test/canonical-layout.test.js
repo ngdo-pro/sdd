@@ -152,11 +152,11 @@ test('[U4][INV-3] standardLayout returns exactly the root and canonical/', async
   const cwd = await makeWorkspace();
   try {
     assert.deepEqual(standardLayout(cwd), [
-      path.join(cwd, '.specs'),
-      path.join(cwd, '.specs', 'canonical'),
+      path.join(cwd, '.sdd'),
+      path.join(cwd, '.sdd', 'canonical'),
     ]);
-    assert.equal(path.join(cwd, '.specs', 'knowledge'), knowledgeRoot(cwd));
-    assert.equal(path.join(cwd, '.specs', 'canonical'), canonicalRoot(cwd));
+    assert.equal(path.join(cwd, '.sdd', 'knowledge'), knowledgeRoot(cwd));
+    assert.equal(path.join(cwd, '.sdd', 'canonical'), canonicalRoot(cwd));
   } finally {
     await cleanup(cwd);
   }
@@ -178,7 +178,7 @@ test('[U5][INV-2][INV-3] saveArtifact writes on demand, relocates on relations o
 
     const first = await saveArtifact(root, meta, 'body');
     assert.equal(first.meta, 'initiatives/i1/features/01-a/specs/042.json');
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/i1/features/01-a/specs/042.json'), true);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/i1/features/01-a/specs/042.json'), true);
 
     const second = await saveArtifact(
       root,
@@ -187,7 +187,7 @@ test('[U5][INV-2][INV-3] saveArtifact writes on demand, relocates on relations o
       { previous: first },
     );
     assert.equal(second.meta, 'initiatives/i2/features/01-b/specs/042.json');
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/i1/features/01-a/specs/042.json'), false);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/i1/features/01-a/specs/042.json'), false);
 
     const artifacts = await loadModel(root);
     assert.equal(artifacts.length, 1);
@@ -203,14 +203,14 @@ test('[U6][INV-1] buildIndex v3 lives under canonical/ with canonical prefixes',
     const artifacts = await loadModel(root);
     const { file } = await writeIndex(root, artifacts);
 
-    assert.equal(file.endsWith('.specs/canonical/index.json'), true);
+    assert.equal(file.endsWith('.sdd/canonical/index.json'), true);
     const index = JSON.parse(await fsp.readFile(file, 'utf8'));
     assert.equal(index.version, 3);
     for (const entry of index.artifacts) {
-      assert.match(entry.meta, /^\.specs\/canonical\//);
-      assert.match(entry.body, /^\.specs\/canonical\//);
-      assert.match(entry.projection, /^\.specs\//);
-      assert.doesNotMatch(entry.projection, /^\.specs\/canonical\//);
+      assert.match(entry.meta, /^\.sdd\/canonical\//);
+      assert.match(entry.body, /^\.sdd\/canonical\//);
+      assert.match(entry.projection, /^\.sdd\//);
+      assert.doesNotMatch(entry.projection, /^\.sdd\/canonical\//);
     }
   } finally {
     await cleanup(root);
@@ -292,17 +292,17 @@ test('[C2][INV-2] spec move plans the mutation without relocating files', async 
       },
     ]);
     await silently(() => render(ctx(root)));
-    const before = await listPaths(root, '.specs/canonical');
+    const before = await listPaths(root, '.sdd/canonical');
 
     await silently(() => move(ctx(root, ['042'], { to: 'active' })));
 
-    assert.deepEqual(await listPaths(root, '.specs/canonical'), before);
+    assert.deepEqual(await listPaths(root, '.sdd/canonical'), before);
 
     const index = JSON.parse(await fsp.readFile(path.join(canonicalRoot(root), 'index.json'), 'utf8'));
     assert.equal(index.artifacts.find((entry) => entry.slug === '042-login').state, 'active');
     // Projections keep the same generated/ path — states never rename files.
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
-    assert.equal(await fileExists(root, '.specs/specs'), false);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
+    assert.equal(await fileExists(root, '.sdd/specs'), false);
   } finally {
     await cleanup(root);
   }
@@ -323,11 +323,11 @@ test('[C3][INV-2] done --cascade archives the chain without moving a single file
       },
     ]);
     await silently(() => render(ctx(root)));
-    const before = await listPaths(root, '.specs/canonical');
+    const before = await listPaths(root, '.sdd/canonical');
 
     await silently(() => done(ctx(root, ['042'], { cascade: true })));
 
-    assert.deepEqual(await listPaths(root, '.specs/canonical'), before);
+    assert.deepEqual(await listPaths(root, '.sdd/canonical'), before);
     const artifacts = await loadModel(root);
     for (const slug of ['042-login', '01-login', 'demo']) {
       assert.equal(artifacts.find((artifact) => artifact.slug === slug).state, 'archived');
@@ -365,10 +365,10 @@ test('[C5][INV-1] validate refuses lifecycle dirs under canonical/ and incomplet
   try {
     await seedModel(root, MODEL_FIXTURE);
     // Parasitic lifecycle directory inside the canonical tree.
-    await writeFiles(root, { '.specs/canonical/initiatives/demo/planned/.keep': '' });
+    await writeFiles(root, { '.sdd/canonical/initiatives/demo/planned/.keep': '' });
     // A spec whose relations make its path underivable.
     await writeFiles(root, {
-      '.specs/canonical/initiatives/demo/features/01-broken/specs/099-broken.json': JSON.stringify({
+      '.sdd/canonical/initiatives/demo/features/01-broken/specs/099-broken.json': JSON.stringify({
         version: 3,
         kind: 'spec',
         id: '099',
@@ -404,7 +404,7 @@ test('[C6][INV-1] upsert spec without --feature is rejected before any write', a
       () => upsert(ctx(root, ['spec'], { slug: '042-x' })),
       (error) => error instanceof UsageError && /spec requires --feature/.test(error.message),
     );
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
   } finally {
     await cleanup(root);
   }
@@ -427,7 +427,7 @@ test('[C7][INV-1][INV-5] link derives relations.initiative and relocates the spe
     const spec = findByRef(await loadModel(root), '042');
     assert.deepEqual(spec.relations, { feature: '01-b', initiative: 'i2' });
     assert.equal(spec.model.meta, 'initiatives/i2/features/01-b/specs/042.json');
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/i1/features/01-a/specs/042.json'), false);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/i1/features/01-a/specs/042.json'), false);
   } finally {
     await cleanup(root);
   }
@@ -457,7 +457,7 @@ test('[C8][INV-1][INV-6] re-parenting a feature relocates it and every descendan
       specs.map((spec) => spec.model.meta).sort(),
       ['initiatives/i2/features/01-a/specs/042.json', 'initiatives/i2/features/01-a/specs/043.json'],
     );
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/i1/features/01-a'), false);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/i1/features/01-a'), false);
   } finally {
     await cleanup(root);
   }
@@ -470,8 +470,8 @@ test('[C9][INV-1] generated/ projections and the canonical index coexist', async
     const artifacts = await loadModel(root);
     await silently(() => render(ctx(root)));
 
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/README.md'), true);
-    assert.equal(await fileExists(root, '.specs/canonical/index.json'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/README.md'), true);
+    assert.equal(await fileExists(root, '.sdd/canonical/index.json'), true);
 
     const drift = await exitCodeOf(() => render(ctx(root, [], { check: true })));
     assert.equal(drift, 0);
@@ -489,7 +489,7 @@ test('[I1][INV-3] init produces the exact minimal tree', async () => {
   const root = await makeWorkspace();
   try {
     await silently(() => init(ctx(root)));
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
   } finally {
     await cleanup(root);
   }
@@ -505,7 +505,7 @@ test('[I4][INV-4][INV-3] validate passes with and without knowledge/', async () 
 
     // knowledge/ is authored content, outside the graph — never required.
     await writeFiles(root, {
-      '.specs/knowledge/decisions/product/PDR-TEST.md': '# PDR-TEST\n',
+      '.sdd/knowledge/decisions/product/PDR-TEST.md': '# PDR-TEST\n',
     });
     assert.equal(await exitCodeOf(() => validate(ctx(root))), 0);
     process.exitCode = 0;

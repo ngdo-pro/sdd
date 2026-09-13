@@ -1,17 +1,15 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import { listFeatures, listInitiatives, listSpecs } from '../core/artifact.js';
-import { SPECS_DIRNAME, canonicalRoot, exists } from '../core/paths.js';
+import { UsageError } from '../core/errors.js';
+import { canonicalRoot, exists } from '../core/paths.js';
 import { modelRelativePaths } from '../model/layout.js';
 import { createMeta } from '../model/schema.js';
-import { saveArtifact } from '../model/store.js';
-import { extractSpecSlugs, parseArtifactDocument } from './parse.js';
+import { loadModel, saveArtifact } from '../model/store.js';
+import { extractParentInitiative, extractSpecSlugs, parseArtifactDocument } from './parse.js';
+import { LEGACY_ROOT_DIRNAME, listFeatures, listInitiatives, listSpecs } from './v2-layout.js';
+import { gateAndRetire } from './migrate.js';
 
-// FROZEN v2 scanner, kept on minimal life-support until the feature 03
-// rework (`spec migrate`): it still READS the legacy v2 markdown layout, but
-// writes through the stateless v3 store, so specs need a fully derived
-// `relations` (feature + initiative) and the skip-check resolves canonical
-// paths. Do not grow this file.
+const TOKEN_RE = /\.specs\//g;
 
 async function readFileSafe(file) {
   try {
@@ -25,97 +23,204 @@ function pruneNulls(object) {
   return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== null && value !== undefined));
 }
 
+function countTokens(content) {
+  return (content.match(TOKEN_RE) ?? []).length;
+}
+
+/** Literal root-token rewrite applied to every imported document (INV-3). */
+function rewriteTokens(content) {
+  return content.replace(TOKEN_RE, '.sdd/');
+}
+
+/** Rewrites the root token across an imported body and its field values. */
+function rewriteParsed(parsed) {
+  return {
+    ...parsed,
+    body: rewriteTokens(parsed.body ?? ''),
+    fields: Object.fromEntries(
+      Object.entries(parsed.fields ?? {}).map(([key, value]) => [
+        key,
+        typeof value === 'string' ? rewriteTokens(value) : value,
+      ]),
+    ),
+  };
+}
+
 /**
- * Imports existing `.specs/` markdown documents into the canonical model.
- * Existing model files are preserved unless `force` is set.
- * @returns {Promise<Array<{ slug: string, status: string }>>}
+ * A JSON model in the legacy root forbids `spec import`: the importer derives
+ * its destinations from markdown document content, which would violate INV-2
+ * on top of an existing model — `spec migrate` owns that conversion.
  */
-export async function importMarkdown(cwd, { force = false } = {}) {
+async function assertNoJsonModel(cwd) {
+  const canonicalIndex = path.join(cwd, LEGACY_ROOT_DIRNAME, 'canonical', 'index.json');
+  const modelIndex = path.join(cwd, LEGACY_ROOT_DIRNAME, 'model', 'index.json');
+  if ((await exists(canonicalIndex)) || (await exists(modelIndex))) {
+    throw new UsageError(
+      'A JSON model already exists (.specs/canonical/index.json or .specs/model/index.json) — '
+      + 'run `spec migrate` instead: it reconstructs .sdd/ from the model metadata.',
+    );
+  }
+}
+
+/**
+ * Imports legacy `.specs/` markdown documents into the canonical model under
+ * `.sdd/`, then finishes through the shared strict gate: index + projections
+ * regenerated, `validate`/`render --check` enforced, `.specs/` retired on
+ * success (failure marker otherwise).
+ *
+ * Relations are derived from the CONTENT (`## 6.` → spec; Parent Initiative
+ * block → feature), never from the disk position. Bodies and field values
+ * are token-rewritten (`.specs/` → `.sdd/`). Refuses (exit 2) when a JSON
+ * model exists — `spec migrate` owns that conversion.
+ *
+ * @returns {Promise<object>} `{ dryRun, results, rewrites?, removals?, artifacts? }`
+ */
+export async function importMarkdown(cwd, { force = false, dryRun = false } = {}) {
+  await assertNoJsonModel(cwd);
+
   const specs = await listSpecs(cwd);
   const initiatives = await listInitiatives(cwd);
   const features = await listFeatures(cwd);
 
-  // Features reference their specs in the generated `## 6.` section — reuse
-  // that to rebuild the spec → feature → initiative relations the model needs.
+  // Features reference their specs in the generated `## 6.` section and
+  // declare their initiative in the Parent Initiative block — both derived
+  // from CONTENT (INV-2), never from the position on disk.
   const specToFeature = new Map();
+  const featureToInitiative = new Map();
   for (const feature of features) {
-    const content = await readFileSafe(path.join(cwd, feature.path));
-    for (const slug of extractSpecSlugs(content)) specToFeature.set(slug, feature.slug);
+    const body = await readFileSafe(path.join(cwd, feature.path));
+    for (const slug of extractSpecSlugs(body)) specToFeature.set(slug, feature.slug);
+    featureToInitiative.set(feature.slug, extractParentInitiative(body));
   }
-  const featureToInitiative = new Map(
-    features.map((feature) => [feature.slug, feature.meta?.initiative ?? null]),
-  );
 
-  const results = [];
-
-  async function persist({ kind, slug, title, state, relations }, parsed) {
-    const candidate = createMeta({
-      kind,
-      slug,
-      title: parsed.title ?? title,
-      state,
-      relations: pruneNulls(relations ?? {}),
-      fields: parsed.fields,
+  const documents = [];
+  for (const entry of specs) {
+    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, entry.path)), 'spec');
+    const featureSlug = specToFeature.get(entry.slug) ?? null;
+    documents.push({
+      kind: 'spec',
+      slug: entry.slug,
+      title: parsed.title ?? entry.slug,
+      state: entry.state,
+      relations: { feature: featureSlug, initiative: featureToInitiative.get(featureSlug) ?? null },
+      parsed,
+      source: entry.path,
     });
-
-    let relativeMeta = null;
-    try {
-      relativeMeta = modelRelativePaths(candidate).meta;
-    } catch {
-      relativeMeta = null; // un-derivable (incomplete relations): always import
-    }
-
-    if (!force && relativeMeta && (await exists(path.join(canonicalRoot(cwd), relativeMeta)))) {
-      results.push({ slug, kind, status: 'skipped' });
-      return;
-    }
-
-    await saveArtifact(cwd, candidate, parsed.body);
-    results.push({ slug, kind, status: 'imported' });
+  }
+  for (const entry of features) {
+    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, entry.path)), 'feature');
+    documents.push({
+      kind: 'feature',
+      slug: entry.slug,
+      title: parsed.title ?? entry.slug,
+      state: entry.state,
+      relations: { initiative: featureToInitiative.get(entry.slug) ?? entry.meta?.initiative ?? null },
+      parsed,
+      source: entry.path,
+    });
+  }
+  for (const entry of initiatives) {
+    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, entry.path)), 'initiative');
+    documents.push({
+      kind: 'initiative',
+      slug: entry.slug,
+      title: parsed.title ?? entry.slug,
+      state: entry.state,
+      relations: {},
+      parsed,
+      source: entry.path,
+    });
   }
 
-  const visionFile = path.join(cwd, SPECS_DIRNAME, 'vision.md');
+  const visionFile = path.join(cwd, LEGACY_ROOT_DIRNAME, 'vision.md');
   if (await exists(visionFile)) {
     const parsed = parseArtifactDocument(await fsp.readFile(visionFile, 'utf8'), 'vision');
-    await persist({ kind: 'vision', slug: 'vision', title: 'Product Vision' }, parsed);
+    documents.push({
+      kind: 'vision',
+      slug: 'vision',
+      title: parsed.title ?? 'Product Vision',
+      state: null,
+      relations: {},
+      parsed,
+      source: '.specs/vision.md',
+    });
   }
 
-  for (const initiative of initiatives) {
-    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, initiative.path)), 'initiative');
-    await persist(
-      { kind: 'initiative', slug: initiative.slug, title: initiative.slug, state: initiative.state },
-      parsed,
+  // INV-2: every imported artifact must land on a derivable canonical path.
+  const unresolved = [];
+  for (const document of documents) {
+    try {
+      modelRelativePaths(createMeta({
+        kind: document.kind,
+        slug: document.slug,
+        title: document.title,
+        state: document.state,
+        relations: pruneNulls(document.relations ?? {}),
+      }));
+    } catch {
+      unresolved.push(document);
+    }
+  }
+  if (unresolved.length > 0) {
+    const labels = unresolved.map((entry) => `${entry.kind} ${entry.slug}`).join(', ');
+    throw new UsageError(
+      `${unresolved.length} document(s) have no derivable parent (${labels}) — `
+      + 'restore or link the missing feature/initiative documents before importing.',
     );
   }
 
-  for (const feature of features) {
-    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, feature.path)), 'feature');
-    await persist(
-      {
-        kind: 'feature',
-        slug: feature.slug,
-        title: feature.slug,
-        state: feature.state,
-        relations: { initiative: feature.meta?.initiative },
-      },
-      parsed,
-    );
+  // Token rewrites (INV-3): bodies and field values, every rewrite listed.
+// Token rewrites (INV-3): bodies, string field values — counted BEFORE the
+// rewrite (the rewritten content no longer carries the legacy token).
+const rewrites = [];
+for (const document of documents) {
+  const parsed = document.parsed ?? {};
+  const occurrences = countTokens(parsed.body ?? '')
+    + Object.values(parsed.fields ?? {})
+      .reduce((sum, value) => sum + (typeof value === 'string' ? countTokens(value) : 0), 0);
+  document.rewritten = rewriteParsed(parsed);
+  if (occurrences > 0) rewrites.push({ file: document.source, occurrences });
+}
+
+  if (dryRun) {
+    return {
+      dryRun: true,
+      results: documents.map((document) => ({ kind: document.kind, slug: document.slug, status: 'planned' })),
+      rewrites,
+      removals: [`${LEGACY_ROOT_DIRNAME}/ (whole tree, after strict gate)`],
+    };
   }
 
-  for (const spec of specs) {
-    const parsed = parseArtifactDocument(await readFileSafe(path.join(cwd, spec.path)), 'spec');
-    const featureSlug = specToFeature.get(spec.slug) ?? null;
-    await persist(
-      {
-        kind: 'spec',
-        slug: spec.slug,
-        title: spec.slug,
-        state: spec.state,
-        relations: { feature: featureSlug, initiative: featureToInitiative.get(featureSlug) ?? null },
-      },
-      parsed,
-    );
+  if (documents.length === 0) {
+    // Nothing to convert: never run the finish (gate + source retirement)
+    // over an empty conversion — the CLI reports "nothing to import".
+    return { dryRun: false, results: [], artifacts: (await loadModel(cwd)).length, rewrites: [] };
   }
 
-  return results;
+  const results = [];
+  for (const document of documents) {
+    const candidate = createMeta({
+      kind: document.kind,
+      slug: document.slug,
+      title: document.title,
+      state: document.state,
+      relations: pruneNulls(document.relations ?? {}),
+      fields: document.rewritten.fields ?? {},
+    });
+
+    const relativeMeta = modelRelativePaths(candidate).meta;
+    if (!force && (await exists(path.join(canonicalRoot(cwd), relativeMeta)))) {
+      results.push({ kind: document.kind, slug: document.slug, status: 'skipped' });
+      continue;
+    }
+
+    await saveArtifact(cwd, candidate, document.rewritten.body);
+    results.push({ kind: document.kind, slug: document.slug, status: 'imported' });
+  }
+
+  // Shared finish (INV-4): index + projections + strict gate + source removal.
+  const artifacts = await loadModel(cwd);
+  await gateAndRetire(cwd, artifacts);
+
+  return { dryRun: false, results, artifacts: artifacts.length, rewrites };
 }

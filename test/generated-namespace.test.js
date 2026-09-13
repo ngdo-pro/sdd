@@ -146,13 +146,13 @@ test('[U1][INV-1] projection paths derive from relations alone, under generated/
 test('[U2][INV-1] generatedRoot, exhaustive root and untouched init layout', async () => {
   const root = await makeWorkspace();
   try {
-    assert.equal(generatedRoot(root), path.join(root, '.specs', 'generated'));
+    assert.equal(generatedRoot(root), path.join(root, '.sdd', 'generated'));
     assert.deepEqual([...ALLOWED_ROOT_ENTRIES], ['config.json', 'canonical', 'generated', 'knowledge']);
 
     // `spec init` still pre-allocates nothing beyond the canonical store.
-    assert.deepEqual(standardLayout(root), [path.join(root, '.specs'), path.join(root, '.specs', 'canonical')]);
+    assert.deepEqual(standardLayout(root), [path.join(root, '.sdd'), path.join(root, '.sdd', 'canonical')]);
     await silently(() => init(ctx(root)));
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
   } finally {
     await cleanup(root);
   }
@@ -162,12 +162,12 @@ test('[U3][INV-2] the prune removes an orphan projection from generated/ and lis
   const root = await makeWorkspace();
   try {
     await seedModelAndRender(root);
-    await writeFiles(root, { '.specs/generated/initiatives/notes.md': '# Notes\n' });
+    await writeFiles(root, { '.sdd/generated/initiatives/notes.md': '# Notes\n' });
 
     const results = await renderProjections(root, await loadModel(root));
     const orphan = results.find((entry) => entry.kind === 'orphan');
 
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/notes.md'), false);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/notes.md'), false);
     assert.deepEqual(
       { kind: orphan.kind, status: orphan.status, path: orphan.path },
       { kind: 'orphan', status: 'removed', path: 'generated/initiatives/notes.md' },
@@ -198,64 +198,57 @@ test('[C1][INV-2] move regenerates at the same projection path — no rename, no
   const root = await makeWorkspace();
   try {
     await seedModelAndRender(root, 'planned');
-    const canonicalBefore = await listPaths(root, '.specs/canonical');
-    const generatedBefore = await listPaths(root, '.specs/generated');
-    const projectionBefore = await snapshot(root, '.specs/generated');
+    const canonicalBefore = await listPaths(root, '.sdd/canonical');
+    const generatedBefore = await listPaths(root, '.sdd/generated');
+    const projectionBefore = await snapshot(root, '.sdd/generated');
 
     await silently(() => move(ctx(root, ['042'], { to: 'active' })));
 
     // Same path — no projection renamed, removed, or re-created. A spec
     // projection renders no lifecycle field, so its content is even
     // bit-identical: transitions live in metadata and the index only.
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
-    assert.deepEqual(await listPaths(root, '.specs/generated'), generatedBefore);
-    assert.deepEqual(await listPaths(root, '.specs/canonical'), canonicalBefore);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
+    assert.deepEqual(await listPaths(root, '.sdd/generated'), generatedBefore);
+    assert.deepEqual(await listPaths(root, '.sdd/canonical'), canonicalBefore);
     assert.equal(
-      await fsp.readFile(path.join(root, '.specs/generated/initiatives/demo/specs/042.md'), 'utf8'),
-      projectionBefore['.specs/generated/initiatives/demo/specs/042.md'],
+      await fsp.readFile(path.join(root, '.sdd/generated/initiatives/demo/specs/042.md'), 'utf8'),
+      projectionBefore['.sdd/generated/initiatives/demo/specs/042.md'],
     );
   } finally {
     await cleanup(root);
   }
 });
 
-test('[C2][INV-2] render converts a v2 workspace: generated/ written, v2 tree swept', async () => {
+test('[C2][INV-2] render writes generated/ and leaves legacy entries to spec migrate', async () => {
   const root = await makeWorkspace();
   try {
     await seedModelAndRender(root);
+    // Legacy v2-named entries parked at the .sdd/ root: the render's horizon
+    // is generated/ ONLY — the v2 sweep was retired with the .sdd/ cutover.
     await writeFiles(root, {
-      '.specs/config.json': JSON.stringify({ version: 2 }),
-      '.specs/vision.md': '# Product Vision: Demo\n',
-      '.specs/specs/active/042-login.md': '# Spec: 042 - Magic link\n',
-      '.specs/initiatives/active/demo/README.md': '# Initiative: Demo\n',
-      '.specs/initiatives/active/demo/active/01-login.md': '# Feature: Login\n',
+      '.sdd/config.json': JSON.stringify({ version: 2 }),
+      '.sdd/vision.md': '# Product Vision: Demo\n',
+      '.sdd/specs/active/042-login.md': '# Spec: 042 - Magic link\n',
+      '.sdd/initiatives/active/demo/README.md': '# Initiative: Demo\n',
+      '.sdd/initiatives/active/demo/active/01-login.md': '# Feature: Login\n',
     });
 
     const results = await renderProjections(root, await loadModel(root));
 
-    // Every expected projection is written under generated/, vision included.
-    assert.equal(await fileExists(root, '.specs/generated/vision.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/README.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/features/01-login.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
+    // Every expected projection is (re)written under generated/, vision included.
+    assert.equal(await fileExists(root, '.sdd/generated/vision.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/README.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/features/01-login.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
 
-    // The whole legacy v2 tree is swept, listed, empty dirs pruned.
-    assert.equal(await fileExists(root, '.specs/vision.md'), false);
-    assert.equal(await fileExists(root, '.specs/specs'), false);
-    assert.equal(await fileExists(root, '.specs/initiatives'), false);
-    assert.deepEqual(
-      results.filter((entry) => entry.status === 'removed').map((entry) => entry.path).sort(),
-      [
-        'initiatives/active/demo/README.md',
-        'initiatives/active/demo/active/01-login.md',
-        'specs/active/042-login.md',
-        'vision.md',
-      ],
-    );
+    // The legacy tree is untouched — no sweep. `spec migrate` owns conversion.
+    assert.equal(await fileExists(root, '.sdd/vision.md'), true);
+    assert.equal(await fileExists(root, '.sdd/specs/active/042-login.md'), true);
+    assert.equal(await fileExists(root, '.sdd/initiatives/active/demo/README.md'), true);
+    assert.equal(results.some((entry) => entry.kind === 'orphan' && entry.status === 'removed'), false);
 
     // Authored content is out of the render's reach.
-    assert.equal(await fileExists(root, '.specs/config.json'), true);
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/demo/demo.json'), true);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/demo/demo.json'), true);
   } finally {
     await cleanup(root);
   }
@@ -264,21 +257,19 @@ test('[C2][INV-2] render converts a v2 workspace: generated/ written, v2 tree sw
 test('[C3][INV-2] render --dry-run previews removals without writing anything', async () => {
   const root = await makeWorkspace();
   try {
-    // A v2 workspace with legacy projections and no generated/ yet.
+    // An orphan under generated/ only: legacy entries are outside the horizon.
     await seedModel(root, FULL_FIXTURE);
-    await writeFiles(root, {
-      '.specs/vision.md': '# Product Vision: Demo\n',
-      '.specs/specs/planned/042-login.md': '# Spec: 042 - Magic link\n',
-    });
-    const before = await snapshot(root, '.specs');
+    await renderProjections(root, await loadModel(root));
+    await writeFiles(root, { '.sdd/generated/stray.md': '# Stray\n' });
+    const before = await snapshot(root, '.sdd');
 
     const results = await renderProjections(root, await loadModel(root), { dryRun: true });
 
-    assert.deepEqual(await snapshot(root, '.specs'), before);
-    assert.equal(results.filter((entry) => entry.status === 'created').length, 4);
+    assert.deepEqual(await snapshot(root, '.sdd'), before);
+    assert.equal(results.filter((entry) => entry.status === 'created').length, 0);
     assert.deepEqual(
       results.filter((entry) => entry.status === 'removed').map((entry) => entry.path).sort(),
-      ['specs/planned/042-login.md', 'vision.md'],
+      ['generated/stray.md'],
     );
   } finally {
     await cleanup(root);
@@ -291,9 +282,9 @@ test('[C4][INV-3] render --check fails on any generated/ drift and on it alone',
     await seedModelAndRender(root);
 
     // Stale + missing projections, plus a parasite under knowledge/ (out of scope).
-    await fsp.writeFile(path.join(root, '.specs/generated/vision.md'), 'tampered\n', 'utf8');
-    await fsp.rm(path.join(root, '.specs/generated/initiatives/demo/specs/042.md'));
-    await writeFiles(root, { '.specs/knowledge/domains/auth/stray.md': '# Stray\n' });
+    await fsp.writeFile(path.join(root, '.sdd/generated/vision.md'), 'tampered\n', 'utf8');
+    await fsp.rm(path.join(root, '.sdd/generated/initiatives/demo/specs/042.md'));
+    await writeFiles(root, { '.sdd/knowledge/domains/auth/stray.md': '# Stray\n' });
 
     const drift = await renderProjections(root, await loadModel(root), { check: true });
     assert.deepEqual(
@@ -309,7 +300,7 @@ test('[C4][INV-3] render --check fails on any generated/ drift and on it alone',
     assert.equal(drift.some((entry) => entry.path.includes('knowledge/')), false);
 
     // An unexpected markdown under generated/ is reported as an orphan finding.
-    await writeFiles(root, { '.specs/generated/stray.md': '# Stray\n' });
+    await writeFiles(root, { '.sdd/generated/stray.md': '# Stray\n' });
     const unexpected = await renderProjections(root, await loadModel(root), { check: true });
     const found = unexpected.find((entry) => entry.path === 'generated/stray.md');
     assert.deepEqual({ kind: found.kind, status: found.status }, { kind: 'orphan', status: 'unexpected' });
@@ -322,7 +313,7 @@ test('[C5][INV-1] validate enforces the exhaustive root and tolerates dotfiles',
   const root = await makeWorkspace();
   try {
     await seedModelAndRender(root);
-    await writeFiles(root, { '.specs/docs/notes.md': '# Notes\n', '.specs/.DS_Store': '' });
+    await writeFiles(root, { '.sdd/docs/notes.md': '# Notes\n', '.sdd/.DS_Store': '' });
 
     const { output, exitCode } = await capturingExitCode(() => validate(ctx(root)));
     assert.match(output, /\[root-layout\]/);
@@ -340,19 +331,19 @@ test('[C6][INV-4] projections.markdown false cuts every markdown projection writ
   try {
     await silently(() => init(ctx(root)));
     await writeFiles(root, {
-      '.specs/config.json': JSON.stringify({ version: 2, projections: { markdown: false } }),
+      '.sdd/config.json': JSON.stringify({ version: 2, projections: { markdown: false } }),
     });
 
     await silently(() => upsert(ctx(root, ['initiative'], { slug: 'demo', title: 'Demo' })));
 
     // No markdown outside canonical/; the index is still regenerated.
-    assert.equal(await fileExists(root, '.specs/generated'), false);
-    assert.equal(await fileExists(root, '.specs/canonical/initiatives/demo/demo.json'), true);
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
+    assert.equal(await fileExists(root, '.sdd/generated'), false);
+    assert.equal(await fileExists(root, '.sdd/canonical/initiatives/demo/demo.json'), true);
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
     assert.equal(index.artifacts.length, 1);
 
     await silently(() => render(ctx(root)));
-    assert.equal(await fileExists(root, '.specs/generated'), false);
+    assert.equal(await fileExists(root, '.sdd/generated'), false);
 
     // --check exits 0 vacuously (zero projection expected or verified).
     assert.equal(await exitCodeOf(() => render(ctx(root, [], { check: true }))), 0);
@@ -376,32 +367,32 @@ test('[I1][INV-1][INV-2] full CLI cycle: exact and stable generated tree', async
     await silently(() => upsert(ctx(root, ['spec'], { slug: '042-login', title: 'Magic link', feature: '01-login' })));
 
     const expectedTree = [
-      '.specs/generated/initiatives',
-      '.specs/generated/initiatives/demo',
-      '.specs/generated/initiatives/demo/README.md',
-      '.specs/generated/initiatives/demo/features',
-      '.specs/generated/initiatives/demo/features/01-login.md',
-      '.specs/generated/initiatives/demo/specs',
-      '.specs/generated/initiatives/demo/specs/042.md',
-      '.specs/generated/vision.md',
+      '.sdd/generated/initiatives',
+      '.sdd/generated/initiatives/demo',
+      '.sdd/generated/initiatives/demo/README.md',
+      '.sdd/generated/initiatives/demo/features',
+      '.sdd/generated/initiatives/demo/features/01-login.md',
+      '.sdd/generated/initiatives/demo/specs',
+      '.sdd/generated/initiatives/demo/specs/042.md',
+      '.sdd/generated/vision.md',
     ].sort();
-    assert.deepEqual(await listPaths(root, '.specs/generated'), expectedTree);
+    assert.deepEqual(await listPaths(root, '.sdd/generated'), expectedTree);
 
     // Every move regenerates content at the same paths — no projection file
     // is ever created or deleted by a transition.
     for (const [reference, to] of [['demo', 'active'], ['01-login', 'active'], ['042', 'active']]) {
       await silently(() => move(ctx(root, [reference], { to })));
-      assert.deepEqual(await listPaths(root, '.specs/generated'), expectedTree);
+      assert.deepEqual(await listPaths(root, '.sdd/generated'), expectedTree);
     }
 
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
     assert.deepEqual(
       index.artifacts.map((artifact) => artifact.projection).sort(),
       [
-        '.specs/generated/initiatives/demo/README.md',
-        '.specs/generated/initiatives/demo/features/01-login.md',
-        '.specs/generated/initiatives/demo/specs/042.md',
-        '.specs/generated/vision.md',
+        '.sdd/generated/initiatives/demo/README.md',
+        '.sdd/generated/initiatives/demo/features/01-login.md',
+        '.sdd/generated/initiatives/demo/specs/042.md',
+        '.sdd/generated/vision.md',
       ],
     );
   } finally {
@@ -415,7 +406,7 @@ test('[I2][INV-1] validate is green on the exhaustive root, flags violations oth
     await seedModelAndRender(root);
     assert.equal(await exitCodeOf(() => validate(ctx(root))), 0);
 
-    await writeFiles(root, { '.specs/legacy/old.md': '# Old\n' });
+    await writeFiles(root, { '.sdd/legacy/old.md': '# Old\n' });
     const { output, exitCode } = await capturingExitCode(() => validate(ctx(root)));
     assert.match(output, /\[root-layout\]/);
     assert.match(output, /legacy\/"/);

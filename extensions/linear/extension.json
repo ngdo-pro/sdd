@@ -12,7 +12,7 @@
     "env": "LINEAR_API_KEY",
     "setting": "settings.apiKey"
   },
-  "remoteRefs": "artifact.remote.linear (stored in .specs/model/**/<artifact>.json)",
+  "remoteRefs": "artifact.remote.linear (stored in .sdd/canonical/**/<artifact>.json)",
   "settings": {
     "teamKey": "",
     "stateMap": { "planned": "Backlog", "active": "In Progress", "archived": "Done" },

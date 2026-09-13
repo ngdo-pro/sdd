@@ -7,7 +7,7 @@ const LINEAR_ENDPOINT = 'https://api.linear.app/graphql';
  * Linear backend — mirrors local artifacts onto Linear issues.
  *
  * The local filesystem stays the source of truth. Each artifact is linked to at
- * most one Linear issue through `.specs/.remote-map.json`, which keeps the sync
+ * most one Linear issue through `.sdd/.remote-map.json`, which keeps the sync
  * idempotent and committable.
  */
 export default function createLinearBackend({ config, backendConfig }) {
@@ -19,7 +19,7 @@ export default function createLinearBackend({ config, backendConfig }) {
   async function graphql(query, variables) {
     if (!apiKey) {
       throw new BackendError(
-        `Linear backend "${backendId}" has no API key. Export LINEAR_API_KEY or set settings.apiKey in .specs/config.json.`,
+        `Linear backend "${backendId}" has no API key. Export LINEAR_API_KEY or set settings.apiKey in .sdd/config.json.`,
       );
     }
     let response;
@@ -45,7 +45,7 @@ export default function createLinearBackend({ config, backendConfig }) {
   async function getTeam() {
     if (teamCache) return teamCache;
     if (!settings.teamKey) {
-      throw new BackendError(`Linear backend "${backendId}" requires settings.teamKey in .specs/config.json.`);
+      throw new BackendError(`Linear backend "${backendId}" requires settings.teamKey in .sdd/config.json.`);
     }
     const data = await graphql(TEAM_QUERY, { key: settings.teamKey });
     const team = data.teams?.nodes?.[0];
@@ -86,8 +86,8 @@ export default function createLinearBackend({ config, backendConfig }) {
   }
 
   function buildDescription(artifact) {
-    const modelPath = artifact.model?.meta ? `.specs/canonical/${artifact.model.meta}` : '—';
-    const projection = artifact.projection ? `.specs/${artifact.projection}` : '—';
+    const modelPath = artifact.model?.meta ? `.sdd/canonical/${artifact.model.meta}` : '—';
+    const projection = artifact.projection ? `.sdd/${artifact.projection}` : '—';
     return [
       '_Synced by Spec Framework — do not edit structural fields manually._',
       '',

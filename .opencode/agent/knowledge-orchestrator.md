@@ -1,5 +1,5 @@
 ---
-description: Orchestrates post-delivery knowledge capitalization — living documentation (.specs/knowledge/), zero technical drift, ADR/PDR formalization, and clean archiving of completed work.
+description: Orchestrates post-delivery knowledge capitalization — living documentation (.sdd/knowledge/), zero technical drift, ADR/PDR formalization, and clean archiving of completed work.
 mode: subagent
 ---
 

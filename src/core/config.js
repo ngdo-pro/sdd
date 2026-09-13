@@ -2,8 +2,8 @@ import fsp from 'node:fs/promises';
 import { ConfigError } from './errors.js';
 import { CONFIG_FILENAME, configPath, exists, relativeTo } from './paths.js';
 
-/** Current configuration schema version (v2 = model-first). */
-export const CONFIG_VERSION = 2;
+/** Current configuration schema version (v3 = `.sdd/` root, migrated layout). */
+export const CONFIG_VERSION = 3;
 
 /**
  * Default settings for the built-in Linear mirror.
@@ -25,7 +25,7 @@ export const DEFAULT_LINEAR_SETTINGS = {
 };
 
 /**
- * Baseline configuration. The canonical model (`.specs/canonical/`) is always
+ * Baseline configuration. The canonical model (`.sdd/canonical/`) is always
  * the source of truth; `backends` only lists optional remote mirrors.
  */
 export function defaultConfig() {
@@ -44,7 +44,7 @@ export function defaultConfig() {
   };
 }
 
-/** The filesystem is intrinsic in v2 — legacy entries are dropped. */
+/** The filesystem is intrinsic in v3 — legacy entries are dropped. */
 function isIntrinsicBackend(entry) {
   return entry?.type === 'filesystem' || entry?.id === 'filesystem';
 }
@@ -85,7 +85,7 @@ function mergeBackends(baseList, rawList) {
   return result;
 }
 
-/** Normalizes a raw (possibly partial or v1) config onto the v2 defaults. */
+/** Normalizes a raw (possibly partial or legacy) config onto the v3 defaults. */
 export function normalizeConfig(raw = {}) {
   const base = defaultConfig();
   const merged = { ...base, ...raw };
@@ -94,6 +94,38 @@ export function normalizeConfig(raw = {}) {
   merged.projections = { markdown: true, ...(raw.projections ?? {}) };
   merged.backends = mergeBackends(base.backends, raw.backends);
   return merged;
+}
+
+const KNOWN_CONFIG_KEYS = ['version', 'sourceOfTruth', 'projections', 'backends'];
+
+/**
+ * Converts a legacy config onto the v3 schema (INV-3 of `spec migrate`):
+ * drops unknown top-level keys and intrinsic `filesystem` backends — each
+ * removal listed as a warning — and forces `version` to 3. Known keys are
+ * preserved; defaults fill the gaps.
+ * @returns {{ config: object, warnings: string[] }}
+ */
+export function convertConfig(raw = {}) {
+  const warnings = [];
+  const cleaned = { ...raw };
+  for (const key of Object.keys(cleaned)) {
+    if (!KNOWN_CONFIG_KEYS.includes(key)) {
+      warnings.push(`unknown top-level key "${key}" dropped`);
+      delete cleaned[key];
+    }
+  }
+  if (Array.isArray(cleaned.backends)) {
+    const kept = [];
+    for (const entry of cleaned.backends) {
+      if (isIntrinsicBackend(entry)) {
+        warnings.push(`legacy backend "${entry?.id ?? entry?.type ?? 'filesystem'}" dropped (the filesystem is intrinsic in v3)`);
+        continue;
+      }
+      kept.push(entry);
+    }
+    cleaned.backends = kept;
+  }
+  return { config: normalizeConfig(cleaned), warnings };
 }
 
 export async function loadConfig(cwd) {

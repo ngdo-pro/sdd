@@ -5,12 +5,12 @@ import { buildGraph } from '../model/graph.js';
 import { renderDocument } from './markdown.js';
 
 /**
- * Markdown horizons owned by the render step: the `generated/` namespace plus
- * the legacy v2 tree (`specs/`, `initiatives/`, `vision.md`). The three v2
- * entries are only a transitional cutover sweep — no expected projection
- * lives there anymore; they are retired with the feature 03 rework.
+ * Markdown horizons owned by the render step: the `generated/` namespace
+ * alone. The legacy v2 sweep (`specs/`, `initiatives/`, `vision.md`) was
+ * retired with the `.sdd/` cutover (feature 03) — stray legacy entries are
+ * now refused by the `root-layout` rule and recovered via `spec migrate`.
  */
-const MANAGED = ['generated', 'specs', 'initiatives', 'vision.md'];
+const MANAGED = ['generated'];
 
 async function readdirSafe(directory) {
   try {
@@ -60,9 +60,9 @@ async function pruneEmptyDirectories(directory, baseDirectory) {
 
 /**
  * Deletes framework-managed markdown that is no longer a projected artifact:
- * orphans under `generated/` plus the legacy v2 tree swept during the cutover
- * (git is the safety net). With `dryRun`, the removals are only listed.
- * Knowledge and canonical documents are never touched.
+ * orphans under `generated/` (git is the safety net). With `dryRun`, the
+ * removals are only listed. Knowledge and canonical documents are never
+ * touched.
  */
 async function pruneStaleProjections(cwd, expected, { dryRun = false } = {}) {
   const root = specsRoot(cwd);
@@ -85,21 +85,16 @@ async function pruneStaleProjections(cwd, expected, { dryRun = false } = {}) {
 
   if (dryRun) return removed;
 
-  // Empty-directory pruning stays inside each managed horizon: `generated/`
-  // itself is preserved (it is a valid root entry), while the transient v2
-  // directories disappear entirely once swept.
+  // Empty-directory pruning stays inside the managed horizon: `generated/`
+  // itself is preserved (it is a valid root entry).
   await pruneEmptyDirectories(generatedRoot(cwd), generatedRoot(cwd));
-  for (const directory of ['specs', 'initiatives']) {
-    await pruneEmptyDirectories(path.join(root, directory), root);
-  }
 
   return removed;
 }
 
 /**
  * Markdown files under `generated/` that the model no longer projects. With
- * `check` they are reported as drift (`unexpected`) instead of being deleted;
- * the v2 sweep is a write-only behaviour and is never inspected here.
+ * `check` they are reported as drift (`unexpected`) instead of being deleted.
  */
 async function collectUnexpectedProjections(cwd, expected) {
   const root = specsRoot(cwd);
@@ -108,10 +103,10 @@ async function collectUnexpectedProjections(cwd, expected) {
 }
 
 /**
- * Regenerates every markdown projection under `.specs/generated/` from the
+ * Regenerates every markdown projection under `.sdd/generated/` from the
  * model. With `check`, nothing is written and drift is reported instead
  * (stale, missing, unexpected — `generated/` only). With `dryRun`, the full
- * write plan (cutover sweep included) is computed without touching the disk.
+ * write plan is computed without touching the disk.
  * @returns {Promise<Array<{ slug: string, kind: string, status: string, path: string }>>}
  */
 export async function renderProjections(cwd, artifacts, { check = false, prune = true, dryRun = false } = {}) {

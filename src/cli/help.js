@@ -10,22 +10,24 @@ export const VERSION = pkg.version;
 export const HELP = `
   spec — Spec Framework CLI (${VERSION})
 
-  Model-first pipeline: canonical artifacts live in .specs/canonical/ (JSON
+  Model-first pipeline: canonical artifacts live in .sdd/canonical/ (JSON
   metadata + markdown body, stateless layout — lifecycle lives in metadata).
-  Every other output — markdown docs under .specs/generated/, Linear issues —
+  Every other output — markdown docs under .sdd/generated/, Linear issues —
   is a generated projection, and the CLI is their only writer.
 
   USAGE
     spec <command> [options]
 
   COMMANDS
-    init                 Bootstrap .specs/canonical/ + config (nothing else)
-    import               Migrate existing .specs/**/*.md into the model
+    init                 Bootstrap .sdd/canonical/ + config (nothing else)
+    migrate [--dry-run]  Rebuild .sdd/ from a legacy workspace (.specs/) —
+                         strict gate, then the legacy root is retired
+    import               Convert legacy .specs/**/*.md into the model
     upsert <kind>        Create/update an artifact (body via --from)
     move <ref>           Transition an artifact state (model + mirrors)
     done <ref>           Mark delivered, check off parents (--cascade)
     link <ref>           Set a parent relation in the model
-    render [--check]     Regenerate .specs/generated/ projections (CI drift
+    render [--check]     Regenerate .sdd/generated/ projections (CI drift
                          guard); preview the write plan with --dry-run
     model [--write]      Inspect the graph / regenerate index.json
     status [<ref>]       Model state, derived progress, remote mirrors
@@ -59,6 +61,7 @@ export const HELP = `
 
   EXAMPLES
     spec init
+    spec migrate --dry-run && spec migrate
     spec upsert spec --slug 042-login --title "Magic link login" --from draft.md
     spec link 042-login --feature auth-login
     spec move 042-login --to active

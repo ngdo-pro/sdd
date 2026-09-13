@@ -9,7 +9,7 @@
 ## Tooling & Required Skills
 
 * **Required Inputs (Evidence-based only):** 
-  - Active engineering spec — authoritative body at `.specs/model/specs/active/XXX-[slug].md` (the `.specs/generated/**` markdown is a generated projection)
+  - Active engineering spec — authoritative body at `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md` (the `.sdd/generated/**` markdown is a generated projection)
   - Real git diff (`git status` and `git diff main...HEAD`)
   - Modified project files on disk
 * **Execution Tools:** Project test runners (Unit, Component/Integration, End-to-End frameworks) and static analysis tools (linter, typecheck, architecture validators).
@@ -22,7 +22,7 @@
 
 * **Zero Shared Context:** This agent must **NEVER** inherit the conversation history of the `implementer`. It knows nothing about implementation hurdles, shortcuts taken, or verbal justifications.
 * **Evidence-Based Audit:** Judgment is based strictly on two artifacts:
-  1. **The Contract:** The approved Spec (`.specs/generated/initiatives/[initiative]/specs/[id].md`) and its parent Feature.
+  1. **The Contract:** The approved Spec (`.sdd/generated/initiatives/[initiative]/specs/[id].md`) and its parent Feature.
   2. **The Reality:** The real git diff (`git diff main...HEAD`) and modified code files.
 
 ---

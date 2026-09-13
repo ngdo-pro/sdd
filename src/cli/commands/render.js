@@ -1,4 +1,5 @@
 import { loadConfig } from '../../core/config.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { loadModel } from '../../model/store.js';
 import { writeIndex } from '../../model/index.js';
 import { refresh } from '../context.js';
@@ -8,12 +9,15 @@ const DRIFT_STATUSES = new Set(['stale', 'missing', 'unexpected']);
 
 /**
  * `spec render [--check] [--dry-run]` — regenerates every markdown projection
- * under `.specs/generated/` (and the index) from the canonical model.
+ * under `.sdd/generated/` (and the index) from the canonical model.
  * `--check` is the read-only CI guard over `generated/` (exit 1 on stale,
- * missing or unexpected). `--dry-run` previews the full write plan — the v2
- * cutover sweep included — without writing anything.
+ * missing or unexpected). `--dry-run` previews the full write plan without
+ * writing anything. Reads pass through the coexistence lock freely; only the
+ * writing mode is guarded (INV-5).
  */
 export async function render({ cwd, flags }) {
+  const writing = !flags.check && !flags.dryRun;
+  if (writing) assertNoCoexistence(cwd);
   const config = await loadConfig(cwd);
   const artifacts = await loadModel(cwd);
 

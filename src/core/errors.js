@@ -29,6 +29,17 @@ export class TransitionError extends SpecFrameworkError {
   }
 }
 
+/**
+ * Migration failure (`spec migrate`, coexistence guard, unreadable source):
+ * the workspace is left untouched (source kept, marker written by the engine)
+ * and the user is told how to recover.
+ */
+export class MigrationError extends SpecFrameworkError {
+  constructor(message) {
+    super(message, { code: 'MIGRATION_ERROR' });
+  }
+}
+
 export class BackendError extends SpecFrameworkError {
   constructor(message, { code = 'BACKEND_ERROR', exitCode = 1 } = {}) {
     super(message, { code, exitCode });

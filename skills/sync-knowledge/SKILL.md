@@ -9,7 +9,7 @@ Use this skill after an engineering specification has passed all quality gates a
 
 All updated knowledge documents must be maintained in the user's language.
 
-> **Model-first (Rule 7):** the spec, its parent feature and initiative live in `.specs/model/`. Their markdown documents and remote issues are generated projections. Completion propagates **only** through the CLI.
+> **Model-first (Rule 7):** the spec, its parent feature and initiative live in `.sdd/canonical/`. Their markdown documents and remote issues are generated projections. Completion propagates **only** through the CLI.
 
 ---
 
@@ -19,18 +19,18 @@ All updated knowledge documents must be maintained in the user's language.
    ```bash
    spec status [id]
    ```
-   Identify the target domain from its metadata; ensure `.specs/knowledge/domains/[domain]/` exists (initialize if greenfield).
+   Identify the target domain from its metadata; ensure `.sdd/knowledge/domains/[domain]/` exists (initialize if greenfield).
 
 2. **Execute Pillar Synchronizations (knowledge is hand-authored, not modelled):**
-   * **Behavior (`/sync-behavior [id]`):** update `.specs/knowledge/domains/[domain]/behavior.md` (journeys, Mermaid flowchart, business rules, failure matrix). Enforce zero technical pollution.
-   * **Contracts (`/sync-contracts [id]`):** update `.specs/knowledge/domains/[domain]/contracts.md` (endpoints, DTOs, validation schemas).
-   * **Models (`/sync-models [id]`):** update `.specs/knowledge/domains/[domain]/models.md` (aggregates, SQL tables, migrations, ERD).
-   * **Tech (`/sync-tech [id]`):** update `.specs/knowledge/domains/[domain]/tech.md` (patterns, services, security invariants).
+   * **Behavior (`/sync-behavior [id]`):** update `.sdd/knowledge/domains/[domain]/behavior.md` (journeys, Mermaid flowchart, business rules, failure matrix). Enforce zero technical pollution.
+   * **Contracts (`/sync-contracts [id]`):** update `.sdd/knowledge/domains/[domain]/contracts.md` (endpoints, DTOs, validation schemas).
+   * **Models (`/sync-models [id]`):** update `.sdd/knowledge/domains/[domain]/models.md` (aggregates, SQL tables, migrations, ERD).
+   * **Tech (`/sync-tech [id]`):** update `.sdd/knowledge/domains/[domain]/tech.md` (patterns, services, security invariants).
 
 3. **Identify & Formalize Structural Decisions (PDR / ADR):**
    * Scan the delivered delta for non-trivial trade-offs:
-     - **Product / Ergonomic Decision (PDR):** → `.specs/knowledge/decisions/product/PDR-XXX-[slug].md` via `templates/PDR_TEMPLATE.md`.
-     - **Technical / Architectural Decision (ADR):** → `.specs/knowledge/decisions/architecture/ADR-XXX-[slug].md` via `templates/ADR_TEMPLATE.md`.
+     - **Product / Ergonomic Decision (PDR):** → `.sdd/knowledge/decisions/product/PDR-XXX-[slug].md` via `templates/PDR_TEMPLATE.md`.
+     - **Technical / Architectural Decision (ADR):** → `.sdd/knowledge/decisions/architecture/ADR-XXX-[slug].md` via `templates/ADR_TEMPLATE.md`.
    * Ask the user if any ambiguity remains.
 
 4. **Complete & Cascate Through the CLI:**

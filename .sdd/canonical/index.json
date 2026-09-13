@@ -1,0 +1,186 @@
+{
+  "version": 3,
+  "sourceOfTruth": "model",
+  "generatedAt": "2026-09-13T10:42:53.178Z",
+  "artifacts": [
+    {
+      "kind": "feature",
+      "id": "01-canonical-tree",
+      "slug": "01-canonical-tree",
+      "title": "Arborescence canonique v3",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/01-canonical-tree/01-canonical-tree.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/features/01-canonical-tree.md",
+      "relations": {
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "02-generated-namespace",
+      "slug": "02-generated-namespace",
+      "title": "Namespace generated/",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/02-generated-namespace/02-generated-namespace.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/features/02-generated-namespace.md",
+      "relations": {
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "03-sdd-migration",
+      "slug": "03-sdd-migration",
+      "title": "Racine .sdd et migration idempotente",
+      "state": "planned",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/features/03-sdd-migration.md",
+      "relations": {
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "04-static-site",
+      "slug": "04-static-site",
+      "title": "Site statique optionnel",
+      "state": "planned",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/04-static-site/04-static-site.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/features/04-static-site.md",
+      "relations": {
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
+      "kind": "initiative",
+      "id": "layout-v3",
+      "slug": "layout-v3",
+      "title": "SDD Layout v3",
+      "state": "planned",
+      "meta": ".sdd/canonical/initiatives/layout-v3/layout-v3.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/layout-v3.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/README.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 4,
+        "completedChildren": 2,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "001",
+      "slug": "001-canonical-layout",
+      "title": "Layout canonique v3",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/01-canonical-tree/specs/001.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/specs/001.md",
+      "relations": {
+        "feature": "01-canonical-tree",
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "002",
+      "slug": "002-generated-projections",
+      "title": "Projections sous generated/",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/02-generated-namespace/specs/002.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/specs/002.md",
+      "relations": {
+        "feature": "02-generated-namespace",
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "003",
+      "slug": "003-sdd-migration",
+      "title": "Racine .sdd et migration idempotente",
+      "state": "active",
+      "meta": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.json",
+      "body": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.md",
+      "projection": ".sdd/generated/initiatives/layout-v3/specs/003.md",
+      "relations": {
+        "feature": "03-sdd-migration",
+        "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
+      "kind": "vision",
+      "id": "vision",
+      "slug": "vision",
+      "title": "SDD Framework",
+      "state": null,
+      "meta": ".sdd/canonical/vision.json",
+      "body": ".sdd/canonical/vision.md",
+      "projection": ".sdd/generated/vision.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
+      },
+      "remote": {}
+    }
+  ]
+}

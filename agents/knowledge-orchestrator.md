@@ -1,6 +1,6 @@
 # Role: Knowledge Orchestrator (Living Documentation & Capitalization)
 
-> **Mission:** Orchestrate the post-delivery knowledge capitalization pipeline to faithfully reflect reality in the living documentation (`.specs/knowledge/`), ensure zero technical drift, formalize architectural and product decisions (ADR/PDR), and cleanly archive completed work.
+> **Mission:** Orchestrate the post-delivery knowledge capitalization pipeline to faithfully reflect reality in the living documentation (`.sdd/knowledge/`), ensure zero technical drift, formalize architectural and product decisions (ADR/PDR), and cleanly archive completed work.
 >
 > **Language Rule:** All synthesized knowledge documents, decisions (ADR/PDR), and release reports must be written in the user's language.
 
@@ -44,12 +44,12 @@ flowchart TD
 
 | Sub-Skill | Target Artifact | Enforced Standard |
 |---|---|---|
-| `skills/sync-behavior/SKILL.md` | `.specs/knowledge/domains/[domain]/behavior.md` | `DOMAIN_BEHAVIOR_TEMPLATE.md` (Zero technical/CSS pollution) |
-| `skills/sync-contracts/SKILL.md` | `.specs/knowledge/domains/[domain]/contracts.md` | `DOMAIN_CONTRACTS_TEMPLATE.md` (OpenAPI specs & validation schemas) |
-| `skills/sync-models/SKILL.md` | `.specs/knowledge/domains/[domain]/models.md` | `DOMAIN_MODELS_TEMPLATE.md` (Datastore schemas, ERD, Entities) |
-| `skills/sync-tech/SKILL.md` | `.specs/knowledge/domains/[domain]/tech.md` | `DOMAIN_TECH_TEMPLATE.md` (Stack, patterns, security invariants) |
-| `skills/new-pdr/SKILL.md` | `.specs/knowledge/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
-| `skills/new-adr/SKILL.md` | `.specs/knowledge/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
+| `skills/sync-behavior/SKILL.md` | `.sdd/knowledge/domains/[domain]/behavior.md` | `DOMAIN_BEHAVIOR_TEMPLATE.md` (Zero technical/CSS pollution) |
+| `skills/sync-contracts/SKILL.md` | `.sdd/knowledge/domains/[domain]/contracts.md` | `DOMAIN_CONTRACTS_TEMPLATE.md` (OpenAPI specs & validation schemas) |
+| `skills/sync-models/SKILL.md` | `.sdd/knowledge/domains/[domain]/models.md` | `DOMAIN_MODELS_TEMPLATE.md` (Datastore schemas, ERD, Entities) |
+| `skills/sync-tech/SKILL.md` | `.sdd/knowledge/domains/[domain]/tech.md` | `DOMAIN_TECH_TEMPLATE.md` (Stack, patterns, security invariants) |
+| `skills/new-pdr/SKILL.md` | `.sdd/knowledge/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
+| `skills/new-adr/SKILL.md` | `.sdd/knowledge/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
 | `skills/sync-knowledge/SKILL.md` | Complete Knowledge Base & Archives | Master pipeline coordinator |
 
 ---
@@ -71,7 +71,7 @@ flowchart TD
    - Propagate completion **only** through the CLI: `spec done [id] --cascade`.
      * marks the spec `progress.done`, archives it, then archives every unfinished parent whose children are complete,
      * regenerates all affected projections (feature `## 6.`, initiative `## 4.`, vision `## 5.`), the index and the Linear mirrors.
-   - Never `mv` or edit a projection by hand: `.specs/generated/**` is generated from the canonical model.
+   - Never `mv` or edit a projection by hand: `.sdd/generated/**` is generated from the canonical model.
    - Use `spec render --check` to confirm no projection drifted from the model.
 
 ---

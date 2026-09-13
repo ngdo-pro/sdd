@@ -1,6 +1,6 @@
 ---
 name: vision
-description: Frame or update the foundational product vision and core tenets in the canonical model (.specs/model/vision.json + vision.md).
+description: Frame or update the foundational product vision and core tenets in the canonical model (.sdd/canonical/vision.json + vision.md).
 ---
 
 # Skill: vision
@@ -11,14 +11,14 @@ All generated vision content must be authored in the user's language.
 
 The Product Vision is the project's **foundational constitution**. It must remain concise (1 page maximum), impactful, purely product-focused (zero engineering jargon), and serve as an authoritative north star to settle trade-offs.
 
-> **Model-first (Rule 7):** the vision lives in `.specs/model/vision.json` (metadata) + `.specs/model/vision.md` (body). `.specs/generated/vision.md` is a **generated projection** — never edit it.
+> **Model-first (Rule 7):** the vision lives in `.sdd/canonical/vision.json` (metadata) + `.sdd/canonical/vision.md` (body). `.sdd/generated/vision.md` is a **generated projection** — never edit it.
 
 ---
 
 ## Procedure
 
 ### 1. Immersion & Current Baseline
-1. Read the current model with `spec status vision --json` (or `.specs/model/vision.md` if it exists).
+1. Read the current model with `spec status vision --json` (or `.sdd/canonical/vision.md` if it exists).
 2. If no model exists yet, run `spec init` first.
 3. Reference template for the **body sections**: `templates/VISION_TEMPLATE.md`.
 
@@ -44,12 +44,12 @@ Conduct an interactive interview through targeted questions covering the 4 manif
 > - **Sections 1 to 4 only.** `## 5. Strategic Initiatives Roadmap` is **generated** from the graph (rule 7) — never author it.
 
 ### 3. Persist Through the CLI
-1. Write the body (sections 1-4, following `templates/VISION_TEMPLATE.md`) to a scratch file, e.g. `.specs/.draft-vision.md`.
+1. Write the body (sections 1-4, following `templates/VISION_TEMPLATE.md`) to a scratch file, e.g. `.sdd/.draft-vision.md`.
 2. Commit it to the model:
    ```bash
-   spec upsert vision --title "[Product Name]" --from .specs/.draft-vision.md
+   spec upsert vision --title "[Product Name]" --from .sdd/.draft-vision.md
    ```
-3. Delete the scratch file. The CLI regenerates `.specs/generated/vision.md` and the index automatically.
+3. Delete the scratch file. The CLI regenerates `.sdd/generated/vision.md` and the index automatically.
 
 ### 4. Confirmation
 Present a concise summary of the validated trade-offs in the user's language, and confirm the roadmap section was regenerated.

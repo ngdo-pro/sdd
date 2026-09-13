@@ -1,9 +1,15 @@
-/** Machine-specific absolute path patterns forbidden by spec-rules.md rule 1. */
+/**
+ * Machine-specific absolute path patterns forbidden by spec-rules.md rule 1.
+ * The last pattern matches only the ABSOLUTE form (leading slash + `.sdd`),
+ * e.g. an anchored root path; a bare `.sdd/…` mention is workspace-relative
+ * and tolerated.
+ */
 export const ABSOLUTE_PATH_PATTERNS = [
   /\/Users\/\S+/g,
   /\/home\/\S+/g,
   /file:\/\/\/\S+/g,
   /[A-Za-z]:\\\\\S+/g,
+  /\/\.sdd\b/g,
 ];
 
 const INVARIANT_DEF_RE = /\*\*\s*(INV-\d+)/;

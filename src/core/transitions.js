@@ -1,5 +1,4 @@
 import { TransitionError } from './errors.js';
-import { STATE_DIRS } from './paths.js';
 
 /** Legal lifecycle transitions. */
 export const ALLOWED_TRANSITIONS = {
@@ -50,9 +49,4 @@ export function assertTransition(artifact, toState) {
     );
   }
   return true;
-}
-
-/** Canonical state → on-disk directory name. */
-export function stateDir(state) {
-  return STATE_DIRS[state];
 }

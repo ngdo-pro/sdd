@@ -1,6 +1,6 @@
 ---
 name: sync-behavior
-description: Synchronize functional behavior changes from a delivered specification into .specs/knowledge/domains/[domain]/behavior.md.
+description: Synchronize functional behavior changes from a delivered specification into .sdd/knowledge/domains/[domain]/behavior.md.
 ---
 
 # Skill: sync-behavior
@@ -12,8 +12,8 @@ Use this skill to update the functional living documentation of a domain (`/sync
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
-   * Read the existing domain behavior document `.specs/knowledge/domains/[domain]/behavior.md`.
+   * Read the delivered specification `.sdd/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
+   * Read the existing domain behavior document `.sdd/knowledge/domains/[domain]/behavior.md`.
    * If `behavior.md` does not exist, initialize it from `templates/DOMAIN_BEHAVIOR_TEMPLATE.md`.
 
 2. **Extract Functional Delta:**
@@ -29,5 +29,5 @@ Use this skill to update the functional living documentation of a domain (`/sync
    * Ensure language consistency (written in the user's language).
 
 4. **Save & Report:**
-   * Write updated content to `.specs/knowledge/domains/[domain]/behavior.md`.
+   * Write updated content to `.sdd/knowledge/domains/[domain]/behavior.md`.
    * Return a concise summary of behavioral changes synchronized.

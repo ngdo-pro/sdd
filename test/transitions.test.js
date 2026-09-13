@@ -4,7 +4,6 @@ import {
   normalizeState,
   canTransition,
   assertTransition,
-  stateDir,
   STATE_LABELS,
 } from '../src/core/transitions.js';
 import { TransitionError } from '../src/core/errors.js';
@@ -48,12 +47,9 @@ test('assertTransition rejects illegal moves and stateless artifacts', () => {
   );
 });
 
-test('stateDir maps states to on-disk directory names', () => {
-  assert.equal(stateDir('planned'), 'planned');
-  assert.equal(stateDir('active'), 'active');
-  assert.equal(stateDir('archived'), 'archive');
-});
-
 test('STATE_LABELS exposes header labels', () => {
   assert.equal(STATE_LABELS.archived, 'Archived');
 });
+
+// `stateDir()` was removed with the v2 scanners: core/ knows nothing about
+// state-encoded paths anymore (feature 03 rework).

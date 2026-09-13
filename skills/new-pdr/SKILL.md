@@ -13,7 +13,7 @@ The generated PDR document must be authored in the user's language.
 
 ## Procedure
 
-1. Determine the next sequential ID (`PDR-XXX`) in `.specs/knowledge/decisions/product/`.
+1. Determine the next sequential ID (`PDR-XXX`) in `.sdd/knowledge/decisions/product/`.
 2. Use `templates/PDR_TEMPLATE.md`.
 3. Document the user context, evaluated interaction options, chosen decision, and ergonomic trade-offs.
-4. Create the document in `.specs/knowledge/decisions/product/PDR-XXX-[slug].md`.
+4. Create the document in `.sdd/knowledge/decisions/product/PDR-XXX-[slug].md`.

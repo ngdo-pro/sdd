@@ -48,7 +48,7 @@ async function hydrate(root, metaRel, bodyRel) {
 }
 
 /**
- * Loads every canonical artifact from `.specs/canonical/` (recursive walk of
+ * Loads every canonical artifact from `.sdd/canonical/` (recursive walk of
  * `initiatives/**`, vision at the root). The layout is stateless: whatever a
  * file's directory says, its identity comes from the metadata itself.
  * @returns {Promise<Array>} hydrated artifacts (metadata + body + paths)

@@ -1,6 +1,6 @@
 ---
 name: sync-tech
-description: Synchronize architectural patterns, technical components, and security invariants from a delivered specification into .specs/knowledge/domains/[domain]/tech.md.
+description: Synchronize architectural patterns, technical components, and security invariants from a delivered specification into .sdd/knowledge/domains/[domain]/tech.md.
 ---
 
 # Skill: sync-tech
@@ -12,8 +12,8 @@ Use this skill to update the technical architecture and patterns documentation o
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
-   * Read `.specs/knowledge/domains/[domain]/tech.md` (or initialize from `templates/DOMAIN_TECH_TEMPLATE.md`).
+   * Read the delivered specification `.sdd/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
+   * Read `.sdd/knowledge/domains/[domain]/tech.md` (or initialize from `templates/DOMAIN_TECH_TEMPLATE.md`).
 
 2. **Extract Technical Deltas:**
    * **Target Stack & Components:** Add new backend services, UseCases, Ports, Adapters, or frontend query hooks, state stores, and layout components.
@@ -21,5 +21,5 @@ Use this skill to update the technical architecture and patterns documentation o
    * **Associated ADRs:** Link newly introduced or referenced Architecture Decision Records (`ADR-XXX`) using document-relative markdown links (e.g. `[`ADR-XXX`](../../../decisions/architecture/ADR-XXX.md)`).
 
 3. **Save & Report:**
-   * Write updated content to `.specs/knowledge/domains/[domain]/tech.md`.
+   * Write updated content to `.sdd/knowledge/domains/[domain]/tech.md`.
    * Return a concise summary of technical architecture changes synchronized.

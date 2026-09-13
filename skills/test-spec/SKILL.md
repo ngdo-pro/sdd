@@ -5,7 +5,7 @@ description: Audit, design, and synchronize unit, integration, E2E tests, and th
 
 # Skill: test-spec
 
-Use this skill to audit, design, and synchronize tests (unit, integration, E2E) ensuring every behavioral invariant and edge case possesses an automated test AND a matching Gherkin scenario in the active specification (`.specs/generated/initiatives/[initiative]/specs/[id].md`).
+Use this skill to audit, design, and synchronize tests (unit, integration, E2E) ensuring every behavioral invariant and edge case possesses an automated test AND a matching Gherkin scenario in the active specification (`.sdd/generated/initiatives/[initiative]/specs/[id].md`).
 
 ---
 
@@ -20,7 +20,7 @@ Use this skill to audit, design, and synchronize tests (unit, integration, E2E) 
 ## Procedure
 
 ### 1. Cross-Audit: Spec vs Test Code
-* Load the active specification in `.specs/generated/initiatives/[initiative]/specs/[id].md`.
+* Load the active specification in `.sdd/generated/initiatives/[initiative]/specs/[id].md`.
 * Analyze **Section 5 (Business Invariants & Traceability)** and **Section 8.1 (Exhaustive Gherkin Scenarios)**.
 * Inspect existing test suites across the project's testing directories (unit, integration, acceptance/E2E).
 * Identify discrepancies:

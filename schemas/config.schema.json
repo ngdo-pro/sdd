@@ -2,21 +2,21 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/nanko/sdd-framework/schemas/config.schema.json",
   "title": "SDD Framework configuration",
-  "description": "Configuration for the `spec` CLI (.specs/config.json). The canonical model in .specs/model/ is always the source of truth; `backends` lists remote mirrors only.",
+  "description": "Configuration for the `spec` CLI (.sdd/config.json). The canonical model in .sdd/canonical/ is always the source of truth; `backends` lists remote mirrors only.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
-    "version": { "type": "integer", "const": 2 },
+    "version": { "type": "integer", "const": 3 },
     "sourceOfTruth": {
       "type": "string",
       "const": "model",
-      "description": "Always `model`: .specs/model/ holds the canonical artefacts."
+      "description": "Always `model`: .sdd/canonical/ holds the canonical artefacts."
     },
     "projections": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "markdown": { "type": "boolean", "default": true, "description": "Generate the markdown projections under .specs/." }
+        "markdown": { "type": "boolean", "default": true, "description": "Generate the markdown projections under .sdd/." }
       }
     },
     "backends": {

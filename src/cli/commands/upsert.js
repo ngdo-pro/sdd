@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises';
 import { UsageError } from '../../core/errors.js';
 import { KINDS } from '../../core/paths.js';
 import { normalizeState } from '../../core/transitions.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { createMeta } from '../../model/schema.js';
 import { findByRef } from '../../model/store.js';
 import { heading, info, printJson, success } from '../render.js';
@@ -56,6 +57,7 @@ function requireParentFeature(artifacts, featureRef) {
  * `relations.initiative` is always derived from it.
  */
 export async function upsert({ cwd, positionals, flags }) {
+  assertNoCoexistence(cwd); // INV-5: mutations are locked while .specs/ + .sdd/ coexist
   const kind = positionals[0] ?? flags.kind;
   if (!kind || !KINDS.includes(kind)) {
     throw new UsageError(`Usage: spec upsert <${KINDS.join('|')}> --slug <slug> [--from <file|->]`);

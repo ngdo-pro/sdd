@@ -1,11 +1,15 @@
 import { UsageError } from '../../core/errors.js';
 import { assertKnownBackends, getBackendConfig, loadConfig, writeConfig } from '../../core/config.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { heading, info, printJson, success, table } from '../render.js';
 
 /**
  * `spec backend list`
  * `spec backend enable <id>`
  * `spec backend disable <id>`
+ *
+ * `enable`/`disable` mutate `.sdd/config.json` and are locked during a
+ * pending migration (INV-5).
  */
 export async function backend({ cwd, positionals, flags }) {
   const action = positionals[0] ?? 'list';
@@ -16,7 +20,7 @@ export async function backend({ cwd, positionals, flags }) {
       printJson(config.backends);
       return;
     }
-    heading('Mirror backends (canonical source of truth: .specs/canonical/)');
+    heading('Mirror backends (canonical source of truth: .sdd/canonical/)');
     if (config.backends.length === 0) {
       info('No backend registered.');
       return;
@@ -34,13 +38,14 @@ export async function backend({ cwd, positionals, flags }) {
 
   const id = positionals[1];
   if (!id) throw new UsageError(`Usage: spec backend ${action} <id>`);
+  assertNoCoexistence(cwd); // INV-5: config mutations locked during coexistence
   assertKnownBackends(config, [id]);
 
   const entry = getBackendConfig(config, id);
   entry.enabled = action === 'enable';
   await writeConfig(cwd, config);
 
-  success(`Backend "${id}" ${entry.enabled ? 'enabled' : 'disabled'} in .specs/config.json`);
+  success(`Backend "${id}" ${entry.enabled ? 'enabled' : 'disabled'} in .sdd/config.json`);
   if (id === 'linear' && entry.enabled && !entry.settings?.teamKey) {
     info('Set settings.teamKey (and LINEAR_API_KEY) before syncing.');
   }

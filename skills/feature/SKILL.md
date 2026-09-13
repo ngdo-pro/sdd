@@ -11,7 +11,7 @@ All generated feature content must be authored in the user's language.
 
 A **Feature** represents a concrete, cohesive unit of user experience or technical capability ideally sized for **1 engineering Spec Delta** (a few days of implementation). The document must remain concise (**1 page maximum**), visual, and behavior-oriented.
 
-> **Model-first (Rule 7):** the feature lives in `.specs/model/initiatives/<initiative-state>/<initiative>/<feature-state>/<feature>.json` + `<feature>.md`. Markdown under `.specs/generated/initiatives/` is generated.
+> **Model-first (Rule 7):** the feature lives in `.sdd/canonical/initiatives/<initiative>/features/<feature>/<feature>.json` + `<feature>.md` (stateless layout). Markdown under `.sdd/generated/initiatives/` is generated.
 
 ---
 
@@ -19,7 +19,7 @@ A **Feature** represents a concrete, cohesive unit of user experience or technic
 
 ### 1. Immersion
 1. Read the parent initiative: `spec status [initiative] --kind initiative`.
-2. Inspect active domain knowledge in `.specs/knowledge/domains/[domain]/` (hand-authored, not part of the model).
+2. Inspect active domain knowledge in `.sdd/knowledge/domains/[domain]/` (hand-authored, not part of the model).
 3. Check for duplicates: `spec list --kind feature`.
 
 ### 2. Exhaustive Interaction & Invariants Interview (via `ask_question`)
@@ -30,13 +30,13 @@ Clarify all interaction specifics, edge cases, and constraints without artificia
 * **Scope Slicing:** if complexity reveals multiple distinct workflows, propose splitting into smaller features.
 
 ### 3. Persist Through the CLI
-1. Write the **body** (sections 1-5 following `templates/FEATURE_TEMPLATE.md`) to a scratch file, e.g. `.specs/.draft-[feature-slug].md`.
+1. Write the **body** (sections 1-5 following `templates/FEATURE_TEMPLATE.md`) to a scratch file, e.g. `.sdd/.draft-[feature-slug].md`.
    * **Do not author `## 6. Implementation Spec(s)`** — it is generated from the specs linked to this feature.
    * Do not write the header/metadata block (`# Feature:`, `> **Parent Initiative:**`, `> **Status:**`) — the renderer generates it from the model.
 2. Commit it to the model, linking the parent initiative in the same call:
    ```bash
    spec upsert feature --slug [feature-slug] --title "[Feature Name]" \
-        --initiative [initiative-slug] --state planned --from .specs/.draft-[feature-slug].md
+        --initiative [initiative-slug] --state planned --from .sdd/.draft-[feature-slug].md
    ```
 3. Delete the scratch file.
 4. If the relation was not set at creation time, register it explicitly:

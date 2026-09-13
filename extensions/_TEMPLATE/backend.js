@@ -9,7 +9,7 @@ import { BackendError } from '../../src/core/errors.js';
  * @param {object} context
  * @param {string} context.cwd            Workspace root.
  * @param {object} context.config         Full normalized framework config.
- * @param {object} context.backendConfig  This backend's entry in `.specs/config.json`.
+ * @param {object} context.backendConfig  This backend's entry in `.sdd/config.json`.
  */
 export default function createExampleBackend({ backendConfig }) {
   const backendId = backendConfig.id;

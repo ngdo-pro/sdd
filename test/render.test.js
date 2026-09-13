@@ -21,14 +21,14 @@ test('spec documents render a title and a Metadata block', () => {
     slug: '042-login',
     title: 'Magic link',
     state: 'active',
-    fields: { Domain: '`.specs/knowledge/domains/auth/`' },
+    fields: { Domain: '`.sdd/knowledge/domains/auth/`' },
     relations: { feature: '01-login' },
     body: '## 1. Intent\n\nAdd login.',
     projection: 'generated/initiatives/demo/specs/042.md',
   };
   const rendered = renderDocument(artifact, buildGraph([artifact]));
   assert.match(rendered, /^# Spec: 042 - Magic link/m);
-  assert.match(rendered, /\* \*\*Domain:\*\* `\.specs\/knowledge\/domains\/auth\/`/);
+  assert.match(rendered, /\* \*\*Domain:\*\* `\.sdd\/knowledge\/domains\/auth\/`/);
   assert.match(rendered, /\* \*\*Feature:\*\* `01-login`/);
   assert.match(rendered, /## 1\. Intent\n\nAdd login\./);
 });
@@ -118,7 +118,7 @@ test('renderProjections writes files and reports drift under check', async () =>
     const first = await renderProjections(root, artifacts);
     assert.equal(first.every((entry) => entry.status === 'created'), true);
 
-    const content = await readWorkspaceFile(root, '.specs/generated/initiatives/demo/README.md');
+    const content = await readWorkspaceFile(root, '.sdd/generated/initiatives/demo/README.md');
     assert.match(content, /# Initiative: Demo/);
 
     const clean = await renderProjections(root, artifacts, { check: true });

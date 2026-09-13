@@ -2,7 +2,7 @@ import { GENERATED_SECTIONS } from '../render/markdown.js';
 
 const SEPARATOR_RE = /^-{3,}\s*$/;
 const TITLE_PREFIX = {
-  spec: /^Spec:\s*\d{3}\s*-\s*/,
+  spec: /^Spec:\s*\d{3,4}\s*-\s*/,
   initiative: /^Initiative:\s*/,
   feature: /^Feature:\s*/,
   vision: /^Product Vision:\s*/,
@@ -108,9 +108,23 @@ function findBodyStart(lines, headerStart) {
   return metadataEnd === -1 ? headerStart : lines.length;
 }
 
-/** Collects every spec slug referenced in a generated `## 6.` section. */
+/**
+ * Collects every spec slug referenced in a generated `## 6.` section.
+ * Ids beyond 999 (4 digits) are tolerated.
+ */
 export function extractSpecSlugs(content) {
   const slugs = new Set();
-  for (const match of content.matchAll(/\*\*`(\d{3}-[\w-]+)`\*\*/g)) slugs.add(match[1]);
+  for (const match of content.matchAll(/\*\*`(\d{3,4}-[\w-]+)`\*\*/g)) slugs.add(match[1]);
   return [...slugs];
+}
+
+/**
+ * Extracts the parent initiative slug from a legacy feature document's
+ * `> **Parent Initiative:** \`slug\`` blockquote — relations are derived from
+ * the CONTENT during a migration, never from the position on disk.
+ * @returns {string | null}
+ */
+export function extractParentInitiative(content) {
+  const match = content.match(/^>\s*\*\*Parent Initiative:\*\*\s*`([^`]+)`/m);
+  return match ? match[1].trim() : null;
 }

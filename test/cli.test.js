@@ -118,13 +118,13 @@ async function seed(root) {
   await silently(() => upsert(ctx(root, ['spec'], { slug: '042-login', title: 'Magic link', feature: '01-login' })));
 }
 
-test('init bootstraps exactly .specs/, canonical/ and config.json', async () => {
+test('init bootstraps exactly .sdd/, canonical/ and config.json', async () => {
   const root = await makeWorkspace();
   try {
     await silently(() => init(ctx(root)));
-    assert.equal(await fileExists(root, '.specs/config.json'), true);
+    assert.equal(await fileExists(root, '.sdd/config.json'), true);
     // INV-3: exact minimal tree — no state dirs, no model/, no knowledge/.
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
     assert.equal((await loadConfig(root)).sourceOfTruth, 'model');
   } finally {
     await cleanup(root);
@@ -142,10 +142,10 @@ test('upsert creates artifacts with projections and a canonical index', async ()
     assert.equal(spec.relations.feature, '01-login');
     assert.equal(spec.relations.initiative, 'demo');
     assert.equal(spec.model.meta, 'initiatives/demo/features/01-login/specs/042.json');
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
-    assert.equal(await fileExists(root, '.specs/canonical/index.json'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
+    assert.equal(await fileExists(root, '.sdd/canonical/index.json'), true);
 
-    const featureDoc = await fsp.readFile(path.join(root, '.specs/generated/initiatives/demo/features/01-login.md'), 'utf8');
+    const featureDoc = await fsp.readFile(path.join(root, '.sdd/generated/initiatives/demo/features/01-login.md'), 'utf8');
     assert.match(featureDoc, /## 6\. Implementation Spec\(s\)/);
     assert.match(featureDoc, /042-login/);
   } finally {
@@ -187,8 +187,8 @@ test('upsert validates usage and rejects specs without --feature', async () => {
       () => upsert(ctx(root, ['spec'], { slug: '042-x' })),
       (error) => error instanceof UsageError && /spec requires --feature/.test(error.message),
     );
-    assert.equal(await fileExists(root, '.specs/canonical/index.json'), false);
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.equal(await fileExists(root, '.sdd/canonical/index.json'), false);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
   } finally {
     await cleanup(root);
   }
@@ -232,7 +232,7 @@ test('move mutates the state in place: model path and projection path constant',
     assert.equal(after.model.meta, before.model.meta);
     // The projection path no longer depends on any state: same file, updated index.
     assert.equal(after.projection, before.projection);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
   } finally {
     await cleanup(root);
   }
@@ -295,7 +295,7 @@ test('render --check detects drift and render fixes it', async () => {
     });
     assert.equal(clean, 0);
 
-    await fsp.writeFile(path.join(root, '.specs/generated/initiatives/demo/specs/042.md'), 'tampered\n', 'utf8');
+    await fsp.writeFile(path.join(root, '.sdd/generated/initiatives/demo/specs/042.md'), 'tampered\n', 'utf8');
     const drifted = await silently(async () => {
       process.exitCode = 0;
       await render(ctx(root, [], { check: true }));
@@ -305,7 +305,7 @@ test('render --check detects drift and render fixes it', async () => {
     process.exitCode = 0;
 
     await silently(() => render(ctx(root)));
-    const content = await fsp.readFile(path.join(root, '.specs/generated/initiatives/demo/specs/042.md'), 'utf8');
+    const content = await fsp.readFile(path.join(root, '.sdd/generated/initiatives/demo/specs/042.md'), 'utf8');
     assert.match(content, /# Spec: 042 - Magic link/);
   } finally {
     await cleanup(root);
@@ -316,15 +316,15 @@ test('model --write regenerates the canonical index.json', async () => {
   const root = await makeWorkspace();
   try {
     await seed(root);
-    await fsp.rm(path.join(root, '.specs/canonical/index.json'));
+    await fsp.rm(path.join(root, '.sdd/canonical/index.json'));
     await silently(() => model(ctx(root, [], { write: true })));
-    assert.equal(await fileExists(root, '.specs/canonical/index.json'), true);
+    assert.equal(await fileExists(root, '.sdd/canonical/index.json'), true);
 
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
     assert.equal(index.version, 3);
     assert.equal(index.sourceOfTruth, 'model');
     assert.equal(index.artifacts.length, 3);
-    assert.match(index.artifacts[0].meta, /^\.specs\/canonical\//);
+    assert.match(index.artifacts[0].meta, /^\.sdd\/canonical\//);
   } finally {
     await cleanup(root);
   }
@@ -374,6 +374,8 @@ test('validate flags uncovered invariants and missing relations', async () => {
 test('import migrates markdown documents into the canonical model', async () => {
   const root = await makeWorkspace();
   try {
+    // Legacy markdown lives under the LITERAL .specs/ root (import source) —
+    // never routed via SPECS_DIRNAME (watchout: fixtures pin the legacy root).
     await writeFiles(root, {
       '.specs/initiatives/active/demo/README.md': '# Initiative: Demo\n\n> **Initiative Slug:** `demo`  \n> **Status:** Active  \n\n---\n\n## 1. Intent & The Gap\n\nToday: nothing.\n',
       '.specs/initiatives/active/demo/planned/01-login.md': '# Feature: Login\n\n> **Parent Initiative:** `demo`  \n\n---\n\n## 1. Problem & Trigger\n\nUsers need login.\n\n---\n\n## 6. Implementation Spec(s)\n\n- [ ] **`042-login`** : Magic link\n',
@@ -408,29 +410,29 @@ test('[I2][INV-1][INV-2][INV-3] full CLI cycle without any file relocation', asy
   const root = await makeWorkspace();
   try {
     await silently(() => init(ctx(root)));
-    assert.deepEqual(await listPaths(root, '.specs'), ['.specs/canonical', '.specs/config.json']);
+    assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
 
     await silently(() => upsert(ctx(root, ['initiative'], { slug: 'demo', title: 'Demo' })));
     await silently(() => upsert(ctx(root, ['feature'], { slug: '01-login', title: 'Login', initiative: 'demo' })));
     await silently(() => upsert(ctx(root, ['spec'], { slug: '042-login', title: 'Magic link', feature: '01-login' })));
 
-    const canonicalPaths = await listPaths(root, '.specs/canonical');
-    assert.ok(canonicalPaths.includes('.specs/canonical/initiatives/demo/features/01-login/specs/042.json'));
+    const canonicalPaths = await listPaths(root, '.sdd/canonical');
+    assert.ok(canonicalPaths.includes('.sdd/canonical/initiatives/demo/features/01-login/specs/042.json'));
 
     // Dirs are created on the very first write only; transitions never touch them.
     for (const to of ['active', 'archived']) {
       await silently(() => move(ctx(root, ['demo'], { to })));
       await silently(() => move(ctx(root, ['01-login'], { to })));
       await silently(() => move(ctx(root, ['042'], { to })));
-      assert.deepEqual(await listPaths(root, '.specs/canonical'), canonicalPaths);
+      assert.deepEqual(await listPaths(root, '.sdd/canonical'), canonicalPaths);
     }
 
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
     assert.deepEqual(
       Object.fromEntries(index.artifacts.map((artifact) => [artifact.slug, artifact.state])),
       { demo: 'archived', '01-login': 'archived', '042-login': 'archived' },
     );
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
   } finally {
     await cleanup(root);
   }
@@ -495,10 +497,10 @@ test('[E1][INV-1..INV-7] full user journey from a blank workspace', async () => 
     assert.equal(findByRef(artifacts, 'layout-v3', { kind: 'initiative' }).state, 'archived');
 
     // No lifecycle directory anywhere under canonical/.
-    const paths = await listPaths(root, '.specs/canonical');
+    const paths = await listPaths(root, '.sdd/canonical');
     assert.equal(paths.some((relative) => /(^|\/)(planned|active|archive)(\/|$)/.test(relative)), false);
 
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
     assert.equal(index.artifacts.every((artifact) => artifact.state === 'archived'), true);
 
     const exitCode = await silently(async () => {
@@ -518,30 +520,30 @@ test('[E2][INV-2] move idempotence: re-run and dry-run are side-effect free', as
   try {
     await seed(root);
     await silently(() => move(ctx(root, ['042-login'], { to: 'archived' })));
-    const before = await snapshot(root, '.specs');
-    const beforeIndex = indexFingerprint(before['.specs/canonical/index.json']);
+    const before = await snapshot(root, '.sdd');
+    const beforeIndex = indexFingerprint(before['.sdd/canonical/index.json']);
 
     // Re-run on an already-archived artifact: no error, no change.
     await silently(() => move(ctx(root, ['042-login'], { to: 'archived' })));
-    let after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete before['.specs/canonical/index.json'];
-    delete after['.specs/canonical/index.json'];
+    let after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete before['.sdd/canonical/index.json'];
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
 
     // Dry-run: same guarantee + explicit no-op message.
     const output = await capturing(() => move(ctx(root, ['042-login'], { to: 'archived', dryRun: true })));
     assert.match(output, /\(dry-run: nothing was written\)/);
-    after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete after['.specs/canonical/index.json'];
+    after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
 
     // A second real move is still a no-op.
     await silently(() => move(ctx(root, ['042-login'], { to: 'archived' })));
-    after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete after['.specs/canonical/index.json'];
+    after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
   } finally {
     await cleanup(root);
@@ -552,17 +554,18 @@ test('[E2][INV-2] move idempotence: re-run and dry-run are side-effect free', as
 // End-to-End Tests (@e2e) — feature 02-generated-namespace, §8.1 scenarios E1, E2
 // ============================================================================
 
-test('[E1][INV-1..INV-4] cutover of a v2 workspace to generated/', async () => {
+test('[E1][INV-1..INV-4] render writes generated/ and hands legacy entries to spec migrate', async () => {
   const root = await makeWorkspace();
   try {
-    // A canonical model up to date, plus the legacy v2 projection tree.
+    // A canonical model up to date, plus legacy v2-named entries parked at
+    // the .sdd/ root: the render never sweeps them (horizon = generated/).
     await seed(root);
     await silently(() => upsert(ctx(root, ['vision'], {})));
     await writeFiles(root, {
-      '.specs/vision.md': '# Product Vision: Demo\n',
-      '.specs/specs/planned/042-login.md': '# Spec: 042 - Magic link\n',
-      '.specs/initiatives/planned/demo/README.md': '# Initiative: Demo\n',
-      '.specs/initiatives/planned/demo/planned/01-login.md': '# Feature: Login\n',
+      '.sdd/vision.md': '# Product Vision: Demo\n',
+      '.sdd/specs/planned/042-login.md': '# Spec: 042 - Magic link\n',
+      '.sdd/initiatives/planned/demo/README.md': '# Initiative: Demo\n',
+      '.sdd/initiatives/planned/demo/planned/01-login.md': '# Feature: Login\n',
     });
 
     await silently(() => render(ctx(root)));
@@ -571,29 +574,23 @@ test('[E1][INV-1..INV-4] cutover of a v2 workspace to generated/', async () => {
       await render(ctx(root, [], { check: true }));
       return process.exitCode;
     });
-    const validateExit = await silently(async () => {
-      process.exitCode = 0;
-      await validate(ctx(root));
-      return process.exitCode;
-    });
 
-    // generated/ is populated, the v2 tree has disappeared (git is the net).
-    assert.equal(await fileExists(root, '.specs/generated/vision.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/README.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/features/01-login.md'), true);
-    assert.equal(await fileExists(root, '.specs/generated/initiatives/demo/specs/042.md'), true);
-    assert.equal(await fileExists(root, '.specs/vision.md'), false);
-    assert.equal(await fileExists(root, '.specs/specs'), false);
-    assert.equal(await fileExists(root, '.specs/initiatives'), false);
-
-    // The index points every projection into .specs/generated/…
-    const index = JSON.parse(await fsp.readFile(path.join(root, '.specs/canonical/index.json'), 'utf8'));
-    assert.equal(index.artifacts.every((artifact) => (artifact.projection ?? '').startsWith('.specs/generated/')), true);
-
-    // knowledge/ is intact (authored, out of the render's scope) and the root complies.
+    // generated/ is populated and clean (check drift only covers generated/).
+    assert.equal(await fileExists(root, '.sdd/generated/vision.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/README.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/features/01-login.md'), true);
+    assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
     assert.equal(checkExit, 0);
-    assert.equal(validateExit, 0);
     process.exitCode = 0;
+
+    // The legacy tree survives untouched — `spec migrate` owns the conversion.
+    assert.equal(await fileExists(root, '.sdd/vision.md'), true);
+    assert.equal(await fileExists(root, '.sdd/specs/planned/042-login.md'), true);
+    assert.equal(await fileExists(root, '.sdd/initiatives/planned/demo/README.md'), true);
+
+    // The index points every projection into .sdd/generated/…
+    const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
+    assert.equal(index.artifacts.every((artifact) => (artifact.projection ?? '').startsWith('.sdd/generated/')), true);
   } finally {
     await cleanup(root);
   }
@@ -604,30 +601,30 @@ test('[E2][INV-2] render idempotence: re-render and dry-run are side-effect free
   try {
     await seed(root);
     await silently(() => render(ctx(root)));
-    const before = await snapshot(root, '.specs');
-    const beforeIndex = indexFingerprint(before['.specs/canonical/index.json']);
+    const before = await snapshot(root, '.sdd');
+    const beforeIndex = indexFingerprint(before['.sdd/canonical/index.json']);
 
     // Re-render: every status is unchanged, the tree is bit-for-bit identical.
     await silently(() => render(ctx(root)));
-    let after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete before['.specs/canonical/index.json'];
-    delete after['.specs/canonical/index.json'];
+    let after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete before['.sdd/canonical/index.json'];
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
 
     // Dry-run: explicit no-op, still zero side effect.
     const output = await capturing(() => render(ctx(root, [], { dryRun: true })));
     assert.match(output, /\(dry-run: nothing was written\)/);
-    after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete after['.specs/canonical/index.json'];
+    after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
 
     // A second real render is still a no-op.
     await silently(() => render(ctx(root)));
-    after = await snapshot(root, '.specs');
-    assert.equal(indexFingerprint(after['.specs/canonical/index.json']), beforeIndex);
-    delete after['.specs/canonical/index.json'];
+    after = await snapshot(root, '.sdd');
+    assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
+    delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
   } finally {
     await cleanup(root);

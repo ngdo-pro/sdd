@@ -1,6 +1,6 @@
 ---
 name: sync-models
-description: Synchronize domain aggregates, SQL database schemas, and ERD diagrams from a delivered specification into .specs/knowledge/domains/[domain]/models.md.
+description: Synchronize domain aggregates, SQL database schemas, and ERD diagrams from a delivered specification into .sdd/knowledge/domains/[domain]/models.md.
 ---
 
 # Skill: sync-models
@@ -12,8 +12,8 @@ Use this skill to update the living data models and database schema documentatio
 ## Procedure
 
 1. **Load Inputs:**
-   * Read the delivered specification `.specs/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
-   * Read `.specs/knowledge/domains/[domain]/models.md` (or initialize from `templates/DOMAIN_MODELS_TEMPLATE.md`).
+   * Read the delivered specification `.sdd/generated/initiatives/[initiative]/specs/[id].md` and identify its target domain (`[domain]`).
+   * Read `.sdd/knowledge/domains/[domain]/models.md` (or initialize from `templates/DOMAIN_MODELS_TEMPLATE.md`).
 
 2. **Extract Data Model Deltas:**
    * **Core Domain Models:** Document Aggregates, Root Entities, UUIDv7 identifiers, and Value Objects.
@@ -22,5 +22,5 @@ Use this skill to update the living data models and database schema documentatio
    * **ERD Diagram:** Update Mermaid `erDiagram` with new entities or relationships.
 
 3. **Save & Report:**
-   * Write updated content to `.specs/knowledge/domains/[domain]/models.md`.
+   * Write updated content to `.sdd/knowledge/domains/[domain]/models.md`.
    * Return a concise summary of models and database tables synchronized.

@@ -1,4 +1,4 @@
-import { STATE_DIRS, parseSpecSlug } from '../core/paths.js';
+import { parseSpecSlug } from '../core/paths.js';
 
 /** Current canonical model metadata version (v3 = stateless canonical layout). */
 export const META_VERSION = 3;
@@ -85,10 +85,6 @@ export function normalizeMeta(raw, fallbackSlug) {
 /** True when the artifact may carry a lifecycle state. */
 export function isStateful(kind) {
   return kind !== 'vision';
-}
-
-export function stateDirLabel(state) {
-  return STATE_DIRS[state] ?? null;
 }
 
 export function defaultFieldsFor(kind) {

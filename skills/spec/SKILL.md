@@ -9,16 +9,16 @@ Use this skill when the user requests designing, specifying, or framing an engin
 
 All generated specification content must be authored in the user's language.
 
-A spec is stored as `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md` (body). The markdown under `.specs/generated/` is a **generated projection** (spec bodies are flattened at `generated/initiatives/[initiative]/specs/[id].md`).
+A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.json` (metadata) + `<id>.md` (body). The markdown under `.sdd/generated/` is a **generated projection** (spec bodies are flattened at `generated/initiatives/[initiative]/specs/[id].md`).
 
-> **Model-first (Rule 7):** never edit `.specs/generated/**` and never write model files by hand — always go through the `spec` CLI.
+> **Model-first (Rule 7):** never edit `.sdd/generated/**` and never write model files by hand — always go through the `spec` CLI.
 
 ---
 
 ## Procedure
 
 1. **Domain Context & Greenfield Check:**
-   * Check if `.specs/knowledge/domains/[domain]/` exists:
+   * Check if `.sdd/knowledge/domains/[domain]/` exists:
      - **Present (Brownfield):** read `behavior.md`, `tech.md`, `contracts.md`, `models.md` to build strictly upon existing foundations.
      - **Absent (Greenfield / Bootstrap):** do not block; treat as the foundational spec for this domain (knowledge will be seeded on `/sync-knowledge`).
    * If derived from an initiative feature: `spec status [feature-slug] --kind feature`.
@@ -36,7 +36,7 @@ A spec is stored as `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md
    * Slugs are `XXX-slug` (e.g. `042-login`); the CLI derives the `id` from it.
 
 4. **Author the Body (`templates/SPEC_TEMPLATE.md`):**
-   * Write the body to a scratch file, e.g. `.specs/.draft-XXX-[slug].md`, adhering strictly to conciseness and structure rules:
+   * Write the body to a scratch file, e.g. `.sdd/.draft-XXX-[slug].md`, adhering strictly to conciseness and structure rules:
      - **Absolute Path Portability:** all paths workspace-relative (`src/...`, `tests/...`). Never machine-absolute paths (rule 1).
      - **Section 1 (Intent & Context):** Why, impact, In Scope, Out of Scope, with clean omission lines for irrelevant tiers.
      - **Section 2 (Flow & Architecture):** concise Mermaid diagram (nominal + error cases).
@@ -55,10 +55,10 @@ A spec is stored as `.specs/model/specs/<state>/XXX-slug.json` (metadata) + `.md
    ```bash
    spec upsert spec --slug XXX-[slug] --title "[Spec Title]" \
         --feature [feature-slug] --state planned \
-        --field "Domain=\`.specs/knowledge/domains/[domain]/\`" \
+        --field "Domain=\`.sdd/knowledge/domains/[domain]/\`" \
         --field "Change Type=\`New Capability\`" \
         --field "Complexity=\`Medium\`" \
-        --from .specs/.draft-XXX-[slug].md
+        --from .sdd/.draft-XXX-[slug].md
    ```
    Then delete the scratch file.
 

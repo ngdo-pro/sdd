@@ -1,4 +1,5 @@
 import { UsageError } from '../../core/errors.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { findByRef } from '../../model/store.js';
 import { arrow, heading, info, printJson, success } from '../render.js';
 import { loadContext, persistArtifact, refresh } from '../context.js';
@@ -38,6 +39,7 @@ export async function link({ cwd, positionals, flags }) {
   if (!reference) {
     throw new UsageError('Usage: spec link <ref> [--feature <ref>] [--initiative <slug>]');
   }
+  if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 
   const { artifacts } = await loadContext(cwd);
   const child = findByRef(artifacts, reference, { kind: flags.kind });

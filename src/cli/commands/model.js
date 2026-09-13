@@ -1,19 +1,22 @@
 import { buildIndex, writeIndex } from '../../model/index.js';
 import { loadModel } from '../../model/store.js';
 import { buildGraph } from '../../model/graph.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { heading, info, printJson, success, table } from '../render.js';
 
 /**
  * `spec model [--json] [--write]` — inspects the artifact graph.
- * `--write` regenerates `.specs/canonical/index.json`.
+ * `--write` regenerates `.sdd/canonical/index.json` (guarded by the
+ * coexistence lock, INV-5); plain reads are exempt.
  */
 export async function model({ cwd, flags }) {
+  if (flags.write) assertNoCoexistence(cwd);
   const artifacts = await loadModel(cwd);
   const index = buildIndex(artifacts);
 
   if (flags.write) {
     await writeIndex(cwd, artifacts);
-    if (!flags.json) success('Wrote .specs/canonical/index.json');
+    if (!flags.json) success('Wrote .sdd/canonical/index.json');
   }
 
   if (flags.json) {
@@ -23,7 +26,7 @@ export async function model({ cwd, flags }) {
 
   const graph = buildGraph(artifacts);
   heading(`Model: ${artifacts.length} artifact(s)`);
-  info(`index: .specs/canonical/index.json${flags.write ? '' : ' (use --write to regenerate)'}`);
+  info(`index: .sdd/canonical/index.json${flags.write ? '' : ' (use --write to regenerate)'}`);
 
   const rows = artifacts
     .slice()

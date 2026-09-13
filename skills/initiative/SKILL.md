@@ -15,7 +15,7 @@ An **Initiative** represents a major strategic theme (quarterly or multi-feature
 
 It must not exceed **1 to 2 pages**, and aims primarily to align the overarching intent, establish the target system mental model/ASCII diagram, and lay out the **Feature Roadmap** (which is generated).
 
-> **Model-first (Rule 7):** the initiative lives in `.specs/model/initiatives/<state>/<slug>/<slug>.json` + `<slug>.md`. Markdown under `.specs/generated/initiatives/` is generated.
+> **Model-first (Rule 7):** the initiative lives in `.sdd/canonical/initiatives/<initiative>/<initiative>.json` + `<initiative>.md` (stateless layout). Markdown under `.sdd/generated/initiatives/` is generated.
 
 ---
 
@@ -41,12 +41,12 @@ Clarify all strategic axes without artificial question caps:
 * **Scope Slicing:** if the leap reveals too many disparate subsystems, recommend slicing into sequential initiatives.
 
 ### 3. Persist Through the CLI
-1. Write the **body** (sections 1-3 following `templates/INITIATIVE_TEMPLATE.md`) to a scratch file, e.g. `.specs/.draft-<slug>.md`.
+1. Write the **body** (sections 1-3 following `templates/INITIATIVE_TEMPLATE.md`) to a scratch file, e.g. `.sdd/.draft-<initiative-slug>.md`.
    * **Do not author `## 4. Feature Roadmap`** — it is generated from the features linked to this initiative.
 2. Commit it to the model:
    ```bash
    spec upsert initiative --slug [slug] --title "[Initiative Name]" \
-        --state planned --field "Type=Product / UX" --from .specs/.draft-<slug>.md
+        --state planned --field "Type=Product / UX" --from .sdd/.draft-<initiative-slug>.md
    ```
 3. Delete the scratch file. The CLI regenerates the projection and index.
 

@@ -7,7 +7,7 @@ These rules apply universally to all agents operating within the **Spec Framewor
 ## 1. Path Portability & Relative Markdown Links Rule
 * **Strictly Portable Paths:** Never include machine-specific absolute paths (`/Users/...`, `file:///...`, `C:\...`, `/tmp/...`) in any specification, initiative, feature, decision record (ADR/PDR), template, or living knowledge file.
 * **Document-to-Document Markdown Links:** All Markdown hyperlinks (`[label](path)`) between files within the repository MUST use document-relative paths (e.g., `[ADR-0002](../../../decisions/architecture/ADR-0002.md)`, `[Contracts](./contracts.md)`). This guarantees that links resolve seamlessly across git platforms (GitHub, GitLab), IDE markdown previewers, and documentation generators.
-* **Workspace-Relative Text References:** Mentions of source code files in text, lists, or trees are written relative to the workspace root without leading slashes (e.g., `src/core/user.ts`, `.specs/specs/active/...`).
+* **Workspace-Relative Text References:** Mentions of source code files in text, lists, or trees are written relative to the workspace root without leading slashes (e.g., `src/core/user.ts`, `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/042.md`).
 
 ---
 
@@ -46,24 +46,25 @@ These rules apply universally to all agents operating within the **Spec Framewor
 ---
 
 ## 7. Model-First & Single-Writer Rule
-* **Canonical model:** The single source of truth is `.specs/model/` — one JSON metadata file plus one markdown body file per artifact:
+* **Canonical model:** The single source of truth is `.sdd/canonical/` — one JSON metadata file plus one markdown body file per artifact (stateless layout, no lifecycle segment in any path):
   - `vision.json` / `vision.md`
-  - `specs/<state>/XXX-slug.{json,md}`
-  - `initiatives/<state>/<slug>/<slug>.{json,md}` (initiative) and `…/<feature-state>/<feature>.{json,md}`
-* **Everything else is generated:** markdown documents under `.specs/` and remote issues (Linear, …) are **projections**. Never hand-edit a projection or a remote issue as a primary copy — edit the model and re-project.
+  - `initiatives/<initiative-slug>/<initiative-slug>.{json,md}`
+  - `initiatives/<initiative>/features/<feature>/specs/<id>.{json,md}`
+* **Everything else is generated:** markdown documents under `.sdd/` and remote issues (Linear, …) are **projections**. Never hand-edit a projection or a remote issue as a primary copy — edit the model and re-project.
 * **Single writer (CLI):** all model mutations go through the `spec` CLI. Never write model files by hand, and never `mv` projections:
   - `spec upsert <kind> --slug <slug> --from <file>` — author/update an artifact.
   - `spec link <ref> --feature|--initiative <parent>` — set graph relations.
   - `spec move <ref> --to <state>` — lifecycle transition (model + mirrors).
   - `spec done <ref> --cascade` — mark delivered, archive, propagate upwards.
   - `spec render [--check]` — regenerate projections (`--check` is the CI drift guard).
-  - `spec import` — one-shot migration of legacy markdown into the model.
+  - `spec migrate [--dry-run]` — one-shot conversion of any legacy `.specs/` workspace (v2 model or v3-canonical) into `.sdd/`: full reconstruction from the metadata, strict gate (`spec validate` + `spec render --check` exit 0), then the legacy root is retired.
+  - `spec import` — one-shot conversion of legacy markdown documents into the model.
 * **Generated sections:** the following sections are derived from the graph and must never be authored inside a body — the renderer appends them:
   - initiative `## 4. Feature Roadmap`
   - feature `## 6. Implementation Spec(s)`
   - vision `## 5. Strategic Initiatives Roadmap`
   The header/metadata block (title, `Status:`, `Parent Initiative:`, spec `## Metadata`) is likewise generated from the model.
 * **Derived completion:** an artifact is complete when its children are all complete (leaf artifact ⇒ its `progress.done` flag). `spec done --cascade` archives every unfinished parent whose children are complete — this is the only sanctioned way to propagate completion upwards.
-* **Local-first source of truth:** `.specs/model/` is canonical and versioned; remote backends are **mirrors**. Never author the sole copy of an artifact remotely.
-* **Backend resolution:** mirrors are declared in `.specs/config.json` and resolved through the adapter port documented in `extensions/README.md`. Extensions MUST respect `--dry-run` and be idempotent.
+* **Local-first source of truth:** `.sdd/canonical/` is canonical and versioned; remote backends are **mirrors**. Never author the sole copy of an artifact remotely.
+* **Backend resolution:** mirrors are declared in `.sdd/config.json` and resolved through the adapter port documented in `extensions/README.md`. Extensions MUST respect `--dry-run` and be idempotent.
 * **Read-only inspection:** `spec status`, `spec list`, `spec model` and `spec validate` (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.

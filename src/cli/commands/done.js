@@ -1,5 +1,6 @@
 import { UsageError } from '../../core/errors.js';
 import { canTransition } from '../../core/transitions.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { findByRef, moveArtifact } from '../../model/store.js';
 import { buildGraph } from '../../model/graph.js';
 import { arrow, heading, info, printJson, success } from '../render.js';
@@ -13,6 +14,7 @@ import { loadContext, persistArtifact, refresh, runCascade } from '../context.js
 export async function done({ cwd, positionals, flags }) {
   const reference = positionals[0];
   if (!reference) throw new UsageError('Usage: spec done <ref> [--undo] [--cascade] [--dry-run]');
+  if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 
   const { artifacts } = await loadContext(cwd);
   const artifact = findByRef(artifacts, reference, { kind: flags.kind });

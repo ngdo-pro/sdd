@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "sourceOfTruth": "model",
+  "projections": {
+    "markdown": true
+  },
+  "backends": [
+    {
+      "id": "linear",
+      "type": "linear",
+      "enabled": false,
+      "settings": {
+        "teamKey": "",
+        "stateMap": {
+          "planned": "Backlog",
+          "active": "In Progress",
+          "archived": "Done"
+        },
+        "labels": {
+          "initiative": "initiative",
+          "feature": "feature",
+          "spec": "spec"
+        },
+        "createOnMove": false
+      }
+    }
+  ]
+}

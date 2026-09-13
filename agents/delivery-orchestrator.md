@@ -25,11 +25,11 @@ flowchart LR
 
 | Phase | Responsible Agent | Mobilized Skill | Produced Deliverable |
 |---|---|---|---|
-| **1. Spec Framing** | `agents/spec-writer.md` | `skills/spec/SKILL.md` | `.specs/model/specs/planned/XXX-[slug].{json,md}` |
+| **1. Spec Framing** | `agents/spec-writer.md` | `skills/spec/SKILL.md` | `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.{json,md}` |
 | **2. Build Code** | `agents/implementer.md` | `skills/build-spec/SKILL.md` | Compiled code & executed migrations (spec moved to `active/` via `spec move`) |
 | **3. Quality Gates** | `agents/qa-tester.md` | `skills/test-spec/SKILL.md` | 100% passing tests (Unit, Component, E2E) |
 | **4. Clean-Room Audit** | `agents/reviewer.md` | Clean-Room Protocol | Audit report (Spec vs Git Diff) |
-| **5. Capitalize & Sync** | `agents/knowledge-orchestrator.md` | `skills/sync-knowledge/SKILL.md` | Updated `.specs/knowledge/` & archived chain via `spec done [id] --cascade` |
+| **5. Capitalize & Sync** | `agents/knowledge-orchestrator.md` | `skills/sync-knowledge/SKILL.md` | Updated `.sdd/knowledge/` & archived chain via `spec done [id] --cascade` |
 
 ---
 
@@ -37,7 +37,7 @@ flowchart LR
 
 1. **Technical Spec Generation:**
    - Consume a qualified Feature.
-   - Delegate writing the engineering spec (`SPEC_TEMPLATE.md`, projection at `.specs/generated/initiatives/[initiative]/specs/[id].md`) to `spec-writer`.
+   - Delegate writing the engineering spec (`SPEC_TEMPLATE.md`, projection at `.sdd/generated/initiatives/[initiative]/specs/[id].md`) to `spec-writer`.
    - Ensure all feature invariants map directly to `INV-X` and Gherkin scenarios.
 
 2. **Mandatory User Approval Gate:**
@@ -59,4 +59,4 @@ flowchart LR
 6. **Closure & Hand-off to Knowledge Track:**
    - Upon formal approval (`APPROVED`):
      * Hand off execution to `knowledge-orchestrator` (`/sync-knowledge [id]`).
-     * The `knowledge-orchestrator` updates `.specs/knowledge/domains/[domain]/`, detects ADR/PDRs, and archives the spec.
+     * The `knowledge-orchestrator` updates `.sdd/knowledge/domains/[domain]/`, detects ADR/PDRs, and archives the spec.

@@ -13,7 +13,7 @@ spec backend enable linear
 spec sync --create                       # create the missing issues
 ```
 
-Then set your team key in `.specs/config.json`:
+Then set your team key in `.sdd/config.json`:
 
 ```json
 {
@@ -47,7 +47,7 @@ Then set your team key in `.specs/config.json`:
 
 The **model is the source of truth**: `spec move` performs the model transition
 *and* realigns the linked issue. The returned identifier is persisted by the CLI
-into `.specs/model/**/<artifact>.json` → `remote.linear`.
+into `.sdd/canonical/**/<artifact>.json` → `remote.linear`.
 
 ---
 

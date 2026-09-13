@@ -58,7 +58,7 @@
 *Immediate focus — currently being framed or delivered (Strict WIP limit: 1-2 concurrent initiatives):*
 
 - [ ] **`[initiative-slug]`**: [Initiative Title]  
-  ↳ *Initiative:* [`.specs/generated/initiatives/[initiative-slug]/README.md`](./initiatives/[initiative-slug]/README.md)
+  ↳ *Initiative:* [`.sdd/generated/initiatives/[initiative-slug]/README.md`](./initiatives/[initiative-slug]/README.md)
 
 ---
 
@@ -66,7 +66,7 @@
 *Prioritized next initiatives ready to launch once capacity is unlocked:*
 
 - [ ] **`[initiative-slug]`**: [Initiative Title]  
-  ↳ *Initiative:* [`.specs/generated/initiatives/[initiative-slug]/README.md`](./initiatives/[initiative-slug]/README.md) *(Framed via `/initiative`)*
+  ↳ *Initiative:* [`.sdd/generated/initiatives/[initiative-slug]/README.md`](./initiatives/[initiative-slug]/README.md) *(Framed via `/initiative`)*
 
 ---
 

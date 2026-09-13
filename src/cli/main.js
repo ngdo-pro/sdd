@@ -4,6 +4,7 @@ import { UsageError } from '../core/errors.js';
 import { line } from './render.js';
 import { init } from './commands/init.js';
 import { importArtifacts } from './commands/import.js';
+import { migrate } from './commands/migrate.js';
 import { render } from './commands/render.js';
 import { model } from './commands/model.js';
 import { upsert } from './commands/upsert.js';
@@ -45,6 +46,7 @@ const OPTIONS = {
 const COMMANDS = {
   init,
   import: importArtifacts,
+  migrate,
   render,
   model,
   upsert,

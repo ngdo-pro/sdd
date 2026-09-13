@@ -1,5 +1,6 @@
 import { UsageError } from '../../core/errors.js';
 import { assertTransition, normalizeState } from '../../core/transitions.js';
+import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { findByRef, moveArtifact } from '../../model/store.js';
 import { arrow, heading, info, line, printJson, success, warn } from '../render.js';
 import { loadContext, persistArtifact, refresh, runCascade } from '../context.js';
@@ -17,6 +18,7 @@ export async function move({ cwd, positionals, flags }) {
   if (!toState) {
     throw new UsageError(`Invalid or missing --to value "${flags.to ?? ''}" (expected: planned, active, archived).`);
   }
+  if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 
   const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
   const artifact = findByRef(artifacts, reference, { kind: flags.kind });
