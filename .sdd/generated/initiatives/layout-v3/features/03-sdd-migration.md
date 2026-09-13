@@ -1,7 +1,7 @@
 # Feature: Racine .sdd et migration idempotente
 
 > **Parent Initiative:** `layout-v3`  
-> **Status:** Planned  
+> **Status:** Archived  
 > **Author(s):** TBD  
 > **Last Updated:** 2026-09-13  
 
@@ -45,5 +45,5 @@ Livraison : 3ᵉ de l'initiative (après 01 et 02) ; accepte tout layout antéri
 
 ## 6. Implementation Spec(s)
 
-- [ ] **`003-sdd-migration`** : Racine .sdd et migration idempotente  
+- [x] **`003-sdd-migration`** : Racine .sdd et migration idempotente  
   ↳ *Spec:* [`generated/initiatives/layout-v3/specs/003.md`](../specs/003.md)

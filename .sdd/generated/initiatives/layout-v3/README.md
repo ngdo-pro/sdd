@@ -50,7 +50,7 @@
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/01-canonical-tree.md`](./features/01-canonical-tree.md)  *(Archived ✅)*
 - [x] **`02-generated-namespace`**: Namespace generated/  
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/02-generated-namespace.md`](./features/02-generated-namespace.md)  *(Archived ✅)*
-- [ ] **`03-sdd-migration`**: Racine .sdd et migration idempotente  
-  ↳ *Feature:* [`generated/initiatives/layout-v3/features/03-sdd-migration.md`](./features/03-sdd-migration.md)  *(Framed ✅ — Ready for `/spec`)*
+- [x] **`03-sdd-migration`**: Racine .sdd et migration idempotente  
+  ↳ *Feature:* [`generated/initiatives/layout-v3/features/03-sdd-migration.md`](./features/03-sdd-migration.md)  *(Archived ✅)*
 - [ ] **`04-static-site`**: Site statique optionnel  
   ↳ *Feature:* [`generated/initiatives/layout-v3/features/04-static-site.md`](./features/04-static-site.md)  *(Framed ✅ — Ready for `/spec`)*

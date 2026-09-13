@@ -1,6 +1,6 @@
 # Domaine : Workspace Management (workspace-management) — Modèles de Données
 
-> **Mission :** Modèle canonique sans état, stocké en fichiers : quatre kinds d'artefacts (métadonnée JSON + corps markdown) reliés par `relations` et indexés dans `index.json` v3 — projections markdown sous `.sdd/generated/` (100 % générées, purgées et régénérées par le CLI) ; aucun datastore SQL, aucune table.
+> **Mission :** Modèle canonique sans état, stocké en fichiers sous la racine `.sdd/` : quatre kinds d'artefacts (métadonnée JSON + corps markdown) reliés par `relations` et indexés dans `index.json` v3 — projections markdown sous `.sdd/generated/` (100 % générées, purgées et régénérées par le CLI) ; aucun datastore SQL, aucune table.
 > **Conventions Transversales :**
 > * Identifiants : `id` de spec = compteur séquentiel global 3–4 chiffres (jamais réutilisé) ; initiative et feature utilisent leur slug comme id.
 > * Audit : chaque métadonnée porte `createdAt` / `updatedAt` ; toute écriture passe par le CLI (zéro édition manuelle).
@@ -9,20 +9,21 @@
 
 ## 1. Périmètre & Frontières des Données
 
-* **Entités gérées dans ce domaine :**
-  * `vision` : racine unique du graphe — `canonical/vision.{json,md}`.
-  * `initiative` : jalon stratégique — `initiatives/<slug>/<slug>.{json,md}`.
-  * `feature` : tranche livrable — `initiatives/<init>/features/<slug>/<slug>.{json,md}`.
-  * `spec` : delta d'ingénierie — `…/specs/<id>.{json,md}` (nom de fichier = id seul).
-* **Projections générées (`generated/` — 100 % CLI, jamais éditées à la main, purge des orphelins au `render`) :**
-  * `vision` → `generated/vision.md` (une seule vision — le double racine est tombé avec la feature `02`).
-  * `initiative` → `generated/initiatives/<slug>/README.md`.
-  * `feature` → `generated/initiatives/<initiative>/features/<slug>.md` (aplatie au niveau initiative).
-  * `spec` → `generated/initiatives/<initiative>/specs/<id>.md` (nom de fichier = id seul, listes triées par id).
+* **Entités gérées dans ce domaine (sous `.sdd/canonical/`) :**
+  * `vision` : racine unique du graphe — `.sdd/canonical/vision.{json,md}`.
+  * `initiative` : jalon stratégique — `.sdd/canonical/initiatives/<slug>/<slug>.{json,md}`.
+  * `feature` : tranche livrable — `.sdd/canonical/initiatives/<init>/features/<slug>/<slug>.{json,md}`.
+  * `spec` : delta d'ingénierie — `.sdd/canonical/…/specs/<id>.{json,md}` (nom de fichier = id seul).
+* **Projections générées (`.sdd/generated/` — 100 % CLI, jamais éditées à la main, purge des orphelins au `render`) :**
+  * `vision` → `.sdd/generated/vision.md` (une seule vision — le double racine est tombé avec la feature `02`).
+  * `initiative` → `.sdd/generated/initiatives/<slug>/README.md`.
+  * `feature` → `.sdd/generated/initiatives/<initiative>/features/<slug>.md` (aplatie au niveau initiative).
+  * `spec` → `.sdd/generated/initiatives/<initiative>/specs/<id>.md` (nom de fichier = id seul, listes triées par id).
 * **Frontières & Délégations :**
-  * `knowledge/` (`decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
-  * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge + sweep hérité, suppressions listées et prévisualisables).
-  * `config.json` : configuration du CLI, hors modèle.
+  * `knowledge/` (`.sdd/knowledge/decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
+  * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge des orphelins, suppressions listées et prévisualisables ; l'horizon de purge est limité à `generated/` depuis le retrait du sweep hérité).
+  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `backends` ; toute clé top-level inconnue et tout backend `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`).
+  * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`spec migrate` reconstruit de zéro puis le retire avec la source).
 
 ---
 
@@ -69,6 +70,8 @@ erDiagram
 | Tous | `remote` | map | Oui | Refs miroirs (Linear) | Projection distante |
 | Tous | `progress.done` | boolean | Non | Cascade au `done` | Complétude remontée |
 
+* **Source de reconstruction :** ces métadonnées (`state`, `relations`, `progress`, `remote`, `fields`, `id`, `slug`, `title`, dates) sont la seule source de vérité de la migration `spec migrate` : toute conversion les recopie tels quels et dérive les destinations des relations — jamais de la position disque.
+
 ---
 
 ## 4. Règles d'Intégrité & Cycle de Vie
@@ -78,7 +81,10 @@ erDiagram
    * Slug unique par kind et immuable après création (PDR-001).
 2. **Politiques de Suppression & Cascade :**
    * Aucune commande de suppression exposée : l'archivage (`archived`) est la sortie du cycle ; `done --cascade` archive un parent dont tous les enfants sont complets ; `--undo` rouvre en `active`.
+   * La migration est la seule opération de masse destructrice : au succès, la source legacy `.sdd/` est retirée intégralement (git sert de filet) ; un workspace à moitié construit est effacé et reconstruit de zéro, jamais fusionné.
 3. **Règles d'Immutabilité & Conservation :**
    * Slug et chemin dérivé immuables ; la relocation n'a lieu qu'au changement de `relations` (`spec link`) — jamais sur un changement d'état (INV-2).
    * `move` mute `state` + `updatedAt` in situ ; transitions légales : `planned → active|archived`, `active → planned|archived`, `archived → active`.
+   * La migration conserve à l'identique : ids, slugs, relations, `progress` (dont `done`), refs `remote`, `createdAt`/`updatedAt` — aucune resynchronisation distante n'est déclenchée.
    * `index.json` vit sous `.sdd/canonical/` : préfixes `meta`/`body` = `.sdd/canonical/…`, `projection` = `.sdd/generated/…` (reciblage de la feature `02` — format v3 inchangé, pas de version 4). Un `move` régénère la projection au même chemin — plus aucun renommage de projection (fin des répertoires d'état).
+   * Réécriture de tokens lors de la migration : uniquement le motif littéral `.sdd/` (racine + slash final) → `.sdd/`, appliqué aux corps, aux valeurs string de `fields` et aux markdown `knowledge/**` — chaque réécriture listée dans le plan ; les mentions sans slash final sont listées, jamais réécrites.

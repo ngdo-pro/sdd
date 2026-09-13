@@ -4,7 +4,7 @@
   "id": "03-sdd-migration",
   "slug": "03-sdd-migration",
   "title": "Racine .sdd et migration idempotente",
-  "state": "planned",
+  "state": "archived",
   "relations": {
     "initiative": "layout-v3"
   },

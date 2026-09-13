@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T10:42:53.178Z",
+  "generatedAt": "2026-09-13T11:23:08.962Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -48,7 +48,7 @@
       "id": "03-sdd-migration",
       "slug": "03-sdd-migration",
       "title": "Racine .sdd et migration idempotente",
-      "state": "planned",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.json",
       "body": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/03-sdd-migration.md",
       "projection": ".sdd/generated/initiatives/layout-v3/features/03-sdd-migration.md",
@@ -58,8 +58,8 @@
       "progress": {
         "done": false,
         "children": 1,
-        "completedChildren": 0,
-        "complete": false
+        "completedChildren": 1,
+        "complete": true
       },
       "remote": {}
     },
@@ -96,7 +96,7 @@
       "progress": {
         "done": false,
         "children": 4,
-        "completedChildren": 2,
+        "completedChildren": 3,
         "complete": false
       },
       "remote": {}
@@ -148,7 +148,7 @@
       "id": "003",
       "slug": "003-sdd-migration",
       "title": "Racine .sdd et migration idempotente",
-      "state": "active",
+      "state": "archived",
       "meta": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.json",
       "body": ".sdd/canonical/initiatives/layout-v3/features/03-sdd-migration/specs/003.md",
       "projection": ".sdd/generated/initiatives/layout-v3/specs/003.md",
@@ -157,10 +157,10 @@
         "initiative": "layout-v3"
       },
       "progress": {
-        "done": false,
+        "done": true,
         "children": 0,
         "completedChildren": 0,
-        "complete": false
+        "complete": true
       },
       "remote": {}
     },
