@@ -8,7 +8,7 @@ import { renderDocument } from './markdown.js';
  * Markdown horizons owned by the render step: the `generated/` namespace
  * alone. The legacy v2 sweep (`specs/`, `initiatives/`, `vision.md`) was
  * retired with the `.sdd/` cutover (feature 03) — stray legacy entries are
- * now refused by the `root-layout` rule and recovered via `spec migrate`.
+ * now refused by the `root-layout` rule and recovered via `sdd migrate`.
  */
 const MANAGED = ['generated'];
 

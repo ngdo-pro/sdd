@@ -5,7 +5,7 @@
   "type": "linear",
   "kind": "mirror",
   "builtin": true,
-  "entry": "../../src/backends/linear.js",
+  "entry": "../../src/connectors/linear.js",
   "description": "Mirrors canonical model artifacts onto Linear issues (GraphQL API). Built into the CLI and documented here.",
   "capabilities": ["read", "list", "transition", "create"],
   "authentication": {
@@ -18,6 +18,13 @@
     "stateMap": { "planned": "Backlog", "active": "In Progress", "archived": "Done" },
     "labels": { "initiative": "initiative", "feature": "feature", "spec": "spec" },
     "createOnMove": false
-  }
+  },
+  "settingTypes": {
+    "teamKey": "string",
+    "stateMap": "object",
+    "labels": "object",
+    "createOnMove": "boolean"
+  },
+  "requiredSettings": ["teamKey"]
 }
 

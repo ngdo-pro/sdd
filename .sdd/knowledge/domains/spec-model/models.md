@@ -22,8 +22,8 @@
 * **Frontières & Délégations :**
   * `knowledge/` (`.sdd/knowledge/decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
   * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge des orphelins, suppressions listées et prévisualisables ; l'horizon de purge est limité à `generated/` depuis le retrait du sweep hérité).
-  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `backends` ; toute clé top-level inconnue et tout backend `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`).
-  * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`spec migrate` reconstruit de zéro puis le retire avec la source).
+  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
+  * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`sdd migrate` reconstruit de zéro puis le retire avec la source).
 
 ---
 
@@ -70,7 +70,19 @@ erDiagram
 | Tous | `remote` | map | Oui | Refs miroirs (Linear) | Projection distante |
 | Tous | `progress.done` | boolean | Non | Cascade au `done` | Complétude remontée |
 
-* **Source de reconstruction :** ces métadonnées (`state`, `relations`, `progress`, `remote`, `fields`, `id`, `slug`, `title`, dates) sont la seule source de vérité de la migration `spec migrate` : toute conversion les recopie tels quels et dérive les destinations des relations — jamais de la position disque.
+* **Source de reconstruction :** ces métadonnées (`state`, `relations`, `progress`, `remote`, `fields`, `id`, `slug`, `title`, dates) sont la seule source de vérité de la migration `sdd migrate` : toute conversion les recopie tels quels et dérive les destinations des relations — jamais de la position disque.
+
+*Dictionnaire de `config.json` → `connectors[]` (hors graphe, écrite par le CLI via `init`/`connectors`, auditée par `validate`) :*
+
+| Entité | Attribut | Type | Nullable | Contraintes | Rôle Métier |
+|---|---|:---:|:---:|---|---|
+| connector | `id` | string | Non | Unique dans `connectors[]` ; intrinsèques (`local`, `filesystem`) exclus | Identité du miroir + clé de namespace des settings flags |
+| connector | `type` | string | Non | Résolu du manifest (`type ?? id`) | Sélection de la fabrique backend (`src/connectors/`) |
+| connector | `enabled` | boolean | Non | `true` à la déclaration ; muté par `enable`/`disable` | Sélection des miroirs actifs (sync/status) |
+| connector | `settings` | object | Oui | Typé par le manifest (`settingTypes`) ; objets par feuilles via subkeys (profondeur ≤ 2) | Configuration du miroir (ex. `teamKey`, `stateMap`, `labels`, `createOnMove`) |
+
+* **Contrat de manifest (`extensions/<id>/extension.json`) :** `settings` (défauts seedés), `settingTypes` (`string | boolean | number | object` — absent ⇒ tout `string` optionnel, rétrocompatible), `requiredSettings` (présence + non-vide auditées par la règle `connector-settings` de `sdd validate` pour les connecteurs activés). Le manifest est la source de typage : la coercion à l'écriture (`coerceSetting`) et l'audit à la lecture (`validate`) partagent le même contrat.
+* **Garanties de forme :** `connectors[]` est triée par id après chaque merge (diff on-disk stable) ; les merges (`mergeSettingOverrides`, `mergeConnectorConfigs`) sont purs — aucun objet partagé n'est muté ; les valeurs explicites (flags, interview) écrasent, les défauts du manifest ne remplissent que les clés absentes.
 
 ---
 
@@ -83,8 +95,12 @@ erDiagram
    * Aucune commande de suppression exposée : l'archivage (`archived`) est la sortie du cycle ; `done --cascade` archive un parent dont tous les enfants sont complets ; `--undo` rouvre en `active`.
    * La migration est la seule opération de masse destructrice : au succès, la source legacy `.sdd/` est retirée intégralement (git sert de filet) ; un workspace à moitié construit est effacé et reconstruit de zéro, jamais fusionné.
 3. **Règles d'Immutabilité & Conservation :**
-   * Slug et chemin dérivé immuables ; la relocation n'a lieu qu'au changement de `relations` (`spec link`) — jamais sur un changement d'état (INV-2).
+   * Slug et chemin dérivé immuables ; la relocation n'a lieu qu'au changement de `relations` (`sdd link`) — jamais sur un changement d'état (INV-2).
    * `move` mute `state` + `updatedAt` in situ ; transitions légales : `planned → active|archived`, `active → planned|archived`, `archived → active`.
    * La migration conserve à l'identique : ids, slugs, relations, `progress` (dont `done`), refs `remote`, `createdAt`/`updatedAt` — aucune resynchronisation distante n'est déclenchée.
    * `index.json` vit sous `.sdd/canonical/` : préfixes `meta`/`body` = `.sdd/canonical/…`, `projection` = `.sdd/generated/…` (reciblage de la feature `02` — format v3 inchangé, pas de version 4). Un `move` régénère la projection au même chemin — plus aucun renommage de projection (fin des répertoires d'état).
    * Réécriture de tokens lors de la migration : uniquement le motif littéral `.sdd/` (racine + slash final) → `.sdd/`, appliqué aux corps, aux valeurs string de `fields` et aux markdown `knowledge/**` — chaque réécriture listée dans le plan ; les mentions sans slash final sont listées, jamais réécrites.
+4. **Règles de Configuration (`config.json`) :**
+   * Typage garanti par le manifest : les settings sont coercés avant écriture (`boolean` strict `true\|false` — `1/0/yes/no` refusés, `number` numérique, `object` par feuilles) ; une valeur non coercible est rejetée avant toute écriture en citant `<id>.<key>`.
+   * Idempotence du merge : les défauts du manifest ne ré-écrasent jamais une valeur utilisateur ; un connecteur jamais déclaré est ajouté, jamais retiré ; `connectors[]` triée par id.
+   * Complétude auditée : un connecteur activé doit porter ses `requiredSettings` (règle `connector-settings` de `sdd validate`, exit 1) ; les connecteurs sans manifest (tiers, rétrocompatibles) ne sont pas audités.

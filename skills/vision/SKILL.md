@@ -18,8 +18,8 @@ The Product Vision is the project's **foundational constitution**. It must remai
 ## Procedure
 
 ### 1. Immersion & Current Baseline
-1. Read the current model with `spec status vision --json` (or `.sdd/canonical/vision.md` if it exists).
-2. If no model exists yet, run `spec init` first.
+1. Read the current model with `sdd status vision --json` (or `.sdd/canonical/vision.md` if it exists).
+2. If no model exists yet, run `sdd init` first.
 3. Reference template for the **body sections**: `templates/VISION_TEMPLATE.md`.
 
 ### 2. Targeted Vision Interview
@@ -47,7 +47,7 @@ Conduct an interactive interview through targeted questions covering the 4 manif
 1. Write the body (sections 1-4, following `templates/VISION_TEMPLATE.md`) to a scratch file, e.g. `.sdd/.draft-vision.md`.
 2. Commit it to the model:
    ```bash
-   spec upsert vision --title "[Product Name]" --from .sdd/.draft-vision.md
+   sdd upsert vision --title "[Product Name]" --from .sdd/.draft-vision.md
    ```
 3. Delete the scratch file. The CLI regenerates `.sdd/generated/vision.md` and the index automatically.
 

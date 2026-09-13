@@ -2,7 +2,7 @@
 
 * **Mission:** Transformer le développement assisté par IA en un processus d'ingénierie orchestré, où des agents aux missions verrouillées exécutent un pipeline rigoureux et où l'humain conserve l'arbitrage.
 * **The Problem:** Les agents IA codent vite mais sans gouvernance : aucune traçabilité entre l'intention, la décision et l'implémentation. La documentation se périmète, le contexte se perd entre les sessions, et les équipes qui délèguent massivement le code n'ont aucun moyen de prouver que ce qui est livré correspond à ce qui a été décidé.
-* **Target Audience:** Les équipes produit et tech qui délèguent massivement le développement à des agents IA (Antigravity, Claude Code, opencode) et veulent industrialiser cette délégation avec des garde-fous process.
+* **Target Audience:** Les équipes produit et tech qui délèguent massivement le développement à des agents IA et veulent industrialiser cette délégation avec des garde-fous process.
 * **North Star Metric:** Le taux de conformité code ↔ spec, mesuré à chaque livraison par la revue clean-room et les quality gates — la preuve chiffrée que le pipeline gouverne réellement la livraison.
 
 ---

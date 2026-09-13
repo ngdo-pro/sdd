@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "kind": "feature",
+  "id": "01-declarative-init",
+  "slug": "01-declarative-init",
+  "title": "Init déclaratif multi-connecteurs",
+  "state": "archived",
+  "relations": {
+    "initiative": "setup-experience"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

@@ -6,13 +6,13 @@ import { arrow, heading, info, line, printJson, success, warn } from '../render.
 import { loadContext, persistArtifact, refresh, runCascade } from '../context.js';
 
 /**
- * `spec move <ref> --to <state>` — a metadata-only lifecycle transition
- * (zero files relocated), mirrored onto every enabled remote backend.
+ * `sdd move <ref> --to <state>` — a metadata-only lifecycle transition
+ * (zero files relocated), mirrored onto every enabled remote connector.
  */
 export async function move({ cwd, positionals, flags }) {
   const reference = positionals[0];
   if (!reference) {
-    throw new UsageError('Usage: spec move <ref> --to <planned|active|archived>');
+    throw new UsageError('Usage: sdd move <ref> --to <planned|active|archived>');
   }
   const toState = normalizeState(flags.to);
   if (!toState) {
@@ -20,7 +20,7 @@ export async function move({ cwd, positionals, flags }) {
   }
   if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 
-  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
+  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.connectors });
   const artifact = findByRef(artifacts, reference, { kind: flags.kind });
 
   const mustMove = assertTransition(artifact, toState) === true;
@@ -31,10 +31,10 @@ export async function move({ cwd, positionals, flags }) {
   for (const mirror of mirrors) {
     try {
       const result = await mirror.transition(artifact, toState, { dryRun: flags.dryRun });
-      mirrorResults.push({ backend: mirror.id, ...result });
+      mirrorResults.push({ connector: mirror.id, ...result });
       if (result.remoteRef) remoteRefs[mirror.id] = result.remoteRef;
     } catch (error) {
-      mirrorResults.push({ backend: mirror.id, error: error.message });
+      mirrorResults.push({ connector: mirror.id, error: error.message });
     }
   }
 
@@ -63,10 +63,10 @@ export async function move({ cwd, positionals, flags }) {
   if (!mustMove) info('already in this state');
 
   for (const result of mirrorResults) {
-    if (result.error) warn(`${result.backend}: ${result.error}`);
-    else if (result.planned) line(`  ${result.backend}: would move to ${result.state ?? toState}`);
-    else if (result.moved) success(`${result.backend}: ${result.remoteRef ?? ''} ${arrow()} ${result.state ?? toState}`.trim());
-    else info(`${result.backend}: already up to date`);
+    if (result.error) warn(`${result.connector}: ${result.error}`);
+    else if (result.planned) line(`  ${result.connector}: would move to ${result.state ?? toState}`);
+    else if (result.moved) success(`${result.connector}: ${result.remoteRef ?? ''} ${arrow()} ${result.state ?? toState}`.trim());
+    else info(`${result.connector}: already up to date`);
   }
 
   for (const entry of cascade) {

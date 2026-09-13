@@ -2,10 +2,10 @@
   "name": "sdd-framework",
   "version": "2.0.0",
   "description": "Universal Spec-Driven Development (SDD) Framework for AI Coding Agents",
-  "author": "Nanko Team",
+  "author": "Nicolas Gomes de Oliveira",
   "cli": {
-    "command": "spec",
-    "entry": "bin/spec.js"
+    "command": "sdd",
+    "entry": "bin/sdd.js"
   },
   "model": ".sdd/canonical",
   "projections": ".sdd",

@@ -1,25 +1,25 @@
-import { BackendError } from '../core/errors.js';
+import { ConnectorError } from '../core/errors.js';
 import { DEFAULT_LINEAR_SETTINGS } from '../core/config.js';
 
 const LINEAR_ENDPOINT = 'https://api.linear.app/graphql';
 
 /**
- * Linear backend — mirrors local artifacts onto Linear issues.
+ * Linear connector — mirrors local artifacts onto Linear issues.
  *
  * The local filesystem stays the source of truth. Each artifact is linked to at
  * most one Linear issue through `.sdd/.remote-map.json`, which keeps the sync
  * idempotent and committable.
  */
-export default function createLinearBackend({ config, backendConfig }) {
-  const settings = { ...DEFAULT_LINEAR_SETTINGS, ...(backendConfig.settings ?? {}) };
-  const backendId = backendConfig.id;
+export default function createLinearBackend({ config, connectorConfig }) {
+  const settings = { ...DEFAULT_LINEAR_SETTINGS, ...(connectorConfig.settings ?? {}) };
+  const connectorId = connectorConfig.id;
   const apiKey = settings.apiKey ?? process.env.LINEAR_API_KEY ?? null;
   let teamCache = null;
 
   async function graphql(query, variables) {
     if (!apiKey) {
-      throw new BackendError(
-        `Linear backend "${backendId}" has no API key. Export LINEAR_API_KEY or set settings.apiKey in .sdd/config.json.`,
+      throw new ConnectorError(
+        `Linear connector "${connectorId}" has no API key. Export LINEAR_API_KEY or set settings.apiKey in .sdd/config.json.`,
       );
     }
     let response;
@@ -30,14 +30,14 @@ export default function createLinearBackend({ config, backendConfig }) {
         body: JSON.stringify({ query, variables }),
       });
     } catch (error) {
-      throw new BackendError(`Linear request failed: ${error.message}`);
+      throw new ConnectorError(`Linear request failed: ${error.message}`);
     }
     if (!response.ok) {
-      throw new BackendError(`Linear API HTTP ${response.status}: ${await response.text()}`);
+      throw new ConnectorError(`Linear API HTTP ${response.status}: ${await response.text()}`);
     }
     const payload = await response.json();
     if (Array.isArray(payload.errors) && payload.errors.length > 0) {
-      throw new BackendError(`Linear API error: ${payload.errors.map((error) => error.message).join('; ')}`);
+      throw new ConnectorError(`Linear API error: ${payload.errors.map((error) => error.message).join('; ')}`);
     }
     return payload.data;
   }
@@ -45,11 +45,11 @@ export default function createLinearBackend({ config, backendConfig }) {
   async function getTeam() {
     if (teamCache) return teamCache;
     if (!settings.teamKey) {
-      throw new BackendError(`Linear backend "${backendId}" requires settings.teamKey in .sdd/config.json.`);
+      throw new ConnectorError(`Linear connector "${connectorId}" requires settings.teamKey in .sdd/config.json.`);
     }
     const data = await graphql(TEAM_QUERY, { key: settings.teamKey });
     const team = data.teams?.nodes?.[0];
-    if (!team) throw new BackendError(`Linear team "${settings.teamKey}" not found.`);
+    if (!team) throw new ConnectorError(`Linear team "${settings.teamKey}" not found.`);
     teamCache = team;
     return team;
   }
@@ -71,11 +71,11 @@ export default function createLinearBackend({ config, backendConfig }) {
     const team = await getTeam();
     const stateName = settings.stateMap?.[state];
     if (!stateName) {
-      throw new BackendError(`No Linear state mapping for framework state "${state}". Update settings.stateMap.`);
+      throw new ConnectorError(`No Linear state mapping for framework state "${state}". Update settings.stateMap.`);
     }
     const match = findState(team, stateName);
     if (!match) {
-      throw new BackendError(`Linear team "${settings.teamKey}" has no workflow state named "${stateName}".`);
+      throw new ConnectorError(`Linear team "${settings.teamKey}" has no workflow state named "${stateName}".`);
     }
     return match;
   }
@@ -89,7 +89,7 @@ export default function createLinearBackend({ config, backendConfig }) {
     const modelPath = artifact.model?.meta ? `.sdd/canonical/${artifact.model.meta}` : '—';
     const projection = artifact.projection ? `.sdd/${artifact.projection}` : '—';
     return [
-      '_Synced by Spec Framework — do not edit structural fields manually._',
+      '_Synced by SDD Framework — do not edit structural fields manually._',
       '',
       '| Field | Value |',
       '|---|---|',
@@ -116,13 +116,13 @@ export default function createLinearBackend({ config, backendConfig }) {
 
     const data = await graphql(CREATE_ISSUE_MUTATION, { input });
     if (!data.issueCreate?.success) {
-      throw new BackendError('Linear issueCreate returned success=false.');
+      throw new ConnectorError('Linear issueCreate returned success=false.');
     }
     return data.issueCreate.issue;
   }
 
   return {
-    id: backendId,
+    id: connectorId,
     type: 'linear',
     remote: true,
     capabilities: { read: true, list: true, transition: true, link: false, create: true, remote: true },
@@ -168,14 +168,14 @@ export default function createLinearBackend({ config, backendConfig }) {
     async transition(artifact, toState, { dryRun = false } = {}) {
       const targetName = settings.stateMap?.[toState];
       if (!targetName) {
-        throw new BackendError(`No Linear state mapping for framework state "${toState}".`);
+        throw new ConnectorError(`No Linear state mapping for framework state "${toState}".`);
       }
 
-      const ref = artifact.remote?.[backendId] ?? null;
+      const ref = artifact.remote?.[connectorId] ?? null;
       if (!ref) {
         if (!settings.createOnMove) {
-          throw new BackendError(
-            `Artifact "${artifact.slug}" is not linked to Linear. Run \`spec sync ${artifact.slug} --create\`, or set settings.createOnMove=true.`,
+          throw new ConnectorError(
+            `Artifact "${artifact.slug}" is not linked to Linear. Run \`sdd sync ${artifact.slug} --create\`, or set settings.createOnMove=true.`,
           );
         }
         if (dryRun) return { moved: false, planned: true, action: 'create', state: targetName };
@@ -185,7 +185,7 @@ export default function createLinearBackend({ config, backendConfig }) {
 
       const issue = await fetchIssue(ref);
       if (!issue) {
-        throw new BackendError(`Linear issue "${ref}" not found (mapped from ${artifact.slug}).`);
+        throw new ConnectorError(`Linear issue "${ref}" not found (mapped from ${artifact.slug}).`);
       }
       if ((issue.state?.name ?? '').toLowerCase() === targetName.toLowerCase()) {
         return { moved: false, remoteRef: ref, state: targetName };
@@ -196,14 +196,14 @@ export default function createLinearBackend({ config, backendConfig }) {
 
       const data = await graphql(UPDATE_ISSUE_MUTATION, { id: issue.id, input: { stateId: targetState.id } });
       if (!data.issueUpdate?.success) {
-        throw new BackendError(`Linear issueUpdate failed for ${ref}.`);
+        throw new ConnectorError(`Linear issueUpdate failed for ${ref}.`);
       }
       return { moved: true, remoteRef: ref, state: targetName };
     },
 
     /** Creates the remote issue for an artifact, returning its reference. */
     async create(artifact, { dryRun = false } = {}) {
-      const existing = artifact.remote?.[backendId] ?? null;
+      const existing = artifact.remote?.[connectorId] ?? null;
       if (existing) return { created: false, remoteRef: existing };
       if (dryRun) return { created: false, planned: true };
       const created = await createIssue(artifact, artifact.state);

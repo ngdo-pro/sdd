@@ -18,7 +18,7 @@ import { validate } from '../src/cli/commands/validate.js';
 import { list } from '../src/cli/commands/list.js';
 import { importArtifacts } from '../src/cli/commands/import.js';
 import { migrate } from '../src/cli/commands/migrate.js';
-import { model } from '../src/cli/commands/model.js';
+import { graph } from '../src/cli/commands/graph.js';
 import { existsSync } from 'node:fs';
 import { makeWorkspace, cleanup, writeFiles, fileExists, readWorkspaceFile } from './helpers.js';
 
@@ -171,7 +171,7 @@ function duplicateIdFiles() {
 const BASE_FLAGS = {
   to: undefined, kind: undefined, state: undefined, slug: undefined, title: undefined,
   from: undefined, feature: undefined, initiative: undefined, field: undefined,
-  backends: undefined, create: false, force: false, check: false, write: false,
+  connectors: undefined, create: false, force: false, check: false, write: false,
   cascade: false, undo: false, done: false, dryRun: false, json: false,
 };
 
@@ -324,14 +324,14 @@ test('[U3][INV-3] convertConfig produces a clean v3 config with exact warnings',
     version: 2,
     sourceOfTruth: 'model',
     legacyDirs: ['.specs/model'],
-    backends: [
+    connectors: [
       { id: 'filesystem', type: 'filesystem', enabled: true },
       { id: 'linear', type: 'linear', enabled: false },
     ],
   });
   assert.equal(config.version, 3);
   assert.equal('legacyDirs' in config, false);
-  assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
+  assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
   assert.equal(warnings.filter((entry) => entry.includes('legacyDirs')).length, 1);
   assert.equal(warnings.filter((entry) => entry.includes('filesystem')).length, 1);
 });
@@ -505,13 +505,13 @@ test('[C5][INV-5] coexistence: mutations refused, reads operate on .sdd/', async
 
     await assert.rejects(
       () => upsert(ctx(root, ['initiative'], { slug: 'extra', title: 'Extra' })),
-      (error) => error instanceof MigrationError && /coexist/i.test(error.message) && /spec migrate/.test(error.message),
+      (error) => error instanceof MigrationError && /coexist/i.test(error.message) && /sdd migrate/.test(error.message),
     );
     await assert.rejects(() => move(ctx(root, ['demo'], { to: 'archived' })), MigrationError);
     await assert.rejects(() => render(ctx(root)), MigrationError);
     await assert.rejects(() => importArtifacts(ctx(root)), MigrationError);
     await assert.rejects(() => init(ctx(root, [], { force: true })), MigrationError);
-    await assert.rejects(() => model(ctx(root, [], { write: true })), MigrationError);
+    await assert.rejects(() => graph(ctx(root, [], { write: true })), MigrationError);
     // Nothing was written by the refused mutations.
     assert.equal(await fileExists(root, '.sdd/canonical/initiatives/extra'), false);
 
@@ -602,7 +602,7 @@ test('[I1][INV-3][INV-4] full v3-canonical conversion with v3 config and rewritt
         sourceOfTruth: 'model',
         legacyDirs: ['.specs/model'],
         projections: { markdown: true },
-        backends: [
+        connectors: [
           { id: 'filesystem', type: 'filesystem', enabled: true },
           { id: 'linear', type: 'linear', enabled: false, settings: { teamKey: 'ENG' } },
         ],
@@ -613,7 +613,7 @@ test('[I1][INV-3][INV-4] full v3-canonical conversion with v3 config and rewritt
     assert.match(dryRun, /divergences\s+\d+/);
     assert.match(dryRun, /token rewrite\(s\)/);
     assert.match(dryRun, /unknown top-level key "legacyDirs" dropped/);
-    assert.match(dryRun, /legacy backend "filesystem" dropped/);
+    assert.match(dryRun, /legacy connector "filesystem" dropped/);
     assert.match(dryRun, /removals\s+\.specs\/ \(whole tree, after strict gate\)/);
 
     const result = await runMigration(root);
@@ -623,7 +623,7 @@ test('[I1][INV-3][INV-4] full v3-canonical conversion with v3 config and rewritt
     const config = JSON.parse(await readWorkspaceFile(root, '.sdd/config.json'));
     assert.equal(config.version, 3);
     assert.equal('legacyDirs' in config, false);
-    assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
+    assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
 
     // Canonical rebuilt, knowledge moved with rewritten tokens, index prefixed .sdd/.
     assert.equal(await fileExists(root, '.sdd/canonical/initiatives/demo/features/01-login/specs/042.json'), true);
@@ -651,7 +651,7 @@ test('[I1][INV-3][INV-4] full v3-canonical conversion with v3 config and rewritt
   }
 });
 
-test('[I2][INV-6][arbitrage 8] spec import converts a markdown-only workspace post-cutover', async () => {
+test('[I2][INV-6][arbitrage 8] sdd import converts a markdown-only workspace post-cutover', async () => {
   const root = await makeWorkspace();
   try {
     await writeFiles(root, {
@@ -679,7 +679,7 @@ test('[I2][INV-6][arbitrage 8] spec import converts a markdown-only workspace po
       await writeFiles(withModel, v2ModelWorkspace());
       await assert.rejects(
         () => importMarkdown(withModel),
-        (error) => error.exitCode === 2 && /spec migrate/.test(error.message),
+        (error) => error.exitCode === 2 && /sdd migrate/.test(error.message),
       );
     } finally {
       await cleanup(withModel);

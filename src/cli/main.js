@@ -6,7 +6,7 @@ import { init } from './commands/init.js';
 import { importArtifacts } from './commands/import.js';
 import { migrate } from './commands/migrate.js';
 import { render } from './commands/render.js';
-import { model } from './commands/model.js';
+import { graph } from './commands/graph.js';
 import { upsert } from './commands/upsert.js';
 import { move } from './commands/move.js';
 import { done } from './commands/done.js';
@@ -14,7 +14,7 @@ import { link } from './commands/link.js';
 import { status } from './commands/status.js';
 import { list } from './commands/list.js';
 import { sync } from './commands/sync.js';
-import { backend } from './commands/backend.js';
+import { connectors } from './commands/connectors.js';
 import { validate } from './commands/validate.js';
 import { VERSION, HELP } from './help.js';
 
@@ -28,7 +28,8 @@ const OPTIONS = {
   feature: { type: 'string' },
   initiative: { type: 'string' },
   field: { type: 'string', multiple: true },
-  backend: { type: 'string', multiple: true },
+  connector: { type: 'string', multiple: true },
+  interactive: { type: 'boolean' },
   create: { type: 'boolean' },
   force: { type: 'boolean' },
   check: { type: 'boolean' },
@@ -48,7 +49,7 @@ const COMMANDS = {
   import: importArtifacts,
   migrate,
   render,
-  model,
+  graph,
   upsert,
   move,
   done,
@@ -57,7 +58,7 @@ const COMMANDS = {
   list,
   ls: list,
   sync,
-  backend,
+  connectors,
   validate,
 };
 
@@ -87,6 +88,22 @@ export async function run(argv) {
     throw new UsageError(`Unknown command "${command}". Run \`spec help\` for the list of commands.`);
   }
 
+  // Settings flags: `--<id>.<key>[.<subkey>=<value>]` collected verbatim
+  // (parseArgs with strict: false exposes them as dotted values keys), plus
+  // un-namespaced keys which `connectors enable <id>` binds to its positional.
+  // A dotted flag without a value is a malformed call — rejected here so no
+  // command ever sees a silent `true` (INV-2).
+  const declaredOptions = new Set(Object.keys(OPTIONS));
+  const settings = {};
+  for (const [key, value] of Object.entries(values)) {
+    const isDotted = key.includes('.');
+    if (!isDotted && declaredOptions.has(key)) continue;
+    if (value === true) {
+      throw new UsageError(`Option "--${key}" requires a value (--${key}=<value>).`);
+    }
+    settings[key] = value;
+  }
+
   await handler({
     cwd: values.cwd ? path.resolve(values.cwd) : process.cwd(),
     positionals: positionals.slice(1),
@@ -100,7 +117,7 @@ export async function run(argv) {
       feature: values.feature,
       initiative: values.initiative,
       field: values.field,
-      backends: values.backend,
+      connectors: values.connector,
       create: Boolean(values.create),
       force: Boolean(values.force),
       check: Boolean(values.check),
@@ -110,6 +127,8 @@ export async function run(argv) {
       done: Boolean(values.done),
       dryRun: Boolean(values['dry-run']),
       json: Boolean(values.json),
+      interactive: Boolean(values.interactive),
+      settings,
     },
   });
 }

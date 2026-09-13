@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T14:04:53.881Z",
+  "generatedAt": "2026-09-13T16:38:17.344Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -14,6 +14,26 @@
       "projection": ".sdd/generated/initiatives/layout-v3/features/01-canonical-tree.md",
       "relations": {
         "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "01-declarative-init",
+      "slug": "01-declarative-init",
+      "title": "Init déclaratif multi-connecteurs",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/01-declarative-init/01-declarative-init.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/01-declarative-init/01-declarative-init.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/features/01-declarative-init.md",
+      "relations": {
+        "initiative": "setup-experience"
       },
       "progress": {
         "done": false,
@@ -40,6 +60,26 @@
         "children": 1,
         "completedChildren": 1,
         "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "02-setup-skill",
+      "slug": "02-setup-skill",
+      "title": "Skill /setup — interview et validation MCP",
+      "state": "planned",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/02-setup-skill.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/02-setup-skill/02-setup-skill.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/features/02-setup-skill.md",
+      "relations": {
+        "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": false,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": false
       },
       "remote": {}
     },
@@ -102,6 +142,24 @@
       "remote": {}
     },
     {
+      "kind": "initiative",
+      "id": "setup-experience",
+      "slug": "setup-experience",
+      "title": "Expérience d'installation",
+      "state": "planned",
+      "meta": ".sdd/canonical/initiatives/setup-experience/setup-experience.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/setup-experience.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/README.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 2,
+        "completedChildren": 1,
+        "complete": false
+      },
+      "remote": {}
+    },
+    {
       "kind": "spec",
       "id": "001",
       "slug": "001-canonical-layout",
@@ -155,6 +213,27 @@
       "relations": {
         "feature": "03-sdd-migration",
         "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "004",
+      "slug": "004-declarative-init",
+      "title": "Init déclaratif multi-connecteurs",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/setup-experience/features/01-declarative-init/specs/004.json",
+      "body": ".sdd/canonical/initiatives/setup-experience/features/01-declarative-init/specs/004.md",
+      "projection": ".sdd/generated/initiatives/setup-experience/specs/004.md",
+      "relations": {
+        "feature": "01-declarative-init",
+        "initiative": "setup-experience"
       },
       "progress": {
         "done": true,

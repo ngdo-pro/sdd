@@ -68,11 +68,11 @@ flowchart TD
      - New protocol, dependency, or persistence engine $\rightarrow$ Prompt for ADR generation.
 
 3. **Cascading Completion & Archiving (CLI-driven):**
-   - Propagate completion **only** through the CLI: `spec done [id] --cascade`.
+   - Propagate completion **only** through the CLI: `sdd done [id] --cascade`.
      * marks the spec `progress.done`, archives it, then archives every unfinished parent whose children are complete,
      * regenerates all affected projections (feature `## 6.`, initiative `## 4.`, vision `## 5.`), the index and the Linear mirrors.
    - Never `mv` or edit a projection by hand: `.sdd/generated/**` is generated from the canonical model.
-   - Use `spec render --check` to confirm no projection drifted from the model.
+   - Use `sdd render --check` to confirm no projection drifted from the model.
 
 ---
 

@@ -13,9 +13,9 @@
 * **Primary Skill:** `skills/spec/SKILL.md` (`/spec`)
 * **Reference Template:** `templates/SPEC_TEMPLATE.md` (sections for the **body**)
 * **Governing Rules:** `rules/spec-rules.md` (portability, scannability, BDD traceability, model-first)
-* **Writing Interface:** `spec upsert spec --slug XXX-[slug] --title … --from <body-file>`
+* **Writing Interface:** `sdd upsert spec --slug XXX-[slug] --title … --from <body-file>`
 * **Required Inputs:**
-  - Approved Feature (from the model: `spec status <feature-slug> --kind feature`)
+  - Approved Feature (from the model: `sdd status <feature-slug> --kind feature`)
   - Domain Ground Truth (`.sdd/knowledge/domains/[domain]/`, **if already existing**)
   - Global Architecture & Tenets (`.sdd/generated/vision.md`, the vision artifact)
 
@@ -30,7 +30,7 @@
 2. **Execute the `spec` Skill Protocol:**
    - Execute the step-by-step procedure defined in `skills/spec/SKILL.md`.
    - Ask targeted technical questions via `ask_question` for all critical boundary, error, or security ambiguities (proactively proposing to split the spec if scope spans multiple heavy subsystems).
-   - Author the **body** from `templates/SPEC_TEMPLATE.md`, then persist it with `spec upsert` (never write model or projection files directly).
+   - Author the **body** from `templates/SPEC_TEMPLATE.md`, then persist it with `sdd upsert` (never write model or projection files directly).
 
 3. **Delta Minimality & Precision:**
    - Focus exclusively on the scope required to fulfill the Feature brief.

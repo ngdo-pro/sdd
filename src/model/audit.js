@@ -61,8 +61,8 @@ async function findRootLayoutViolations(cwd) {
  * Computes every spec-rules.md finding for a workspace: portable paths
  * (rule 1), invariant traceability (rule 3), the stateless canonical layout
  * (INV-1), spec id uniqueness (INV-5) and graph integrity.
- * Pure reader — no config, no backends, no `process.exitCode`: the same
- * engine backs `spec validate` and the strict gate of `spec migrate`.
+ * Pure reader — no config, no connectors, no `process.exitCode`: the same
+ * engine backs `sdd validate` and the strict gate of `sdd migrate`.
  * @returns {Promise<Array<{ artifact: string, rule: string, detail: string }>>}
  */
 export async function computeFindings(cwd) {
@@ -86,7 +86,7 @@ export async function computeFindings(cwd) {
         });
       }
       if (!artifact.relations?.feature) {
-        findings.push({ artifact: label, rule: 'graph-integrity', detail: 'no parent feature linked (run `spec link`)' });
+        findings.push({ artifact: label, rule: 'graph-integrity', detail: 'no parent feature linked (run `sdd link`)' });
       }
       if (!artifact.relations?.initiative) {
         findings.push({ artifact: label, rule: 'graph-integrity', detail: 'no parent initiative linked (derive via `--feature`)' });

@@ -1,7 +1,7 @@
 # Extension: Linear
 
-Mirrors Spec Framework artifacts onto **Linear issues**. Built into the CLI
-(`src/backends/linear.js`) — no installation needed, just enable it.
+Mirrors SDD Framework artifacts onto **Linear issues**. Built into the CLI
+(`src/connectors/linear.js`) — no installation needed, just enable it.
 
 ---
 
@@ -9,15 +9,15 @@ Mirrors Spec Framework artifacts onto **Linear issues**. Built into the CLI
 
 ```bash
 export LINEAR_API_KEY="lin_api_..."      # Personal API key
-spec backend enable linear
-spec sync --create                       # create the missing issues
+sdd connectors enable linear
+sdd sync --create                       # create the missing issues
 ```
 
 Then set your team key in `.sdd/config.json`:
 
 ```json
 {
-  "backends": [
+  "connectors": [
     {
       "id": "linear",
       "type": "linear",
@@ -45,7 +45,7 @@ Then set your team key in `.sdd/config.json`:
 | Parent ↔ child link | Reported as unsupported (Linear relations are not managed yet) |
 | Local ↔ remote identity | `artifact.remote.linear` in the artifact's canonical metadata |
 
-The **model is the source of truth**: `spec move` performs the model transition
+The **model is the source of truth**: `sdd move` performs the model transition
 *and* realigns the linked issue. The returned identifier is persisted by the CLI
 into `.sdd/canonical/**/<artifact>.json` → `remote.linear`.
 
@@ -54,12 +54,12 @@ into `.sdd/canonical/**/<artifact>.json` → `remote.linear`.
 ## 3. Usage
 
 ```bash
-spec sync --create --backend linear   # create issues + align states
-spec move 042-login --to active       # model transition AND issue transition
-spec status 042-login                 # show the current mirror reference
+sdd sync --create --connector linear   # create issues + align states
+sdd move 042-login --to active       # model transition AND issue transition
+sdd status 042-login                 # show the current mirror reference
 ```
 
-`createOnMove: true` makes `spec move` auto-create the missing issue instead of
+`createOnMove: true` makes `sdd move` auto-create the missing issue instead of
 failing when an artifact was never synced.
 
 ---
@@ -71,12 +71,12 @@ failing when an artifact was never synced.
 by querying `team.key = teamKey` and reading its `states`.
 
 If a mapping name does not exist in the team, the movement fails with an
-actionable `BackendError` — adjust `stateMap` rather than renaming Linear states.
+actionable `ConnectorError` — adjust `stateMap` rather than renaming Linear states.
 
 ---
 
 ## 5. Limitations (v1)
 
 * `link` is a no-op: Linear issue relations are not wired yet.
-* Only the first 100 issues of the team are listed (`spec list --backend linear`).
+* Only the first 100 issues of the team are listed (`sdd list --connector linear`).
 * Labels must pre-exist in the team to be attached; unknown labels are skipped.

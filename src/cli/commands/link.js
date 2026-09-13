@@ -27,9 +27,9 @@ function requireParentFeature(artifacts, featureRef) {
 }
 
 /**
- * `spec link <ref>` — records a parent relation in the canonical model.
- *   spec link <spec-ref>    --feature <ref>     (initiative derived from the feature)
- *   spec link <feature-ref> --initiative <slug> (relocates the feature AND its specs)
+ * `sdd link <ref>` — records a parent relation in the canonical model.
+ *   sdd link <spec-ref>    --feature <ref>     (initiative derived from the feature)
+ *   sdd link <feature-ref> --initiative <slug> (relocates the feature AND its specs)
  *
  * Relocation follows `previous`: parent first, then descendant specs, so the
  * tree never keeps orphans at the old location.
@@ -37,7 +37,7 @@ function requireParentFeature(artifacts, featureRef) {
 export async function link({ cwd, positionals, flags }) {
   const reference = positionals[0];
   if (!reference) {
-    throw new UsageError('Usage: spec link <ref> [--feature <ref>] [--initiative <slug>]');
+    throw new UsageError('Usage: sdd link <ref> [--feature <ref>] [--initiative <slug>]');
   }
   if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 

@@ -8,7 +8,7 @@ const pkg = JSON.parse(
 export const VERSION = pkg.version;
 
 export const HELP = `
-  spec — Spec Framework CLI (${VERSION})
+  sdd — SDD Framework CLI (${VERSION})
 
   Model-first pipeline: canonical artifacts live in .sdd/canonical/ (JSON
   metadata + markdown body, stateless layout — lifecycle lives in metadata).
@@ -29,11 +29,11 @@ export const HELP = `
     link <ref>           Set a parent relation in the model
     render [--check]     Regenerate .sdd/generated/ projections (CI drift
                          guard); preview the write plan with --dry-run
-    model [--write]      Inspect the graph / regenerate index.json
+    graph [--write]      Inspect the graph / regenerate index.json
     status [<ref>]       Model state, derived progress, remote mirrors
     list                 List artifacts (--kind, --state)
     sync [<ref>]         Reconcile remote mirrors (Linear) with the model
-    backend <action>     list | enable <id> | disable <id>
+    connectors <action>     list | enable <id> | disable <id>
     validate             Enforce spec-rules.md (paths, invariants, graph)
 
   OPTIONS
@@ -51,7 +51,7 @@ export const HELP = `
     --create             Create missing remote artifacts (sync)
     --check              Report drift without writing (render)
     --write              Write index.json (model)
-    --backend <id>       Restrict to a mirror (repeatable)
+    --connector <id>       Restrict to a mirror (repeatable)
     --dry-run            Preview changes without writing
     --json               Machine-readable output
     --force              Overwrite existing material (init, import)
@@ -60,14 +60,14 @@ export const HELP = `
     -v, --version        Show the CLI version
 
   EXAMPLES
-    spec init
-    spec migrate --dry-run && spec migrate
-    spec upsert spec --slug 042-login --title "Magic link login" --from draft.md
-    spec link 042-login --feature auth-login
-    spec move 042-login --to active
-    spec done 042-login --cascade
-    spec render --check
-    spec import && spec model --write
+    sdd init
+    sdd migrate --dry-run && sdd migrate
+    sdd upsert spec --slug 042-login --title "Magic link login" --from draft.md
+    sdd link 042-login --feature auth-login
+    sdd move 042-login --to active
+    sdd done 042-login --cascade
+    sdd render --check
+    sdd import && sdd graph --write
 
   REFERENCES
     <ref> accepts an id (042), a slug (042-login / auth-login) or a path.

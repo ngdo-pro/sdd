@@ -7,6 +7,8 @@ import {
   defaultConfig,
   getBackendConfig,
   loadConfig,
+  mergeConnectorConfigs,
+  mergeSettingOverrides,
   normalizeConfig,
   selectBackendConfigs,
 } from '../src/core/config.js';
@@ -19,15 +21,15 @@ test('defaultConfig is model-first with one disabled mirror', () => {
   assert.equal(config.version, 3);
   assert.equal(config.sourceOfTruth, 'model');
   assert.equal(config.projections.markdown, true);
-  assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
-  assert.equal(config.backends[0].enabled, false);
+  assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
+  assert.equal(config.connectors[0].enabled, false);
 });
 
-test('normalizeConfig upgrades a legacy v1 config, dropping the intrinsic filesystem backend', () => {
+test('normalizeConfig upgrades a legacy v1 config, dropping the intrinsic filesystem connector', () => {
   const config = normalizeConfig({
     version: 1,
     sourceOfTruth: 'filesystem',
-    backends: [
+    connectors: [
       { id: 'filesystem', type: 'filesystem', enabled: true, required: true },
       { id: 'linear', type: 'linear', enabled: true, settings: { teamKey: 'ENG' } },
     ],
@@ -37,13 +39,13 @@ test('normalizeConfig upgrades a legacy v1 config, dropping the intrinsic filesy
   // input lands on v3.
   assert.equal(config.version, 3);
   assert.equal(config.sourceOfTruth, 'model');
-  assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
+  assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
   assert.equal(getBackendConfig(config, 'linear').enabled, true);
   assert.equal(getBackendConfig(config, 'linear').settings.teamKey, 'ENG');
 });
 
 test('normalizeConfig merges partial mirror settings onto defaults', () => {
-  const config = normalizeConfig({ backends: [{ id: 'linear', settings: { labels: { spec: 'spec' } } }] });
+  const config = normalizeConfig({ connectors: [{ id: 'linear', settings: { labels: { spec: 'spec' } } }] });
   const linear = getBackendConfig(config, 'linear');
   assert.equal(linear.settings.stateMap.active, 'In Progress');
   assert.equal(linear.settings.labels.spec, 'spec');
@@ -51,14 +53,14 @@ test('normalizeConfig merges partial mirror settings onto defaults', () => {
 });
 
 test('normalizeConfig keeps unknown third-party mirrors', () => {
-  const config = normalizeConfig({ backends: [{ id: 'jira', type: 'jira', enabled: true }] });
+  const config = normalizeConfig({ connectors: [{ id: 'jira', type: 'jira', enabled: true }] });
   assert.ok(getBackendConfig(config, 'jira'));
 });
 
 test('selectBackendConfigs honours enabled flags and explicit filters', () => {
-  const config = normalizeConfig({ backends: [{ id: 'linear', enabled: true }] });
-  assert.deepEqual(selectBackendConfigs(config).map((backend) => backend.id), ['linear']);
-  assert.deepEqual(selectBackendConfigs(config, { only: ['linear'] }).map((backend) => backend.id), ['linear']);
+  const config = normalizeConfig({ connectors: [{ id: 'linear', enabled: true }] });
+  assert.deepEqual(selectBackendConfigs(config).map((connector) => connector.id), ['linear']);
+  assert.deepEqual(selectBackendConfigs(config, { only: ['linear'] }).map((connector) => connector.id), ['linear']);
   assert.deepEqual(selectBackendConfigs(defaultConfig()), []);
 });
 
@@ -73,7 +75,7 @@ test('loadConfig falls back to defaults and reads an on-disk config', async () =
   try {
     assert.equal((await loadConfig(root)).sourceOfTruth, 'model');
 
-    await writeFiles(root, { '.sdd/config.json': JSON.stringify({ backends: [{ id: 'linear', enabled: true }] }) });
+    await writeFiles(root, { '.sdd/config.json': JSON.stringify({ connectors: [{ id: 'linear', enabled: true }] }) });
     assert.equal(getBackendConfig(await loadConfig(root), 'linear').enabled, true);
   } finally {
     await cleanup(root);
@@ -122,7 +124,7 @@ test('[U3][INV-3] convertConfig produces a clean v3 config with exact warnings',
     sourceOfTruth: 'model',
     legacyDirs: ['.specs/model'],
     projections: { markdown: true },
-    backends: [
+    connectors: [
       { id: 'filesystem', type: 'filesystem', enabled: true },
       { id: 'linear', type: 'linear', enabled: true, settings: { teamKey: 'ENG' } },
     ],
@@ -132,10 +134,10 @@ test('[U3][INV-3] convertConfig produces a clean v3 config with exact warnings',
   assert.equal(config.sourceOfTruth, 'model');
   assert.equal('legacyDirs' in config, false);
   assert.equal(warnings.join(' ').includes('legacyDirs'), true);
-  assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
+  assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
   assert.equal(getBackendConfig(config, 'linear').enabled, true);
   assert.equal(getBackendConfig(config, 'linear').settings.teamKey, 'ENG');
-  // Exactly one warning for the unknown key and one for the dropped backend.
+  // Exactly one warning for the unknown key and one for the dropped connector.
   assert.equal(warnings.filter((warning) => warning.includes('legacyDirs')).length, 1);
   assert.equal(warnings.filter((warning) => warning.includes('filesystem')).length, 1);
   assert.equal(warnings.length, 2);
@@ -145,5 +147,84 @@ test('convertConfig keeps a compliant v3 config untouched and warns nothing', ()
   const { config, warnings } = convertConfig(defaultConfig());
   assert.equal(config.version, 3);
   assert.deepEqual(warnings, []);
-  assert.deepEqual(config.backends.map((backend) => backend.id), ['linear']);
+  assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
+});
+
+// ============================================================================
+// Deep typed merge & idempotent connectors merge (spec 004-declarative-init)
+// ============================================================================
+
+test('[INV-2] mergeSettingOverrides deep-merges dotted paths without mutating its inputs', () => {
+  const base = { teamKey: '', labels: { spec: 'spec', feature: 'feature' }, createOnMove: false };
+  const merged = mergeSettingOverrides(base, { teamKey: 'ENG', 'labels.spec': 'SPEC', createOnMove: true });
+  assert.deepEqual(merged, { teamKey: 'ENG', labels: { spec: 'SPEC', feature: 'feature' }, createOnMove: true });
+  assert.deepEqual(base, { teamKey: '', labels: { spec: 'spec', feature: 'feature' }, createOnMove: false });
+});
+
+test('[INV-2] mergeSettingOverrides replaces non-object branches wholesale', () => {
+  const merged = mergeSettingOverrides(
+    { options: { a: 1, b: 2 } },
+    { options: { a: 9 }, extra: [1, 2] },
+  );
+  assert.deepEqual(merged, { options: { a: 9, b: 2 }, extra: [1, 2] });
+});
+
+test('[INV-3] mergeConnectorConfigs never lets manifest defaults overwrite explicit user values', () => {
+  const existing = [{
+    id: 'linear', type: 'linear', enabled: true,
+    settings: { teamKey: 'ENG', labels: { spec: 'spec', feature: 'feature' }, createOnMove: true },
+  }];
+  const declaration = {
+    id: 'linear', type: 'linear', enabled: true,
+    settings: { teamKey: '', labels: { spec: 'spec', feature: 'feature' }, createOnMove: false },
+    explicit: [],
+  };
+  const merged = mergeConnectorConfigs(existing, [declaration]);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].settings.teamKey, 'ENG');
+  assert.equal(merged[0].settings.createOnMove, true);
+  // Inputs are never mutated (defaultConfig is shared between tests).
+  assert.deepEqual(existing[0].settings, { teamKey: 'ENG', labels: { spec: 'spec', feature: 'feature' }, createOnMove: true });
+});
+
+test('[INV-3] explicit overrides win on a re-declaration, absent leaves are seeded', () => {
+  const existing = [{
+    id: 'linear', type: 'linear', enabled: true,
+    settings: { teamKey: 'ENG', labels: { spec: 'spec' } },
+  }];
+  const declaration = {
+    id: 'linear', type: 'linear', enabled: true,
+    settings: { teamKey: 'NEW', labels: { spec: 'SPEC', initiative: 'initiative' }, createOnMove: false },
+    explicit: ['teamKey', 'labels.spec'],
+  };
+  const merged = mergeConnectorConfigs(existing, [declaration]);
+  assert.equal(merged[0].settings.teamKey, 'NEW');
+  assert.deepEqual(merged[0].settings.labels, { spec: 'SPEC', initiative: 'initiative' });
+  assert.equal(merged[0].settings.createOnMove, false);
+});
+
+test('[INV-3] unknown connectors are appended, never removed, and the list stays sorted', () => {
+  const existing = [
+    { id: 'linear', type: 'linear', enabled: true, settings: { teamKey: 'ENG' } },
+    { id: 'zulu', type: 'zulu', enabled: false },
+  ];
+  const merged = mergeConnectorConfigs(existing, [
+    { id: 'alpha', type: 'alpha', enabled: true, settings: { endpoint: '' }, explicit: [] },
+  ]);
+  assert.deepEqual(merged.map((entry) => entry.id), ['alpha', 'linear', 'zulu']);
+  assert.deepEqual(merged.find((entry) => entry.id === 'alpha').settings, { endpoint: '' });
+});
+
+test('[INV-3] intrinsic local entries never appear in connectors[]', () => {
+  const existing = [
+    { id: 'local', type: 'local', enabled: true },
+    { id: 'linear', type: 'linear', enabled: false },
+  ];
+  const merged = mergeConnectorConfigs(existing, [{ id: 'filesystem', type: 'filesystem', enabled: true, explicit: [] }]);
+  assert.deepEqual(merged.map((entry) => entry.id), ['linear']);
+});
+
+test('[INV-3] normalizeConfig keeps connectors[] sorted by id', () => {
+  const config = normalizeConfig({ connectors: [{ id: 'zulu', type: 'zulu' }, { id: 'alpha', type: 'alpha' }] });
+  assert.deepEqual(config.connectors.map((entry) => entry.id), ['alpha', 'linear', 'zulu']);
 });

@@ -1,27 +1,27 @@
-import { BackendError } from '../../src/core/errors.js';
+import { ConnectorError } from '../../src/core/errors.js';
 
 /**
- * Template mirror backend factory.
+ * Template mirror connector factory.
  *
  * Copy `extensions/_TEMPLATE/` to `extensions/<your-id>/`, implement the methods
- * below, then enable it with `spec backend enable <your-id>`.
+ * below, then enable it with `sdd connectors enable <your-id>`.
  *
  * @param {object} context
  * @param {string} context.cwd            Workspace root.
  * @param {object} context.config         Full normalized framework config.
- * @param {object} context.backendConfig  This backend's entry in `.sdd/config.json`.
+ * @param {object} context.connectorConfig  This connector's entry in `.sdd/config.json`.
  */
-export default function createExampleBackend({ backendConfig }) {
-  const backendId = backendConfig.id;
+export default function createExampleConnector({ connectorConfig }) {
+  const connectorId = connectorConfig.id;
 
   /** Replace with a real client call. */
   async function callApi() {
-    throw new BackendError('Example backend is not implemented yet.');
+    throw new ConnectorError('Example connector is not implemented yet.');
   }
 
   return {
-    id: backendId,
-    type: backendConfig.type,
+    id: connectorId,
+    type: connectorConfig.type,
     remote: true,
     capabilities: { read: true, list: true, transition: true, create: true, link: true },
 
@@ -37,11 +37,11 @@ export default function createExampleBackend({ backendConfig }) {
 
     async transition(artifact, toState, { dryRun = false } = {}) {
       // 1. Read the existing remote reference from the artifact metadata.
-      // 2. If missing, either create it (when allowed) or throw a BackendError.
+      // 2. If missing, either create it (when allowed) or throw a ConnectorError.
       // 3. Update the remote state; return the reference for the CLI to persist.
-      const remoteRef = artifact.remote?.[backendId] ?? null;
+      const remoteRef = artifact.remote?.[connectorId] ?? null;
       if (!remoteRef) {
-        throw new BackendError(`"${artifact.slug}" is not linked to ${backendId}.`);
+        throw new ConnectorError(`"${artifact.slug}" is not linked to ${connectorId}.`);
       }
       if (dryRun) return { moved: false, planned: true, remoteRef };
       await callApi();

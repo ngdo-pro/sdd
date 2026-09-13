@@ -19,15 +19,15 @@ Livraison : 2ᵉ de l'initiative (après 01, avant 03).
 
 ## 3. Nominal User Flow (*Happy Path*)
 
-1. **Trigger:** `spec upsert`, `spec render` ou `spec done`.
+1. **Trigger:** `sdd upsert`, `sdd render` ou `sdd done`.
 2. **Interaction & Display:** toutes les projections sont écrites sous `generated/` ; aucune écriture de projection en dehors de ce namespace.
-3. **Validation & Persistence:** `spec render --check` détecte tout drift entre modèle et projections (exit 1).
+3. **Validation & Persistence:** `sdd render --check` détecte tout drift entre modèle et projections (exit 1).
 
 ## 4. Functional Invariants (Non-Negotiable Rules)
 
-* **INV-1:** toute projection vit sous `generated/`, vision comprise — la racine ne contient que `config.json`, `canonical/`, `generated/`, `knowledge/` (et `site/` uniquement si la feature `04-static-site` est activée) ; `spec validate` traite toute autre entrée de racine comme une violation.
-* **INV-2:** `generated/` est intégralement régénérable depuis le modèle : `spec render` purge tout fichier non projeté attendu (`knowledge/` est hors périmètre du render) ; toute suppression est listée dans la sortie et prévisualisable via `--dry-run`.
-* **INV-3:** `spec render --check` échoue avec exit 1 sur tout drift, et ne couvre que `generated/`.
+* **INV-1:** toute projection vit sous `generated/`, vision comprise — la racine ne contient que `config.json`, `canonical/`, `generated/`, `knowledge/` (et `site/` uniquement si la feature `04-static-site` est activée) ; `sdd validate` traite toute autre entrée de racine comme une violation.
+* **INV-2:** `generated/` est intégralement régénérable depuis le modèle : `sdd render` purge tout fichier non projeté attendu (`knowledge/` est hors périmètre du render) ; toute suppression est listée dans la sortie et prévisualisable via `--dry-run`.
+* **INV-3:** `sdd render --check` échoue avec exit 1 sur tout drift, et ne couvre que `generated/`.
 * **INV-4:** le CLI tolère l'absence de l'option `projections.markdown` dans la config (défaut : activé).
 
 ## 5. Out of Scope

@@ -17,7 +17,7 @@ All updated knowledge documents must be maintained in the user's language.
 
 1. **Locate Specification:**
    ```bash
-   spec status [id]
+   sdd status [id]
    ```
    Identify the target domain from its metadata; ensure `.sdd/knowledge/domains/[domain]/` exists (initialize if greenfield).
 
@@ -35,7 +35,7 @@ All updated knowledge documents must be maintained in the user's language.
 
 4. **Complete & Cascate Through the CLI:**
    ```bash
-   spec done [id] --cascade
+   sdd done [id] --cascade
    ```
    This single command:
    * marks the spec `progress.done = true` and archives it (`active/ ➔ archive/`),
@@ -46,6 +46,6 @@ All updated knowledge documents must be maintained in the user's language.
    Use `--dry-run` first to preview the cascade, and `--undo` to reopen a spec if it was closed by mistake.
 
 5. **Verification & Confirmation:**
-   * `spec render --check` → must be clean.
-   * `spec validate` → must be clean.
+   * `sdd render --check` → must be clean.
+   * `sdd validate` → must be clean.
    * Summarize all performed updates in the user's language: updated domain knowledge files, created PDRs/ADRs, archived spec, and the cascaded completion milestones (which features/initiatives were archived).

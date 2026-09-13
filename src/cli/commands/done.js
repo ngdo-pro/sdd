@@ -7,13 +7,13 @@ import { arrow, heading, info, printJson, success } from '../render.js';
 import { loadContext, persistArtifact, refresh, runCascade } from '../context.js';
 
 /**
- * `spec done <ref>` — marks an artifact delivered and archives it (metadata
+ * `sdd done <ref>` — marks an artifact delivered and archives it (metadata
  * only, no relocation), then optionally archives parents whose children are
  * all complete (`--cascade`). `--undo` reopens it.
  */
 export async function done({ cwd, positionals, flags }) {
   const reference = positionals[0];
-  if (!reference) throw new UsageError('Usage: spec done <ref> [--undo] [--cascade] [--dry-run]');
+  if (!reference) throw new UsageError('Usage: sdd done <ref> [--undo] [--cascade] [--dry-run]');
   if (!flags.dryRun) assertNoCoexistence(cwd); // INV-5: mutations locked during coexistence
 
   const { artifacts } = await loadContext(cwd);

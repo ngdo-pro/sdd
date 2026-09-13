@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "004",
+  "slug": "004-declarative-init",
+  "title": "Init déclaratif multi-connecteurs",
+  "state": "archived",
+  "relations": {
+    "feature": "01-declarative-init",
+    "initiative": "setup-experience"
+  },
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
+    "Change Type": "`New Capability`",
+    "Complexity": "`Large`"
+  },
+  "remote": {},
+  "progress": {
+    "done": true
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

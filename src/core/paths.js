@@ -70,7 +70,7 @@ export function configPath(cwd) {
 }
 
 /**
- * Directory layout bootstrapped by `spec init`: nothing but the root and the
+ * Directory layout bootstrapped by `sdd init`: nothing but the root and the
  * canonical store. Every other directory is created on demand (INV-3).
  */
 export function standardLayout(cwd) {

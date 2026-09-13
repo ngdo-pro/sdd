@@ -11,7 +11,7 @@ All generated specification content must be authored in the user's language.
 
 A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.json` (metadata) + `<id>.md` (body). The markdown under `.sdd/generated/` is a **generated projection** (spec bodies are flattened at `generated/initiatives/[initiative]/specs/[id].md`).
 
-> **Model-first (Rule 7):** never edit `.sdd/generated/**` and never write model files by hand — always go through the `spec` CLI.
+> **Model-first (Rule 7):** never edit `.sdd/generated/**` and never write model files by hand — always go through the `sdd` CLI.
 
 ---
 
@@ -21,8 +21,8 @@ A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/
    * Check if `.sdd/knowledge/domains/[domain]/` exists:
      - **Present (Brownfield):** read `behavior.md`, `tech.md`, `contracts.md`, `models.md` to build strictly upon existing foundations.
      - **Absent (Greenfield / Bootstrap):** do not block; treat as the foundational spec for this domain (knowledge will be seeded on `/sync-knowledge`).
-   * If derived from an initiative feature: `spec status [feature-slug] --kind feature`.
-   * Read the vision: `spec status vision --json`.
+   * If derived from an initiative feature: `sdd status [feature-slug] --kind feature`.
+   * Read the vision: `sdd status vision --json`.
 
 2. **Exhaustive Technical Interview:**
    * Clarify all technical ambiguities (security boundaries, migrations, failure modes, concurrency, backward compatibility) via `ask_question`. Never artificially cap questions.
@@ -31,7 +31,7 @@ A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/
 3. **Sequential Identifier:**
    * Determine the next free 3-digit id:
      ```bash
-     spec list --kind spec --json
+     sdd list --kind spec --json
      ```
    * Slugs are `XXX-slug` (e.g. `042-login`); the CLI derives the `id` from it.
 
@@ -53,7 +53,7 @@ A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/
 
 5. **Persist Through the CLI:**
    ```bash
-   spec upsert spec --slug XXX-[slug] --title "[Spec Title]" \
+   sdd upsert spec --slug XXX-[slug] --title "[Spec Title]" \
         --feature [feature-slug] --state planned \
         --field "Domain=\`.sdd/knowledge/domains/[domain]/\`" \
         --field "Change Type=\`New Capability\`" \
@@ -64,11 +64,11 @@ A spec is stored as `.sdd/canonical/initiatives/<initiative>/features/<feature>/
 
 6. **Link to the Parent Feature (if not set above):**
    ```bash
-   spec link XXX-[slug] --feature [feature-slug]
+   sdd link XXX-[slug] --feature [feature-slug]
    ```
    The feature's `## 6. Implementation Spec(s)` section is regenerated automatically.
 
 7. **Validation:**
-   * `spec validate` — enforces portable paths (rule 1) and invariant traceability (rule 3).
-   * `spec render --check` — confirms projections match the model.
+   * `sdd validate` — enforces portable paths (rule 1) and invariant traceability (rule 3).
+   * `sdd render --check` — confirms projections match the model.
    * Invite the user to review before implementation (`/build-spec XXX`).

@@ -3,7 +3,7 @@ import { buildGraph } from '../../model/graph.js';
 import { heading, printJson, table, warn } from '../render.js';
 import { loadContext } from '../context.js';
 
-/** `spec list [--kind k] [--state s]` — lists artifacts from the model. */
+/** `sdd list [--kind k] [--state s]` — lists artifacts from the model. */
 export async function list({ cwd, flags }) {
   const { artifacts } = await loadContext(cwd);
 

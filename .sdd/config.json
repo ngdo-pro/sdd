@@ -4,7 +4,7 @@
   "projections": {
     "markdown": true
   },
-  "backends": [
+  "connectors": [
     {
       "id": "linear",
       "type": "linear",

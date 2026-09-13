@@ -45,13 +45,13 @@ function requireParentFeature(artifacts, featureRef) {
     throw new UsageError(`No feature found for "${featureRef}" — nothing was written. (${error.message})`);
   }
   if (!parent.relations?.initiative) {
-    throw new UsageError(`Feature "${parent.slug}" has no parent initiative; run \`spec link ${parent.slug} --initiative <slug>\` first.`);
+    throw new UsageError(`Feature "${parent.slug}" has no parent initiative; run \`sdd link ${parent.slug} --initiative <slug>\` first.`);
   }
   return parent;
 }
 
 /**
- * `spec upsert <kind> --slug <slug> [--from <file|->] …`
+ * `sdd upsert <kind> --slug <slug> [--from <file|->] …`
  * Creates or updates an artifact at its definitive canonical location, then
  * re-projects. Specs must be attached to their parent feature (`--feature`);
  * `relations.initiative` is always derived from it.
@@ -60,7 +60,7 @@ export async function upsert({ cwd, positionals, flags }) {
   assertNoCoexistence(cwd); // INV-5: mutations are locked while .specs/ + .sdd/ coexist
   const kind = positionals[0] ?? flags.kind;
   if (!kind || !KINDS.includes(kind)) {
-    throw new UsageError(`Usage: spec upsert <${KINDS.join('|')}> --slug <slug> [--from <file|->]`);
+    throw new UsageError(`Usage: sdd upsert <${KINDS.join('|')}> --slug <slug> [--from <file|->]`);
   }
   const slug = flags.slug ?? (kind === 'vision' ? 'vision' : undefined);
   if (!slug) throw new UsageError('Missing --slug.');

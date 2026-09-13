@@ -1,24 +1,24 @@
-# Extensions — Pluggable Mirror Backends
+# Extensions — Pluggable Mirror Connectors
 
-The Spec Framework is **model-first**: `.sdd/canonical/` is the canonical source of
-truth, and every other surface is a projection. Mirror backends project the model
+The SDD Framework is **model-first**: `.sdd/canonical/` is the canonical source of
+truth, and every other surface is a projection. Mirror connectors project the model
 onto remote systems (Linear, GitHub Issues, Jira, Notion…) and receive the same
-deterministic *movements* through the `spec` CLI.
+deterministic *movements* through the `sdd` CLI.
 
 ```text
-  skills / agents ──(decide)──▶  spec CLI  ──(movement)──▶  MODEL (.sdd/canonical/)  ← canonical
+  skills / agents ──(decide)──▶  sdd CLI  ──(movement)──▶  MODEL (.sdd/canonical/)  ← canonical
                                   (execute)                        │
                                                                    ├─▶ markdown projections (.sdd/generated/)
-                                                                   └─▶ mirror backends
+                                                                   └─▶ mirror connectors
                                                                         ├─ linear   (built-in)
                                                                         └─ <your id> (extension)
 ```
 
 ---
 
-## 1. What a backend is
+## 1. What a connector is
 
-A backend is a **mirror** of the canonical model. It implements a small port over
+A connector is a **mirror** of the canonical model. It implements a small port over
 the framework artifact lifecycle:
 
 | Operation | Purpose |
@@ -33,15 +33,15 @@ The `ctx` object carries `{ dryRun }`.
 
 ### Remote references live in the model
 
-Backends must **not** keep their own identifier map. The CLI stores whatever
-reference you return in `artifact.remote[backendId]`, inside the artifact's
+Connectors must **not** keep their own identifier map. The CLI stores whatever
+reference you return in `artifact.remote[connectorId]`, inside the artifact's
 canonical metadata:
 
 ```json
 { "kind": "spec", "slug": "042-login", "remote": { "linear": "ENG-142" } }
 ```
 
-* Read the existing reference from `artifact.remote?.[backendId]`.
+* Read the existing reference from `artifact.remote?.[connectorId]`.
 * Return `{ remoteRef }` from `transition`/`create` and the CLI persists it.
 * Never mutate the artifact object yourself.
 
@@ -49,7 +49,7 @@ canonical metadata:
 
 ## 2. Canonical artifact descriptor
 
-Every backend speaks the same artifact shape (hydrated from the model):
+Every connector speaks the same artifact shape (hydrated from the model):
 
 ```js
 {
@@ -70,30 +70,30 @@ Every backend speaks the same artifact shape (hydrated from the model):
 
 ---
 
-## 3. Writing a backend
+## 3. Writing a connector
 
 1. Copy `extensions/_TEMPLATE/` to `extensions/<your-id>/`.
-2. Implement `backend.js` (default export = factory).
+2. Implement `connector.js` (default export = factory).
 3. Describe the mapping in `README.md` and fill `extension.json`.
 4. Enable it in the consuming project:
 
    ```bash
-   spec backend enable <your-id>     # or edit .sdd/config.json
-   spec status                       # verify it is picked up
+   sdd connectors enable <your-id>     # or edit .sdd/config.json
+   sdd status                       # verify it is picked up
    ```
 
-The registry auto-discovers any `extensions/<id>/backend.js` exposing a default
+The registry auto-discovers any `extensions/<id>/connector.js` exposing a default
 export. Folders starting with `_` or `.` are ignored (templates/private).
 
 ### Factory contract
 
 ```js
 export default function createBackend({ cwd, config, backendConfig }) {
-  const backendId = backendConfig.id;
+  const connectorId = backendConfig.id;
   const settings = backendConfig.settings ?? {};
 
   return {
-    id: backendId,
+    id: connectorId,
     type: backendConfig.type,
     remote: true,
     capabilities: { read: true, list: true, transition: true, create: true, link: true },
@@ -112,18 +112,18 @@ export default function createBackend({ cwd, config, backendConfig }) {
 * **Be idempotent** — re-running a movement must be a no-op, not an error.
 * **Mirror, never author** — the model is canonical. Never invent state that does
   not exist locally.
-* **Report, don't crash** — throw a `BackendError` (from `src/core/errors.js`)
+* **Report, don't crash** — throw a `ConnectorError` (from `src/core/errors.js`)
   with an actionable message when a movement cannot be applied.
 
 ---
 
-## 4. Built-in backends
+## 4. Built-in connectors
 
 | id | Source | Auth | Notes |
 |---|---|---|---|
-| `linear` | built-in (`src/backends/linear.js`) | `LINEAR_API_KEY` | Mirrors artifacts onto Linear issues. |
+| `linear` | built-in (`src/connectors/linear.js`) | `LINEAR_API_KEY` | Mirrors artifacts onto Linear issues. |
 
-## 5. Planned / community backends
+## 5. Planned / community connectors
 
 `github` (Issues) is the next candidate and will ship as a built-in. Contributions
 for Jira, Notion, GitLab and others are welcome as extension folders following the

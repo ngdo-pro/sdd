@@ -47,9 +47,9 @@ function rewriteParsed(parsed) {
 }
 
 /**
- * A JSON model in the legacy root forbids `spec import`: the importer derives
+ * A JSON model in the legacy root forbids `sdd import`: the importer derives
  * its destinations from markdown document content, which would violate INV-2
- * on top of an existing model — `spec migrate` owns that conversion.
+ * on top of an existing model — `sdd migrate` owns that conversion.
  */
 async function assertNoJsonModel(cwd) {
   const canonicalIndex = path.join(cwd, LEGACY_ROOT_DIRNAME, 'canonical', 'index.json');
@@ -57,7 +57,7 @@ async function assertNoJsonModel(cwd) {
   if ((await exists(canonicalIndex)) || (await exists(modelIndex))) {
     throw new UsageError(
       'A JSON model already exists (.specs/canonical/index.json or .specs/model/index.json) — '
-      + 'run `spec migrate` instead: it reconstructs .sdd/ from the model metadata.',
+      + 'run `sdd migrate` instead: it reconstructs .sdd/ from the model metadata.',
     );
   }
 }
@@ -71,7 +71,7 @@ async function assertNoJsonModel(cwd) {
  * Relations are derived from the CONTENT (`## 6.` → spec; Parent Initiative
  * block → feature), never from the disk position. Bodies and field values
  * are token-rewritten (`.specs/` → `.sdd/`). Refuses (exit 2) when a JSON
- * model exists — `spec migrate` owns that conversion.
+ * model exists — `sdd migrate` owns that conversion.
  *
  * @returns {Promise<object>} `{ dryRun, results, rewrites?, removals?, artifacts? }`
  */

@@ -1,5 +1,5 @@
 /**
- * Typed error hierarchy for the Spec Framework CLI.
+ * Typed error hierarchy for the SDD Framework CLI.
  * Every error carries a stable `code` and a process `exitCode`.
  */
 export class SpecFrameworkError extends Error {
@@ -30,7 +30,7 @@ export class TransitionError extends SpecFrameworkError {
 }
 
 /**
- * Migration failure (`spec migrate`, coexistence guard, unreadable source):
+ * Migration failure (`sdd migrate`, coexistence guard, unreadable source):
  * the workspace is left untouched (source kept, marker written by the engine)
  * and the user is told how to recover.
  */
@@ -40,8 +40,8 @@ export class MigrationError extends SpecFrameworkError {
   }
 }
 
-export class BackendError extends SpecFrameworkError {
-  constructor(message, { code = 'BACKEND_ERROR', exitCode = 1 } = {}) {
+export class ConnectorError extends SpecFrameworkError {
+  constructor(message, { code = 'CONNECTOR_ERROR', exitCode = 1 } = {}) {
     super(message, { code, exitCode });
   }
 }

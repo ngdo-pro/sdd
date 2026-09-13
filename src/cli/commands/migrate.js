@@ -64,11 +64,11 @@ function printResult(result) {
   info(`rewrites      ${occurrences} token rewrite(s) across ${result.rewrites.length} file(s)`);
   for (const divergence of result.divergences) line(`    · ${divergenceLine(divergence)}`);
   info(`removed       ${result.removedRoot}`);
-  success('A second `spec migrate` is a no-op.');
+  success('A second `sdd migrate` is a no-op.');
 }
 
 /**
- * `spec migrate [--dry-run] [--json]` — converts any identifiable legacy
+ * `sdd migrate [--dry-run] [--json]` — converts any identifiable legacy
  * workspace (v2 model, v3-canonical under `.specs/`) into `.sdd/` by FULL
  * reconstruction from the metadata, guarded by the strict gate
  * (validate = 0 finding, render --check = 0 drift), then retires `.specs/`.

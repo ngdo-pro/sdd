@@ -1,10 +1,8 @@
 {
-  "name": "@nanko/sdd-framework",
+  "name": "sdd-framework",
   "version": "2.0.0",
-  "description": "Universal Spec-Driven Development (SDD) Framework for Antigravity and Claude Code",
+  "description": "Universal Spec-Driven Development (SDD) Framework for Humans and AI Agents",
   "keywords": [
-    "antigravity",
-    "claude-code",
     "spec-driven-development",
     "specification",
     "ai-agents",
@@ -13,12 +11,12 @@
     "linear",
     "model-first"
   ],
-  "author": "Nanko Team",
+  "author": "Nicolas Gomes de Oliveira",
   "license": "MIT",
   "type": "module",
   "main": "plugin.json",
   "bin": {
-    "spec": "bin/spec.js"
+    "sdd": "bin/sdd.js"
   },
   "files": [
     "bin/",
@@ -33,9 +31,13 @@
     "README.md"
   ],
   "scripts": {
+    "sdd": "node bin/sdd.js",
     "test": "node --test \"test/**/*.test.js\""
   },
   "engines": {
     "node": ">=18.17"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0"
   }
 }

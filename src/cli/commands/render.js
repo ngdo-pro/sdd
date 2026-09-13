@@ -8,7 +8,7 @@ import { heading, info, printJson, success, table, warn } from '../render.js';
 const DRIFT_STATUSES = new Set(['stale', 'missing', 'unexpected']);
 
 /**
- * `spec render [--check] [--dry-run]` — regenerates every markdown projection
+ * `sdd render [--check] [--dry-run]` — regenerates every markdown projection
  * under `.sdd/generated/` (and the index) from the canonical model.
  * `--check` is the read-only CI guard over `generated/` (exit 1 on stale,
  * missing or unexpected). `--dry-run` previews the full write plan without
@@ -22,7 +22,7 @@ export async function render({ cwd, flags }) {
   const artifacts = await loadModel(cwd);
 
   if (artifacts.length === 0) {
-    warn('The model is empty. Run `spec import` or `spec upsert` first.');
+    warn('The model is empty. Run `sdd import` or `sdd upsert` first.');
     return;
   }
 
@@ -64,7 +64,7 @@ export async function render({ cwd, flags }) {
       return;
     }
     for (const entry of drifted) warn(`${entry.path} is ${entry.status}`);
-    info(`${drifted.length} projection(s) out of date. Run \`spec render\`.`);
+    info(`${drifted.length} projection(s) out of date. Run \`sdd render\`.`);
     process.exitCode = 1;
     return;
   }

@@ -14,7 +14,7 @@ Use this skill whenever the user requests modifying, trimming, or enriching the 
 ## Procedure
 
 1. **Load the Active Specification:**
-   * Locate it through the CLI: `spec status [id]` (or `spec list --kind spec --state active`).
+   * Locate it through the CLI: `sdd status [id]` (or `sdd list --kind spec --state active`).
    * Read the authoritative body from `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md`.
    * If missing from `active/`, return an explicit error prompting the user to verify the ID.
 
@@ -33,13 +33,13 @@ Use this skill whenever the user requests modifying, trimming, or enriching the 
 3. **Apply the Changes Through the CLI:**
    * Edit the body to a scratch file (e.g. `.sdd/.draft-[id].md`) then persist it:
      ```bash
-     spec upsert spec --slug [id] --from .sdd/.draft-[id].md
+     sdd upsert spec --slug [id] --from .sdd/.draft-[id].md
      ```
    * The title, metadata fields and all generated sections are preserved/regenerated automatically. Use `--title` / `--field Key=Value` to change them.
-   * Relationships are changed with `spec link`, states with `spec move` — never by hand.
+   * Relationships are changed with `sdd link`, states with `sdd move` — never by hand.
    * Thoroughly remove obsolete mentions or removed options from the body.
 
 4. **Validation & Hand-off:**
-   * Run `spec validate` and `spec render --check`.
+   * Run `sdd validate` and `sdd render --check`.
    * Concisely summarize the contractual changes.
    * If associated code must be adjusted, resume implementation via `/build-spec [id]`.

@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "kind": "initiative",
+  "id": "setup-experience",
+  "slug": "setup-experience",
+  "title": "Expérience d'installation",
+  "state": "planned",
+  "relations": {},
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-13",
+  "updatedAt": "2026-09-13"
+}

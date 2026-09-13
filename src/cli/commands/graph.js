@@ -5,11 +5,11 @@ import { assertNoCoexistence } from '../../migrate/migrate.js';
 import { heading, info, printJson, success, table } from '../render.js';
 
 /**
- * `spec model [--json] [--write]` — inspects the artifact graph.
+ * `sdd graph [--json] [--write]` — inspects the artifact graph.
  * `--write` regenerates `.sdd/canonical/index.json` (guarded by the
  * coexistence lock, INV-5); plain reads are exempt.
  */
-export async function model({ cwd, flags }) {
+export async function graph({ cwd, flags }) {
   if (flags.write) assertNoCoexistence(cwd);
   const artifacts = await loadModel(cwd);
   const index = buildIndex(artifacts);

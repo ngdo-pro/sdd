@@ -1,12 +1,12 @@
 import { loadConfig } from '../core/config.js';
-import { createBackends } from '../backends/registry.js';
+import { createBackends } from '../connectors/registry.js';
 import { renderProjections } from '../render/projections.js';
 import { writeIndex } from '../model/index.js';
 import { buildGraph, cascadeCandidates } from '../model/graph.js';
 import { loadModel, moveArtifact, saveArtifact } from '../model/store.js';
 import { projectionRelativePath } from '../model/layout.js';
 
-/** Loads config, the canonical model and the enabled mirror backends. */
+/** Loads config, the canonical model and the enabled mirror connectors. */
 export async function loadContext(cwd, { only } = {}) {
   const config = await loadConfig(cwd);
   const artifacts = await loadModel(cwd);

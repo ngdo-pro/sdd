@@ -3,11 +3,11 @@ import { importMarkdown } from '../../migrate/import.js';
 import { heading, info, line, printJson, warn } from '../render.js';
 
 /**
- * `spec import [--dry-run]` — converts legacy `.specs/` markdown documents
+ * `sdd import [--dry-run]` — converts legacy `.specs/` markdown documents
  * into the canonical model under `.sdd/`, then regenerates projections and
  * the index through the shared strict gate (retiring `.specs/` on success).
- * A JSON model anywhere refuses the import (exit 2 — run `spec migrate`),
- * and during coexistence the command is locked (INV-5) — `spec migrate` is
+ * A JSON model anywhere refuses the import (exit 2 — run `sdd migrate`),
+ * and during coexistence the command is locked (INV-5) — `sdd migrate` is
  * the recovery path in both cases.
  */
 export async function importArtifacts({ cwd, flags }) {
@@ -43,5 +43,5 @@ export async function importArtifacts({ cwd, flags }) {
     line(`  · ${entry.kind} ${entry.slug}: ${entry.status}`);
   }
   info(`${outcome.artifacts} artifact(s) in the model. Projections regenerated.`);
-  info('Run `spec render --check` in CI to guard against drift.');
+  info('Run `sdd render --check` in CI to guard against drift.');
 }

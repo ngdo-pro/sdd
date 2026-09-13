@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/nanko/sdd-framework/schemas/config.schema.json",
+  "$id": "https://github.com/ngdo-pro/sdd-framework/schemas/config.schema.json",
   "title": "SDD Framework configuration",
-  "description": "Configuration for the `spec` CLI (.sdd/config.json). The canonical model in .sdd/canonical/ is always the source of truth; `backends` lists remote mirrors only.",
+  "description": "Configuration for the `sdd` CLI (.sdd/config.json). The canonical model in .sdd/canonical/ is always the source of truth; `connectors` lists remote mirrors only.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -19,16 +19,16 @@
         "markdown": { "type": "boolean", "default": true, "description": "Generate the markdown projections under .sdd/." }
       }
     },
-    "backends": {
+    "connectors": {
       "type": "array",
-      "description": "Remote mirror backends. The local model is intrinsic and never listed here.",
+      "description": "Remote mirror connectors. The local model is intrinsic and never listed here.",
       "items": {
         "type": "object",
         "required": ["id", "type"],
         "additionalProperties": true,
         "properties": {
           "id": { "type": "string", "description": "Unique mirror identifier (also the key used in artifact.remote)." },
-          "type": { "type": "string", "description": "Backend implementation, e.g. linear, or an extensions/<id> folder." },
+          "type": { "type": "string", "description": "Connector implementation, e.g. linear, or an extensions/<id> folder." },
           "enabled": { "type": "boolean", "default": false },
           "settings": { "type": "object", "additionalProperties": true }
         }

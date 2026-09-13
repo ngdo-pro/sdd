@@ -15,10 +15,10 @@ Use this skill when the user requests implementing an approved engineering speci
 
 1. **Activate Specification (Planned ➔ Active):**
    ```bash
-   spec move [XXX] --to active
+   sdd move [XXX] --to active
    ```
-   This performs the model transition, relocates both model files and the projection, and mirrors the movement onto every enabled backend.
-   * **Reading the spec:** `spec status [XXX]` for metadata, then read `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md` for the **body** (the authoritative content).
+   This performs the model transition, relocates both model files and the projection, and mirrors the movement onto every enabled connector.
+   * **Reading the spec:** `sdd status [XXX]` for metadata, then read `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md` for the **body** (the authoritative content).
    * **Inventory & Signatures:** analyze the factorized `tree` (Section 3.1) and key contracts (Section 3.2).
    * **Technical Watchouts:** read **Section 6** before writing any code.
    * **BDD Requirements:** follow the Gherkin scenarios in **Section 8.1** as the implementation roadmap.
@@ -49,5 +49,5 @@ Use this skill when the user requests implementing an approved engineering speci
 
 7. **Status Update & Hand-off:**
    * Check off completed tasks in **Section 7** of the body (edit the model body via `/update-spec`, not the projection).
-   * Verify `spec render --check` passes and `spec validate` is clean.
+   * Verify `sdd render --check` passes and `sdd validate` is clean.
    * Prompt the user to run `/test-spec [id]` or `/sync-knowledge [id]`.

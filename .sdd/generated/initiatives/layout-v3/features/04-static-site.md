@@ -14,7 +14,7 @@ Le graphe (initiatives → features → specs, progression) n'est navigable qu'e
 ## 2. Wireframe / Visual Behavior
 
 ```text
-spec render --site   →   .sdd/site/   (non commité)
+sdd render --site   →   .sdd/site/   (non commité)
 index.html (dashboard) → initiative → feature → spec
 badges d'état, progression, liens croisés
 ```
@@ -23,7 +23,7 @@ Livraison : déferrable — dernière de l'initiative (les features 01–03 dél
 
 ## 3. Nominal User Flow (*Happy Path*)
 
-1. **Trigger:** `spec render --site`.
+1. **Trigger:** `sdd render --site`.
 2. **Interaction & Display:** le site est généré depuis le même modèle, dans `.sdd/site/`, jamais commité ; l'entrée `.sdd/site/` du `.gitignore` racine est posée par le script de setup du workspace, pas par le rendu.
 3. **Validation & Persistence:** régénérable à la demande ; le modèle reste la seule source de vérité.
 
@@ -31,8 +31,8 @@ Livraison : déferrable — dernière de l'initiative (les features 01–03 dél
 
 * **INV-1:** le site est un artefact de consommation — jamais source de vérité, jamais commité.
 * **INV-2:** générable sans dépendance runtime externe (zéro dépendance npm).
-* **INV-3:** `spec render --site` n'écrit que dans `.sdd/site/` — jamais le `.gitignore` racine ni quoi que ce soit hors `.sdd/`.
-* **INV-4:** `spec render --check` ne vérifie que `generated/` ; le site est exclusivement régénéré à la demande.
+* **INV-3:** `sdd render --site` n'écrit que dans `.sdd/site/` — jamais le `.gitignore` racine ni quoi que ce soit hors `.sdd/`.
+* **INV-4:** `sdd render --check` ne vérifie que `generated/` ; le site est exclusivement régénéré à la demande.
 
 ## 5. Out of Scope
 

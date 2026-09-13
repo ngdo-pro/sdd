@@ -22,11 +22,11 @@ It must not exceed **1 to 2 pages**, and aims primarily to align the overarching
 ## Procedure
 
 ### 1. Immersion & Duplicate Prevention
-1. Read the vision: `spec status vision --json` (align with tenets).
+1. Read the vision: `sdd status vision --json` (align with tenets).
 2. **Existence & Duplicate Check:**
    ```bash
-   spec list --kind initiative
-   spec status <slug>
+   sdd list --kind initiative
+   sdd status <slug>
    ```
    * **Already planned/active:** stop and inform the user; propose contributing via `/feature [slug] [feature-slug]` instead of duplicating.
    * **Already archived:** warn that the milestone was delivered; suggest an explicit follow-up slug (e.g. `[slug]-phase2`).
@@ -45,7 +45,7 @@ Clarify all strategic axes without artificial question caps:
    * **Do not author `## 4. Feature Roadmap`** — it is generated from the features linked to this initiative.
 2. Commit it to the model:
    ```bash
-   spec upsert initiative --slug [slug] --title "[Initiative Name]" \
+   sdd upsert initiative --slug [slug] --title "[Initiative Name]" \
         --state planned --field "Type=Product / UX" --from .sdd/.draft-<initiative-slug>.md
    ```
 3. Delete the scratch file. The CLI regenerates the projection and index.

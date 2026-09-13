@@ -26,14 +26,14 @@ export const DEFAULT_LINEAR_SETTINGS = {
 
 /**
  * Baseline configuration. The canonical model (`.sdd/canonical/`) is always
- * the source of truth; `backends` only lists optional remote mirrors.
+ * the source of truth; `connectors` only lists optional remote mirrors.
  */
 export function defaultConfig() {
   return {
     version: CONFIG_VERSION,
     sourceOfTruth: 'model',
     projections: { markdown: true },
-    backends: [
+    connectors: [
       {
         id: 'linear',
         type: 'linear',
@@ -44,22 +44,138 @@ export function defaultConfig() {
   };
 }
 
-/** The filesystem is intrinsic in v3 — legacy entries are dropped. */
+/** The filesystem and the local model are intrinsic — never listed in `connectors[]`. */
 function isIntrinsicBackend(entry) {
-  return entry?.type === 'filesystem' || entry?.id === 'filesystem';
+  const type = entry?.type;
+  const id = entry?.id;
+  return type === 'filesystem' || id === 'filesystem' || type === 'local' || id === 'local';
 }
 
 /**
- * Merges backend settings one level deep, so partial overrides such as
- * `labels: { spec: "spec" }` keep the other default label mappings.
+ * Expands dotted override keys (`{ 'labels.spec': 'X' }`) into nested objects
+ * (`{ labels: { spec: 'X' } }`) before the deep merge.
  */
-function mergeSettings(current = {}, incoming = {}) {
+function expandDottedOverrides(overrides) {
+  const expanded = {};
+  for (const [key, value] of Object.entries(overrides ?? {})) {
+    const parts = key.split('.');
+    let cursor = expanded;
+    for (const part of parts.slice(0, -1)) {
+      cursor = cursor[part] ??= {};
+    }
+    cursor[parts[parts.length - 1]] = value;
+  }
+  return expanded;
+}
+
+/** Deep-merges plain-object branches; scalars and arrays replace wholesale. */
+function mergeValues(current, incoming) {
   const merged = { ...current };
   for (const [key, value] of Object.entries(incoming)) {
     const isPlainObject = value !== null && typeof value === 'object' && !Array.isArray(value);
-    merged[key] = isPlainObject ? { ...(current[key] ?? {}), ...value } : value;
+    merged[key] = isPlainObject
+      ? mergeValues(
+        current[key] !== null && typeof current[key] === 'object' && !Array.isArray(current[key]) ? current[key] : {},
+        value,
+      )
+      : value;
   }
   return merged;
+}
+
+/**
+ * Deep, typed settings merge (INV-2): `{ 'labels.spec': 'SPEC' }` lands in
+ * `settings.labels.spec` while the sibling defaults stay intact. Pure —
+ * neither `base` nor `overrides` is mutated (the shared `defaultConfig()`
+ * must never be corrupted).
+ */
+export function mergeSettingOverrides(base = {}, overrides = {}) {
+  return mergeValues(base ?? {}, expandDottedOverrides(overrides ?? {}));
+}
+
+/**
+ * Traces the part of a declaration worth merging: explicitly set paths always
+ * win, manifest defaults only fill paths absent from the existing settings —
+ * they never overwrite a user value (INV-3).
+ */
+function pickDeclarationSettings(declaration, currentSettings, explicit) {
+  const picked = {};
+  const hasPath = (settings, dottedPath) => {
+    let cursor = settings;
+    for (const part of dottedPath.split('.')) {
+      if (cursor === null || typeof cursor !== 'object' || !(part in cursor)) return false;
+      cursor = cursor[part];
+    }
+    return true;
+  };
+  for (const [key, value] of Object.entries(declaration.settings ?? {})) {
+    if (explicit.has(key)) {
+      picked[key] = value;
+      continue;
+    }
+    const isPlainObject = value !== null && typeof value === 'object' && !Array.isArray(value);
+    if (isPlainObject) {
+      const nested = {};
+      for (const [subkey, sub] of Object.entries(value)) {
+        if (explicit.has(`${key}.${subkey}`) || !hasPath(currentSettings, `${key}.${subkey}`)) {
+          nested[subkey] = sub;
+        }
+      }
+      if (Object.keys(nested).length > 0) picked[key] = nested;
+      continue;
+    }
+    if (!hasPath(currentSettings, key)) picked[key] = value;
+  }
+  return picked;
+}
+
+/**
+ * Idempotent merge of declarative connector entries onto `connectors[]`
+ * (INV-3): explicit values (flags or interview) win, manifest defaults never
+ * overwrite a user value, a connector never declared is added and never
+ * removed, intrinsic entries (`local`, `filesystem`) are skipped, and the
+ * result is sorted by id so the on-disk diff stays stable.
+ */
+export function mergeConnectorConfigs(existing = [], incoming = []) {
+  const result = existing
+    .filter((entry) => !isIntrinsicBackend(entry))
+    .map((entry) => structuredClone(entry));
+
+  for (const declaration of incoming ?? []) {
+    if (!declaration || typeof declaration.id !== 'string' || isIntrinsicBackend(declaration)) continue;
+    const explicit = new Set(declaration.explicit ?? []);
+    const index = result.findIndex((entry) => entry.id === declaration.id);
+
+    if (index === -1) {
+      const entry = {
+        id: declaration.id,
+        type: declaration.type ?? declaration.id,
+        enabled: declaration.enabled ?? true,
+      };
+      const settings = pickDeclarationSettings(declaration, undefined, explicit);
+      if (Object.keys(settings).length > 0) entry.settings = settings;
+      result.push(entry);
+      continue;
+    }
+
+    const merged = { ...result[index] };
+    if (typeof declaration.enabled === 'boolean') merged.enabled = declaration.enabled;
+    const picked = pickDeclarationSettings(declaration, merged.settings, explicit);
+    if (Object.keys(picked).length > 0) {
+      merged.settings = mergeSettingOverrides(merged.settings ?? {}, picked);
+    }
+    result[index] = merged;
+  }
+
+  return result.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+}
+
+/**
+ * Merges connector settings (deep, so partial overrides such as
+ * `labels: { spec: "spec" }` keep the other default label mappings).
+ */
+function mergeSettings(current = {}, incoming = {}) {
+  return mergeSettingOverrides(current, incoming);
 }
 
 function mergeBackends(baseList, rawList) {
@@ -82,7 +198,9 @@ function mergeBackends(baseList, rawList) {
     else delete merged.settings;
     result[index] = merged;
   }
-  return result;
+  // Stable on-disk order: `connectors[]` is always sorted by id, so repeated
+  // load → write cycles do not churn the config diff.
+  return result.sort((a, b) => String(a.id).localeCompare(String(b.id)));
 }
 
 /** Normalizes a raw (possibly partial or legacy) config onto the v3 defaults. */
@@ -92,15 +210,15 @@ export function normalizeConfig(raw = {}) {
   merged.version = CONFIG_VERSION;
   merged.sourceOfTruth = 'model';
   merged.projections = { markdown: true, ...(raw.projections ?? {}) };
-  merged.backends = mergeBackends(base.backends, raw.backends);
+  merged.connectors = mergeBackends(base.connectors, raw.connectors);
   return merged;
 }
 
-const KNOWN_CONFIG_KEYS = ['version', 'sourceOfTruth', 'projections', 'backends'];
+const KNOWN_CONFIG_KEYS = ['version', 'sourceOfTruth', 'projections', 'connectors'];
 
 /**
- * Converts a legacy config onto the v3 schema (INV-3 of `spec migrate`):
- * drops unknown top-level keys and intrinsic `filesystem` backends — each
+ * Converts a legacy config onto the v3 schema (INV-3 of `sdd migrate`):
+ * drops unknown top-level keys and intrinsic `filesystem` connectors — each
  * removal listed as a warning — and forces `version` to 3. Known keys are
  * preserved; defaults fill the gaps.
  * @returns {{ config: object, warnings: string[] }}
@@ -114,16 +232,16 @@ export function convertConfig(raw = {}) {
       delete cleaned[key];
     }
   }
-  if (Array.isArray(cleaned.backends)) {
+  if (Array.isArray(cleaned.connectors)) {
     const kept = [];
-    for (const entry of cleaned.backends) {
+    for (const entry of cleaned.connectors) {
       if (isIntrinsicBackend(entry)) {
-        warnings.push(`legacy backend "${entry?.id ?? entry?.type ?? 'filesystem'}" dropped (the filesystem is intrinsic in v3)`);
+        warnings.push(`legacy connector "${entry?.id ?? entry?.type ?? 'filesystem'}" dropped (the filesystem is intrinsic in v3)`);
         continue;
       }
       kept.push(entry);
     }
-    cleaned.backends = kept;
+    cleaned.connectors = kept;
   }
   return { config: normalizeConfig(cleaned), warnings };
 }
@@ -145,22 +263,22 @@ export async function writeConfig(cwd, config) {
 }
 
 export function getBackendConfig(config, id) {
-  return config.backends.find((backend) => backend.id === id) ?? null;
+  return config.connectors.find((connector) => connector.id === id) ?? null;
 }
 
-/** Backends considered for an operation: explicit `only` filter or enabled ones. */
+/** Connectors considered for an operation: explicit `only` filter or enabled ones. */
 export function selectBackendConfigs(config, { only } = {}) {
   if (Array.isArray(only) && only.length > 0) {
-    return config.backends.filter((backend) => only.includes(backend.id));
+    return config.connectors.filter((connector) => only.includes(connector.id));
   }
-  return config.backends.filter((backend) => backend.enabled);
+  return config.connectors.filter((connector) => connector.enabled);
 }
 
 export function assertKnownBackends(config, ids) {
-  const known = config.backends.map((backend) => backend.id);
+  const known = config.connectors.map((connector) => connector.id);
   const missing = ids.filter((id) => !known.includes(id));
   if (missing.length > 0) {
-    throw new ConfigError(`Unknown backend(s): ${missing.join(', ')}. Available: ${known.join(', ') || 'none'}.`);
+    throw new ConfigError(`Unknown connector(s): ${missing.join(', ')}. Available: ${known.join(', ') || 'none'}.`);
   }
 }
 

@@ -25,7 +25,7 @@ import { makeWorkspace, cleanup, seedModel, fileExists, writeFiles, MODEL_FIXTUR
 const BASE_FLAGS = {
   to: undefined, kind: undefined, state: undefined, slug: undefined, title: undefined,
   from: undefined, feature: undefined, initiative: undefined, field: undefined,
-  backends: undefined, create: false, force: false, check: false, write: false,
+  connectors: undefined, create: false, force: false, check: false, write: false,
   cascade: false, undo: false, done: false, dryRun: false, json: false,
 };
 
@@ -277,7 +277,7 @@ test('[C1][INV-3] loadModel discovers the nested canonical tree', async () => {
   }
 });
 
-test('[C2][INV-2] spec move plans the mutation without relocating files', async () => {
+test('[C2][INV-2] sdd move plans the mutation without relocating files', async () => {
   const root = await makeWorkspace();
   try {
     await seedModel(root, [

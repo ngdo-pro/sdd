@@ -52,19 +52,19 @@ These rules apply universally to all agents operating within the **Spec Framewor
   - `initiatives/<initiative>/features/<feature>/specs/<id>.{json,md}`
 * **Everything else is generated:** markdown documents under `.sdd/` and remote issues (Linear, …) are **projections**. Never hand-edit a projection or a remote issue as a primary copy — edit the model and re-project.
 * **Single writer (CLI):** all model mutations go through the `spec` CLI. Never write model files by hand, and never `mv` projections:
-  - `spec upsert <kind> --slug <slug> --from <file>` — author/update an artifact.
-  - `spec link <ref> --feature|--initiative <parent>` — set graph relations.
-  - `spec move <ref> --to <state>` — lifecycle transition (model + mirrors).
-  - `spec done <ref> --cascade` — mark delivered, archive, propagate upwards.
-  - `spec render [--check]` — regenerate projections (`--check` is the CI drift guard).
-  - `spec migrate [--dry-run]` — one-shot conversion of any legacy `.specs/` workspace (v2 model or v3-canonical) into `.sdd/`: full reconstruction from the metadata, strict gate (`spec validate` + `spec render --check` exit 0), then the legacy root is retired.
-  - `spec import` — one-shot conversion of legacy markdown documents into the model.
+  - `sdd upsert <kind> --slug <slug> --from <file>` — author/update an artifact.
+  - `sdd link <ref> --feature|--initiative <parent>` — set graph relations.
+  - `sdd move <ref> --to <state>` — lifecycle transition (model + mirrors).
+  - `sdd done <ref> --cascade` — mark delivered, archive, propagate upwards.
+  - `sdd render [--check]` — regenerate projections (`--check` is the CI drift guard).
+  - `sdd migrate [--dry-run]` — one-shot conversion of any legacy `.specs/` workspace (v2 model or v3-canonical) into `.sdd/`: full reconstruction from the metadata, strict gate (`sdd validate` + `sdd render --check` exit 0), then the legacy root is retired.
+  - `sdd import` — one-shot conversion of legacy markdown documents into the model.
 * **Generated sections:** the following sections are derived from the graph and must never be authored inside a body — the renderer appends them:
   - initiative `## 4. Feature Roadmap`
   - feature `## 6. Implementation Spec(s)`
   - vision `## 5. Strategic Initiatives Roadmap`
   The header/metadata block (title, `Status:`, `Parent Initiative:`, spec `## Metadata`) is likewise generated from the model.
-* **Derived completion:** an artifact is complete when its children are all complete (leaf artifact ⇒ its `progress.done` flag). `spec done --cascade` archives every unfinished parent whose children are complete — this is the only sanctioned way to propagate completion upwards.
-* **Local-first source of truth:** `.sdd/canonical/` is canonical and versioned; remote backends are **mirrors**. Never author the sole copy of an artifact remotely.
-* **Backend resolution:** mirrors are declared in `.sdd/config.json` and resolved through the adapter port documented in `extensions/README.md`. Extensions MUST respect `--dry-run` and be idempotent.
-* **Read-only inspection:** `spec status`, `spec list`, `spec model` and `spec validate` (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.
+* **Derived completion:** an artifact is complete when its children are all complete (leaf artifact ⇒ its `progress.done` flag). `sdd done --cascade` archives every unfinished parent whose children are complete — this is the only sanctioned way to propagate completion upwards.
+* **Local-first source of truth:** `.sdd/canonical/` is canonical and versioned; remote connectors are **mirrors**. Never author the sole copy of an artifact remotely.
+* **Connector resolution:** mirrors are declared in `.sdd/config.json` and resolved through the adapter port documented in `extensions/README.md`. Extensions MUST respect `--dry-run` and be idempotent.
+* **Read-only inspection:** `sdd status`, `sdd list`, `sdd graph` and `sdd validate` (rules 1 & 3 enforcement) are the canonical ways to inspect the workspace.

@@ -26,10 +26,10 @@ flowchart LR
 | Phase | Responsible Agent | Mobilized Skill | Produced Deliverable |
 |---|---|---|---|
 | **1. Spec Framing** | `agents/spec-writer.md` | `skills/spec/SKILL.md` | `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.{json,md}` |
-| **2. Build Code** | `agents/implementer.md` | `skills/build-spec/SKILL.md` | Compiled code & executed migrations (spec moved to `active/` via `spec move`) |
+| **2. Build Code** | `agents/implementer.md` | `skills/build-spec/SKILL.md` | Compiled code & executed migrations (spec moved to `active/` via `sdd move`) |
 | **3. Quality Gates** | `agents/qa-tester.md` | `skills/test-spec/SKILL.md` | 100% passing tests (Unit, Component, E2E) |
 | **4. Clean-Room Audit** | `agents/reviewer.md` | Clean-Room Protocol | Audit report (Spec vs Git Diff) |
-| **5. Capitalize & Sync** | `agents/knowledge-orchestrator.md` | `skills/sync-knowledge/SKILL.md` | Updated `.sdd/knowledge/` & archived chain via `spec done [id] --cascade` |
+| **5. Capitalize & Sync** | `agents/knowledge-orchestrator.md` | `skills/sync-knowledge/SKILL.md` | Updated `.sdd/knowledge/` & archived chain via `sdd done [id] --cascade` |
 
 ---
 

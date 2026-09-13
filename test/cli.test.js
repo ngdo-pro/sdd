@@ -8,11 +8,14 @@ import { move } from '../src/cli/commands/move.js';
 import { done } from '../src/cli/commands/done.js';
 import { link } from '../src/cli/commands/link.js';
 import { render } from '../src/cli/commands/render.js';
-import { model } from '../src/cli/commands/model.js';
-import { backend } from '../src/cli/commands/backend.js';
+import { graph } from '../src/cli/commands/graph.js';
+import { connectors } from '../src/cli/commands/connectors.js';
 import { validate } from '../src/cli/commands/validate.js';
 import { list } from '../src/cli/commands/list.js';
 import { importArtifacts } from '../src/cli/commands/import.js';
+import { run } from '../src/cli/main.js';
+import { runInteractive } from '../src/cli/interactive.js';
+import { listManifests } from '../src/connectors/registry.js';
 import { UsageError } from '../src/core/errors.js';
 import { getBackendConfig, loadConfig } from '../src/core/config.js';
 import { findByRef, loadModel } from '../src/model/store.js';
@@ -29,7 +32,7 @@ const BASE_FLAGS = {
   feature: undefined,
   initiative: undefined,
   field: undefined,
-  backends: undefined,
+  connectors: undefined,
   create: false,
   force: false,
   check: false,
@@ -39,6 +42,7 @@ const BASE_FLAGS = {
   done: false,
   dryRun: false,
   json: false,
+  settings: {},
 };
 
 function ctx(cwd, positionals = [], flags = {}) {
@@ -317,7 +321,7 @@ test('model --write regenerates the canonical index.json', async () => {
   try {
     await seed(root);
     await fsp.rm(path.join(root, '.sdd/canonical/index.json'));
-    await silently(() => model(ctx(root, [], { write: true })));
+    await silently(() => graph(ctx(root, [], { write: true })));
     assert.equal(await fileExists(root, '.sdd/canonical/index.json'), true);
 
     const index = JSON.parse(await fsp.readFile(path.join(root, '.sdd/canonical/index.json'), 'utf8'));
@@ -330,18 +334,18 @@ test('model --write regenerates the canonical index.json', async () => {
   }
 });
 
-test('backend enable and disable update the mirror config', async () => {
+test('connector enable and disable update the mirror config', async () => {
   const root = await makeWorkspace();
   try {
     await silently(() => init(ctx(root)));
-    await silently(() => backend(ctx(root, ['enable', 'linear'])));
+    await silently(() => connectors(ctx(root, ['enable', 'linear'])));
     assert.equal(getBackendConfig(await loadConfig(root), 'linear').enabled, true);
 
-    await silently(() => backend(ctx(root, ['disable', 'linear'])));
+    await silently(() => connectors(ctx(root, ['disable', 'linear'])));
     assert.equal(getBackendConfig(await loadConfig(root), 'linear').enabled, false);
 
-    await assert.rejects(() => backend(ctx(root, ['enable', 'ghost'])), Error);
-    await assert.rejects(() => backend(ctx(root, ['frobnicate'])), UsageError);
+    await assert.rejects(() => connectors(ctx(root, ['enable', 'ghost'])), Error);
+    await assert.rejects(() => connectors(ctx(root, ['frobnicate'])), UsageError);
   } finally {
     await cleanup(root);
   }
@@ -551,10 +555,192 @@ test('[E2][INV-2] move idempotence: re-run and dry-run are side-effect free', as
 });
 
 // ============================================================================
+// Integration Tests (@integration) — spec 004-declarative-init, §8.1 I1, I2
+// ============================================================================
+
+/** Runs the real CLI (flag parsing included) while muting stdout. */
+async function cli(args, root) {
+  const original = process.stdout.write;
+  process.stdout.write = () => true;
+  try {
+    return await run([...args, '--cwd', root]);
+  } finally {
+    process.stdout.write = original;
+  }
+}
+
+/** Runs the real CLI capturing stdout (for the dry-run JSON preview). */
+async function cliCaptured(args, root) {
+  const chunks = [];
+  const original = process.stdout.write;
+  process.stdout.write = (chunk) => {
+    chunks.push(String(chunk));
+    return true;
+  };
+  try {
+    await run([...args, '--cwd', root]);
+  } finally {
+    process.stdout.write = original;
+  }
+  return chunks.join('');
+}
+
+test('[I1][INV-5] late adoption through connectors enable carries typed settings', async () => {
+  const root = await makeWorkspace();
+  try {
+    await silently(() => init(ctx(root)));
+
+    // Un-namespaced keys bind to the positional id; `createOnMove` is coerced
+    // via the manifest settingTypes (strict boolean).
+    await silently(() => connectors(ctx(root, ['enable', 'linear'], {
+      settings: { teamKey: 'ENG', createOnMove: 'true' },
+    })));
+
+    const linear = getBackendConfig(await loadConfig(root), 'linear');
+    assert.equal(linear.enabled, true);
+    assert.equal(linear.settings.teamKey, 'ENG');
+    assert.equal(linear.settings.createOnMove, true);
+    // The connector's local settings are merged, defaults intact.
+    assert.deepEqual(linear.settings.stateMap, { planned: 'Backlog', active: 'In Progress', archived: 'Done' });
+    assert.equal(linear.settings.labels.spec, 'spec');
+
+    // A foreign namespace is a UsageError.
+    await assert.rejects(
+      () => connectors(ctx(root, ['enable', 'linear'], { settings: { 'ghost.teamKey': 'X' } })),
+      (error) => error instanceof UsageError && error.message.includes('"ghost"'),
+    );
+    const after = getBackendConfig(await loadConfig(root), 'linear');
+    assert.equal(after.settings.teamKey, 'ENG');
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[I2][INV-4] --interactive without a TTY is a UsageError and prompts nothing', async () => {
+  const root = await makeWorkspace();
+  try {
+    delete process.stdout.isTTY;
+    await assert.rejects(
+      () => init(ctx(root, [], { interactive: true })),
+      (error) => error instanceof UsageError
+        && error.exitCode === 2
+        && /TTY/.test(error.message)
+        && /flags/.test(error.message),
+    );
+    // Nothing written, no prompt side effect.
+    assert.equal(await fileExists(root, '.sdd/config.json'), false);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[I2][INV-4] the TTY interview declares connectors through the injectable prompter', async () => {
+  const root = await makeWorkspace();
+  try {
+    const calls = [];
+    const prompter = {
+      async multiselect({ options }) {
+        calls.push(['multiselect', options.map((option) => option.value)]);
+        return ['linear'];
+      },
+      async text({ message, initialValue }) {
+        calls.push(['text', message, initialValue]);
+        return message === 'linear.teamKey' ? 'ENG' : (initialValue ?? '');
+      },
+      async confirm({ message, initialValue }) {
+        calls.push(['confirm', message, initialValue]);
+        return initialValue === true;
+      },
+    };
+
+    const wasTTY = process.stdout.isTTY;
+    process.stdout.isTTY = true;
+    try {
+      const { connectors: declarations } = await runInteractive({
+        catalog: await listManifests(root),
+        prompter,
+      });
+      assert.deepEqual(calls[0], ['multiselect', ['linear']]);
+      assert.equal(declarations.length, 1);
+      const linear = declarations[0];
+      assert.equal(linear.id, 'linear');
+      assert.equal(linear.enabled, true);
+      assert.equal(linear.settings.teamKey, 'ENG');
+      assert.equal(linear.settings.createOnMove, false);
+      assert.deepEqual(linear.settings.labels, { initiative: 'initiative', feature: 'feature', spec: 'spec' });
+      assert.deepEqual(linear.settings.stateMap, { planned: 'Backlog', active: 'In Progress', archived: 'Done' });
+      assert.ok(linear.explicit.includes('teamKey'));
+      assert.ok(linear.explicit.includes('labels.spec'));
+    } finally {
+      if (wasTTY === undefined) delete process.stdout.isTTY;
+      else process.stdout.isTTY = wasTTY;
+    }
+  } finally {
+    await cleanup(root);
+  }
+});
+
+// ============================================================================
+// End-to-End Tests (@e2e) — spec 004-declarative-init, §8.1 E1
+// ============================================================================
+
+test('[E1][INV-1..INV-5] dry-run preview, declarative init, idempotent re-init, gates green', async () => {
+  const root = await makeWorkspace();
+  try {
+    // 1. Dry-run: a JSON preview of the resolved config, and nothing written.
+    const preview = await cliCaptured(
+      ['init', '--connector', 'linear', '--linear.teamKey=ENG', '--dry-run'],
+      root,
+    );
+    const previewConfig = JSON.parse(preview.slice(0, preview.lastIndexOf('}') + 1));
+    assert.equal(previewConfig.connectors[0].enabled, true);
+    assert.equal(previewConfig.connectors[0].settings.teamKey, 'ENG');
+    assert.equal(previewConfig.connectors[0].settings.createOnMove, false);
+    assert.match(preview, /\(dry-run: nothing was written\)/);
+    assert.equal(await fileExists(root, '.sdd/config.json'), false);
+
+    // 2. Real init: same resolution, typed and sorted on disk.
+    await cli(['init', '--connector', 'linear', '--linear.teamKey=ENG'], root);
+    const config = await loadConfig(root);
+    assert.deepEqual(config.connectors.map((connector) => connector.id), ['linear']);
+    const linear = getBackendConfig(config, 'linear');
+    assert.equal(linear.enabled, true);
+    assert.equal(linear.settings.teamKey, 'ENG');
+    assert.equal(linear.settings.createOnMove, false);
+    assert.deepEqual(linear.settings.stateMap, { planned: 'Backlog', active: 'In Progress', archived: 'Done' });
+
+    // 3. Re-init with an explicit override: the value wins, siblings survive.
+    await cli(['init', '--connector', 'linear', '--linear.teamKey=NEW'], root);
+    const reinitialized = getBackendConfig(await loadConfig(root), 'linear');
+    assert.equal(reinitialized.settings.teamKey, 'NEW');
+    assert.equal(reinitialized.settings.labels.spec, 'spec');
+
+    // 4. Structural gates stay green on the declarative workspace.
+    const validateExit = await silently(async () => {
+      process.exitCode = 0;
+      await validate({ cwd: root, flags: { json: false } });
+      return process.exitCode;
+    });
+    assert.equal(validateExit, 0);
+    process.exitCode = 0;
+
+    const renderExit = await silently(async () => {
+      process.exitCode = 0;
+      await render(ctx(root, [], { check: true }));
+      return process.exitCode;
+    });
+    assert.equal(renderExit, 0);
+    process.exitCode = 0;
+  } finally {
+    await cleanup(root);
+  }
+});
+
+// ============================================================================
 // End-to-End Tests (@e2e) — feature 02-generated-namespace, §8.1 scenarios E1, E2
 // ============================================================================
 
-test('[E1][INV-1..INV-4] render writes generated/ and hands legacy entries to spec migrate', async () => {
+test('[E1][INV-1..INV-4] render writes generated/ and hands legacy entries to sdd migrate', async () => {
   const root = await makeWorkspace();
   try {
     // A canonical model up to date, plus legacy v2-named entries parked at
@@ -583,7 +769,7 @@ test('[E1][INV-1..INV-4] render writes generated/ and hands legacy entries to sp
     assert.equal(checkExit, 0);
     process.exitCode = 0;
 
-    // The legacy tree survives untouched — `spec migrate` owns the conversion.
+    // The legacy tree survives untouched — `sdd migrate` owns the conversion.
     assert.equal(await fileExists(root, '.sdd/vision.md'), true);
     assert.equal(await fileExists(root, '.sdd/specs/planned/042-login.md'), true);
     assert.equal(await fileExists(root, '.sdd/initiatives/planned/demo/README.md'), true);

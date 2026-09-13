@@ -23,15 +23,15 @@ Livraison : 1ʳᵉ de l'initiative (avant 02 et 03).
 
 ## 3. Nominal User Flow (*Happy Path*)
 
-1. **Trigger:** `spec upsert <kind>` ou `spec move <ref> --to <state>`.
+1. **Trigger:** `sdd upsert <kind>` ou `sdd move <ref> --to <state>`.
 2. **Interaction & Display:** les fichiers sont écrits à leur emplacement canonique définitif (aucun répertoire d'état) ; l'état vit dans la métadonnée `state` et l'index.
-3. **Validation & Persistence:** `spec validate` vérifie les invariants de chemin du nouveau layout.
+3. **Validation & Persistence:** `sdd validate` vérifie les invariants de chemin du nouveau layout.
 
 ## 4. Functional Invariants (Non-Negotiable Rules)
 
 * **INV-1:** aucun état de cycle de vie n'apparaît dans un chemin canonique.
-* **INV-2:** `spec move` ne déplace aucun fichier — il mute la métadonnée `state`, l'index et les projections, rien d'autre.
-* **INV-3:** **tous** les répertoires (y compris `knowledge/decisions/{architecture,product}/` et `domains/`) sont créés à la volée ; `spec init` ne pré-alloue aucun répertoire vide.
+* **INV-2:** `sdd move` ne déplace aucun fichier — il mute la métadonnée `state`, l'index et les projections, rien d'autre.
+* **INV-3:** **tous** les répertoires (y compris `knowledge/decisions/{architecture,product}/` et `domains/`) sont créés à la volée ; `sdd init` ne pré-alloue aucun répertoire vide.
 * **INV-4:** `knowledge/` regroupe `decisions/{architecture,product}/` et `domains/` ; le dossier `decisions/` disparaît du premier niveau.
 * **INV-5:** les ids de spec restent uniques au niveau du modèle ; la grammaire `<ref>` par id nu est inchangée.
 * **INV-6:** le slug d'initiative est immuable après création (le titre peut changer, jamais le chemin) — cf. PDR slug-immuable.
@@ -42,4 +42,4 @@ Livraison : 1ʳᵉ de l'initiative (avant 02 et 03).
 * Le namespace généré (feature `02-generated-namespace`) et le renommage `.sdd` (feature `03-sdd-migration`).
 * Toute commande de renommage de slug (le slug est immuable, cf. INV-6).
 * La migration des workspaces v2 existants.
-* Le mirroring Linear et les backends distants.
+* Le mirroring Linear et les connectors distants.

@@ -156,7 +156,7 @@ export async function detectLayout(cwd) {
     return {
       layout: 'unsupported',
       sourceRoot: null,
-      detail: 'no spec workspace found — run `spec init` to bootstrap one.',
+      detail: 'no spec workspace found — run `sdd init` to bootstrap one.',
     };
   }
 
@@ -166,7 +166,7 @@ export async function detectLayout(cwd) {
     return {
       layout: 'coexistence',
       sourceRoot: legacy.sourceRoot,
-      detail: '.specs/ and .sdd/ coexist (pending or failed migration) — rerun `spec migrate`: it wipes .sdd/ and rebuilds it from the source.',
+      detail: '.specs/ and .sdd/ coexist (pending or failed migration) — rerun `sdd migrate`: it wipes .sdd/ and rebuilds it from the source.',
     };
   }
   return legacy;
@@ -229,8 +229,8 @@ async function classifyLegacyLayout(cwd) {
     layout: 'unsupported',
     sourceRoot: null,
     detail: hasMarkdown
-      ? 'markdown-only workspace without an index.json — run `spec import` to convert the markdown, or restore index.json from git.'
-      : 'no model index and no markdown found — run `spec init` to bootstrap a workspace, or restore the workspace from git.',
+      ? 'markdown-only workspace without an index.json — run `sdd import` to convert the markdown, or restore index.json from git.'
+      : 'no model index and no markdown found — run `sdd init` to bootstrap a workspace, or restore the workspace from git.',
   };
 }
 
@@ -238,8 +238,8 @@ async function classifyLegacyLayout(cwd) {
  * INV-5 coexistence guard: refuses every mutating CLI path while `.specs/`
  * and `.sdd/` coexist. Reads (`status`, `list`, `validate`, `render
  * --check`/`--dry-run`, `model` in read mode) are exempt and operate on
- * `.sdd/` exclusively. `spec migrate` never calls it — it is the recovery
- * tool; `spec import` goes through this guard in its command.
+ * `.sdd/` exclusively. `sdd migrate` never calls it — it is the recovery
+ * tool; `sdd import` goes through this guard in its command.
  */
 export function assertNoCoexistence(cwd) {
   const legacyPresent = existsSync(path.join(cwd, LEGACY_ROOT_DIRNAME));
@@ -247,7 +247,7 @@ export function assertNoCoexistence(cwd) {
   if (legacyPresent && sddPresent) {
     throw new MigrationError(
       '.specs/ and .sdd/ coexist — the migration is pending or failed and every mutation is locked. '
-      + 'Run `spec migrate`: it rebuilds .sdd/ from scratch and retires .specs/.',
+      + 'Run `sdd migrate`: it rebuilds .sdd/ from scratch and retires .specs/.',
     );
   }
 }
@@ -521,9 +521,9 @@ async function writeFailureMarker(cwd, stage, message) {
  * as the commands, in-process (`computeFindings` + `renderProjections({check})`,
  * never the CLI commands which mutate `process.exitCode`). With
  * `projections.markdown === false` the render leg is vacuous (the index is
- * still regenerated), mirroring `spec render --check`'s behaviour. Otherwise
+ * still regenerated), mirroring `sdd render --check`'s behaviour. Otherwise
  * the marker is written, the source is kept and a MigrationError (exit 1) is
- * raised. Shared by `spec migrate` and the re-owned `spec import` finish.
+ * raised. Shared by `sdd migrate` and the re-owned `sdd import` finish.
  */
 export async function gateAndRetire(cwd, artifacts, { markdown = true } = {}) {
   const findings = await computeFindings(cwd);
@@ -614,7 +614,7 @@ export async function runMigration(cwd) {
   if (blocking.length > 0) {
     throw new MigrationError(
       `${blocking.length} unresolved relation(s) — the graph would fail the strict gate. `
-      + 'Fix the model first (preview the plan with `spec migrate --dry-run`).',
+      + 'Fix the model first (preview the plan with `sdd migrate --dry-run`).',
     );
   }
 

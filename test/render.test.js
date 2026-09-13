@@ -33,7 +33,7 @@ test('spec documents render a title and a Metadata block', () => {
   assert.match(rendered, /## 1\. Intent\n\nAdd login\./);
 });
 
-test('feature documents render the generated spec list from relations', async () => {
+test('feature documents render the generated sdd list from relations', async () => {
   const root = await makeWorkspace();
   try {
     await seedModel(root, MODEL_FIXTURE);

@@ -5,7 +5,7 @@ import fsp from 'node:fs/promises';
  * Legacy v2 layout scanners — relocated from `src/core/artifact.js` by the
  * feature 03 rework so `core/` knows nothing about state-encoded paths.
  * These listers READ the pre-v3 markdown/model layout under the literal
- * legacy root `.specs/` and are consumed only by `spec import` (markdown
+ * legacy root `.specs/` and are consumed only by `sdd import` (markdown
  * workspaces). The legacy root is intentionally a literal: `SPECS_DIRNAME`
  * switched to `.sdd/`, and the legacy source must stay readable during a
  * migration. Never grow this file beyond migration needs.

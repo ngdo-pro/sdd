@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import createLinearBackend from '../src/backends/linear.js';
-import { BackendError } from '../src/core/errors.js';
+import createLinearBackend from '../src/connectors/linear.js';
+import { ConnectorError } from '../src/core/errors.js';
 
 const SETTINGS = {
   teamKey: 'ENG',
@@ -49,9 +49,9 @@ function mockFetch(handlers) {
   return { calls, restore: () => { globalThis.fetch = original; } };
 }
 
-function backend(overrides = {}) {
+function connector(overrides = {}) {
   return createLinearBackend({
-    backendConfig: { id: 'linear', type: 'linear', settings: { ...SETTINGS, ...overrides } },
+    connectorConfig: { id: 'linear', type: 'linear', settings: { ...SETTINGS, ...overrides } },
   });
 }
 
@@ -70,12 +70,12 @@ const artifact = {
 
 test('transition requires an API key', async () => {
   const instance = createLinearBackend({
-    backendConfig: { id: 'linear', type: 'linear', settings: { ...SETTINGS, apiKey: undefined } },
+    connectorConfig: { id: 'linear', type: 'linear', settings: { ...SETTINGS, apiKey: undefined } },
   });
   const previous = process.env.LINEAR_API_KEY;
   delete process.env.LINEAR_API_KEY;
   try {
-    await assert.rejects(() => instance.transition(artifact, 'active', {}), BackendError);
+    await assert.rejects(() => instance.transition(artifact, 'active', {}), ConnectorError);
   } finally {
     if (previous !== undefined) process.env.LINEAR_API_KEY = previous;
   }
@@ -84,7 +84,7 @@ test('transition requires an API key', async () => {
 test('transition refuses to move an unlinked artifact when createOnMove is off', async () => {
   const { restore } = mockFetch(() => TEAM);
   try {
-    await assert.rejects(() => backend().transition(artifact, 'active', {}), BackendError);
+    await assert.rejects(() => connector().transition(artifact, 'active', {}), ConnectorError);
   } finally {
     restore();
   }
@@ -102,7 +102,7 @@ test('transition updates the linked issue state and returns its reference', asyn
 
   try {
     const linked = { ...artifact, remote: { linear: 'ENG-142' } };
-    const result = await backend().transition(linked, 'active', {});
+    const result = await connector().transition(linked, 'active', {});
     assert.equal(result.moved, true);
     assert.equal(result.remoteRef, 'ENG-142');
     assert.equal(result.state, 'In Progress');
@@ -124,7 +124,7 @@ test('transition is idempotent when the issue already sits in the target state',
 
   try {
     const linked = { ...artifact, remote: { linear: 'ENG-142' } };
-    const result = await backend().transition(linked, 'active', {});
+    const result = await connector().transition(linked, 'active', {});
     assert.equal(result.moved, false);
     assert.equal(calls.some((call) => call.query.includes('IssueUpdate')), false);
   } finally {
@@ -142,7 +142,7 @@ test('create issues an item and returns its identifier without mutating the arti
   });
 
   try {
-    const result = await backend().create(artifact, {});
+    const result = await connector().create(artifact, {});
     assert.equal(result.created, true);
     assert.equal(result.remoteRef, 'ENG-999');
     assert.equal(artifact.remote.linear, undefined);
@@ -161,7 +161,7 @@ test('create is a no-op when the artifact is already linked', async () => {
   const { restore } = mockFetch(() => TEAM);
   try {
     const linked = { ...artifact, remote: { linear: 'ENG-142' } };
-    const result = await backend().create(linked, {});
+    const result = await connector().create(linked, {});
     assert.deepEqual(result, { created: false, remoteRef: 'ENG-142' });
   } finally {
     restore();
@@ -172,7 +172,7 @@ test('dryRun never calls the Linear API for updates', async () => {
   const { calls, restore } = mockFetch((body) => (body.query.includes('SpecFrameworkIssue(') ? ISSUE : TEAM));
   try {
     const linked = { ...artifact, remote: { linear: 'ENG-142' } };
-    const result = await backend().transition(linked, 'active', { dryRun: true });
+    const result = await connector().transition(linked, 'active', { dryRun: true });
     assert.equal(result.planned, true);
     assert.equal(calls.some((call) => call.query.includes('IssueUpdate')), false);
   } finally {
@@ -183,16 +183,16 @@ test('dryRun never calls the Linear API for updates', async () => {
 test('resolve recognises Linear identifiers only', async () => {
   const { restore } = mockFetch(() => ISSUE);
   try {
-    const resolved = await backend().resolve('ENG-142');
+    const resolved = await connector().resolve('ENG-142');
     assert.equal(resolved.id, 'ENG-142');
     assert.equal(resolved.state, 'Backlog');
-    assert.equal(await backend().resolve('042-login'), null);
+    assert.equal(await connector().resolve('042-login'), null);
   } finally {
     restore();
   }
 });
 
 test('link reports that Linear relations are not managed', async () => {
-  const result = await backend().link({ child: artifact, parent: artifact, relation: 'spec-of-feature' });
+  const result = await connector().link({ child: artifact, parent: artifact, relation: 'spec-of-feature' });
   assert.equal(result.skipped, true);
 });

@@ -18,9 +18,9 @@ A **Feature** represents a concrete, cohesive unit of user experience or technic
 ## Procedure
 
 ### 1. Immersion
-1. Read the parent initiative: `spec status [initiative] --kind initiative`.
+1. Read the parent initiative: `sdd status [initiative] --kind initiative`.
 2. Inspect active domain knowledge in `.sdd/knowledge/domains/[domain]/` (hand-authored, not part of the model).
-3. Check for duplicates: `spec list --kind feature`.
+3. Check for duplicates: `sdd list --kind feature`.
 
 ### 2. Exhaustive Interaction & Invariants Interview (via `ask_question`)
 Clarify all interaction specifics, edge cases, and constraints without artificial question caps:
@@ -35,13 +35,13 @@ Clarify all interaction specifics, edge cases, and constraints without artificia
    * Do not write the header/metadata block (`# Feature:`, `> **Parent Initiative:**`, `> **Status:**`) — the renderer generates it from the model.
 2. Commit it to the model, linking the parent initiative in the same call:
    ```bash
-   spec upsert feature --slug [feature-slug] --title "[Feature Name]" \
+   sdd upsert feature --slug [feature-slug] --title "[Feature Name]" \
         --initiative [initiative-slug] --state planned --from .sdd/.draft-[feature-slug].md
    ```
 3. Delete the scratch file.
 4. If the relation was not set at creation time, register it explicitly:
    ```bash
-   spec link [feature-slug] --initiative [initiative-slug]
+   sdd link [feature-slug] --initiative [initiative-slug]
    ```
    The parent initiative's `## 4. Feature Roadmap` is regenerated automatically.
 

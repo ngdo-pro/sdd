@@ -16,7 +16,7 @@
 * **Reference Templates:** 
   - `templates/INITIATIVE_TEMPLATE.md`
   - `templates/FEATURE_TEMPLATE.md`
-* **Writing Interface:** `spec upsert initiative|feature --slug … --from <body-file>` then `spec link`
+* **Writing Interface:** `sdd upsert initiative|feature --slug … --from <body-file>` then `sdd link`
 * **Governing Rules:** `rules/spec-rules.md` (1-2 pages maximum, mandatory ASCII wireframes, model-first)
 * **Authoritative Reference:** the vision artifact (read-only constitution)
 

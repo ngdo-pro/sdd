@@ -37,7 +37,7 @@ const FEATURE_DOC = `# Feature: Login
 
 > **Parent Initiative:** \`demo\`  
 > **Status:** Active  
-> **Author(s):** Nanko  
+> **Author(s):** ngdo  
 
 ---
 
@@ -84,10 +84,10 @@ test('parseFields reads bullets and blockquotes, skipping derived keys', () => {
     '* **Domain:** `x`',
     '> **Status:** Active  ',
     '> **Parent Initiative:** `demo`  ',
-    '> **Author(s):** Nanko  ',
+    '> **Author(s):** ngdo  ',
   ]);
   assert.equal(fields.Domain, '`x`');
-  assert.equal(fields['Author(s)'], 'Nanko');
+  assert.equal(fields['Author(s)'], 'ngdo');
   assert.equal('Status' in fields, false);
   assert.equal('Parent Initiative' in fields, false);
 });
@@ -165,7 +165,7 @@ test('importMarkdown reconstructs the model from markdown documents, retiring .s
   }
 });
 
-test('importMarkdown refuses when a JSON model exists and orients to spec migrate', async () => {
+test('importMarkdown refuses when a JSON model exists and orients to sdd migrate', async () => {
   const root = await makeWorkspace();
   try {
     await writeFiles(root, {
@@ -176,7 +176,7 @@ test('importMarkdown refuses when a JSON model exists and orients to spec migrat
 
     await assert.rejects(
       () => importMarkdown(root),
-      (error) => error instanceof UsageError && error.exitCode === 2 && /spec migrate/.test(error.message),
+      (error) => error instanceof UsageError && error.exitCode === 2 && /sdd migrate/.test(error.message),
     );
     // Nothing was written.
     assert.equal(await fileExists(root, '.sdd'), false);

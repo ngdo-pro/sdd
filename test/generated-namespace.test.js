@@ -25,7 +25,7 @@ const FULL_FIXTURE = [
 const BASE_FLAGS = {
   to: undefined, kind: undefined, state: undefined, slug: undefined, title: undefined,
   from: undefined, feature: undefined, initiative: undefined, field: undefined,
-  backends: undefined, create: false, force: false, check: false, write: false,
+  connectors: undefined, create: false, force: false, check: false, write: false,
   cascade: false, undo: false, done: false, dryRun: false, json: false,
 };
 
@@ -149,7 +149,7 @@ test('[U2][INV-1] generatedRoot, exhaustive root and untouched init layout', asy
     assert.equal(generatedRoot(root), path.join(root, '.sdd', 'generated'));
     assert.deepEqual([...ALLOWED_ROOT_ENTRIES], ['config.json', 'canonical', 'generated', 'knowledge']);
 
-    // `spec init` still pre-allocates nothing beyond the canonical store.
+    // `sdd init` still pre-allocates nothing beyond the canonical store.
     assert.deepEqual(standardLayout(root), [path.join(root, '.sdd'), path.join(root, '.sdd', 'canonical')]);
     await silently(() => init(ctx(root)));
     assert.deepEqual(await listPaths(root, '.sdd'), ['.sdd/canonical', '.sdd/config.json']);
@@ -219,7 +219,7 @@ test('[C1][INV-2] move regenerates at the same projection path — no rename, no
   }
 });
 
-test('[C2][INV-2] render writes generated/ and leaves legacy entries to spec migrate', async () => {
+test('[C2][INV-2] render writes generated/ and leaves legacy entries to sdd migrate', async () => {
   const root = await makeWorkspace();
   try {
     await seedModelAndRender(root);
@@ -241,7 +241,7 @@ test('[C2][INV-2] render writes generated/ and leaves legacy entries to spec mig
     assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/features/01-login.md'), true);
     assert.equal(await fileExists(root, '.sdd/generated/initiatives/demo/specs/042.md'), true);
 
-    // The legacy tree is untouched — no sweep. `spec migrate` owns conversion.
+    // The legacy tree is untouched — no sweep. `sdd migrate` owns conversion.
     assert.equal(await fileExists(root, '.sdd/vision.md'), true);
     assert.equal(await fileExists(root, '.sdd/specs/active/042-login.md'), true);
     assert.equal(await fileExists(root, '.sdd/initiatives/active/demo/README.md'), true);

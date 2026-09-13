@@ -4,16 +4,16 @@ import { heading, line, printJson, success, warn } from '../render.js';
 import { loadContext, persistArtifact, refresh } from '../context.js';
 
 /**
- * `spec sync [<ref>]` — reconciles remote mirrors with the canonical model.
+ * `sdd sync [<ref>]` — reconciles remote mirrors with the canonical model.
  * Creates missing remote artifacts (`--create`) and realigns their state.
  * Writes are locked during a pending migration (INV-5).
  */
 export async function sync({ cwd, positionals, flags }) {
   if (!flags.dryRun) assertNoCoexistence(cwd);
-  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.backends });
+  const { artifacts, mirrors } = await loadContext(cwd, { only: flags.connectors });
 
   if (mirrors.length === 0) {
-    warn('No remote mirror enabled. Use `spec backend enable <id>`.');
+    warn('No remote mirror enabled. Use `sdd connectors enable <id>`.');
     return;
   }
 
@@ -26,7 +26,7 @@ export async function sync({ cwd, positionals, flags }) {
     if (artifact.state === null || artifact.state === undefined) continue;
 
     for (const mirror of mirrors) {
-      const entry = { artifact: artifact.slug, kind: artifact.kind, backend: mirror.id, action: null, ok: true };
+      const entry = { artifact: artifact.slug, kind: artifact.kind, connector: mirror.id, action: null, ok: true };
       try {
         if (!artifact.remote?.[mirror.id]) {
           if (!flags.create) {
@@ -69,7 +69,7 @@ export async function sync({ cwd, positionals, flags }) {
 
   heading(`Sync: ${report.length} operation(s)`);
   for (const entry of report) {
-    const label = `${entry.artifact} [${entry.backend}]`;
+    const label = `${entry.artifact} [${entry.connector}]`;
     if (!entry.ok) warn(`${label}: ${entry.action}`);
     else if (entry.action?.startsWith('skipped')) line(`  · ${label}: ${entry.action}`);
     else success(`${label}: ${entry.action}`);

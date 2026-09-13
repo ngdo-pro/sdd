@@ -26,6 +26,6 @@
 
 ## 3. Strategic Invariants & Guardrails
 
-* **État en métadonnées uniquement:** aucun état de cycle de vie n'apparaît dans un chemin ; `spec move` ne déplace plus aucun fichier, il ne mute que les métadonnées et l'index.
-* **Séparation authored/généré visible:** `canonical/` et `knowledge/` sont les seules zones éditables ; `generated/` est intégralement régénérable et vérifié par `spec render --check`.
-* **Migration idempotente:** `spec migrate` convertit un workspace v2 (`.sdd/`) vers v3 (`.sdd/`) sans perte, ré-exécutable sans effet de bord, et le graphe (ids, relations, progress) est préservé.
+* **État en métadonnées uniquement:** aucun état de cycle de vie n'apparaît dans un chemin ; `sdd move` ne déplace plus aucun fichier, il ne mute que les métadonnées et l'index.
+* **Séparation authored/généré visible:** `canonical/` et `knowledge/` sont les seules zones éditables ; `generated/` est intégralement régénérable et vérifié par `sdd render --check`.
+* **Migration idempotente:** `sdd migrate` convertit un workspace v2 (`.sdd/`) vers v3 (`.sdd/`) sans perte, ré-exécutable sans effet de bord, et le graphe (ids, relations, progress) est préservé.
