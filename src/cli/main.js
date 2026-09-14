@@ -80,7 +80,7 @@ export async function run(argv, { fetchImpl } = {}) {
   const { values, positionals } = parsed;
 
   if (values.version) {
-    line(`sdd-framework ${VERSION}`);
+    line(`@ngdo-pro/sdd ${VERSION}`);
     return;
   }
 
