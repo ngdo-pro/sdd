@@ -33,7 +33,7 @@ $ sdd install --host claude --no-init --dry-run   # prévisualise, n'écrit rien
 
 * **INV-1:** les câblages pointent vers le **module installé** (`node_modules/shodo/skills|agents|templates`) — jamais de copie ; re-install idempotent (pas de doublon dans `opencode.json`/settings), `--undo` retire exactement les entrées posées (journalisées) et rien d'autre.
 * **INV-2:** jamais d'écrasement d'existant — un symlink/une entrée préexistante avec un autre contenu est signalé et laissé intact (warn + skip) ; les fichiers hôtes (`opencode.json`, `.claude/**`) sont modifiés par merge de structure, jamais réécrits brutalement.
-* **INV-3:** aucune clé API ni network — `install` est offline ; `sdd init` conserve sa sémantique (local par défaut, connecteurs via `--connector`/`/setup`).
+* **INV-3:** aucune clé API ni network — `install` est offline ; `sdd init` conserve sa sémantique (local par défaut, connecteurs via `--connector`/`/sdd-setup`).
 * **INV-4:** `--dry-run` prévisualise le plan complet (hôte détecté, entrées à poser, init à exécuter) sans écrire ; l'ordre des phases : détection → câblage → init.
 * **INV-5:** si aucun hôte détecté et pas de `--host`, l'install câble quand même le workspace (`sdd init` seul) et explique comment câbler à la main (pointer vers la doc).
 
@@ -42,5 +42,5 @@ $ sdd install --host claude --no-init --dry-run   # prévisualise, n'écrit rien
 ## 5. Out of Scope
 
 * Détection/câblage d'hôtes non listés (Antigravity `.agents/` couvert ; futurs hôtes via le registre d'hôtes extensible).
-* Publication npm elle-même (hors CLI) ; les connecteurs et leur config (`/setup`, spec 006).
+* Publication npm elle-même (hors CLI) ; les connecteurs et leur config (`/sdd-setup`, spec 006).
 * Gestion des mises à jour de version (re-install sur nouvelle version = re-pointage de symlinks, pas de changelog).

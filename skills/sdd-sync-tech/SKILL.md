@@ -1,5 +1,5 @@
 ---
-name: sync-tech
+name: sdd-sync-tech
 description: Synchronize architectural patterns, technical components, and security invariants from a delivered specification into .sdd/knowledge/domains/[domain]/tech.md.
 ---
 

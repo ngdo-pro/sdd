@@ -11,8 +11,8 @@
 ## Tooling & Required Skills
 
 * **Primary Skills:** 
-  - `skills/initiative/SKILL.md` (`/initiative [slug]`) for macro framing
-  - `skills/feature/SKILL.md` (`/feature [initiative] [slug]`) for micro framing
+  - `skills/sdd-initiative/SKILL.md` (`/sdd-initiative [slug]`) for macro framing
+  - `skills/sdd-feature/SKILL.md` (`/sdd-feature [initiative] [slug]`) for micro framing
 * **Reference Templates:** 
   - `templates/INITIATIVE_TEMPLATE.md`
   - `templates/FEATURE_TEMPLATE.md`

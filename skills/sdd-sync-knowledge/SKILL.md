@@ -1,5 +1,5 @@
 ---
-name: sync-knowledge
+name: sdd-sync-knowledge
 description: Propagate a delivered specification into the living knowledge documentation and cascade the completion upwards through the model.
 ---
 

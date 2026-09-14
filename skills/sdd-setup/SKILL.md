@@ -1,5 +1,5 @@
 ---
-name: setup
+name: sdd-setup
 description: The single conversational entry point to adopt the framework — read-only état des lieux, legacy `.specs/` migration, host wiring + model init, optional Linear mirror connector — every write through the `sdd` CLI, dry-run first.
 ---
 

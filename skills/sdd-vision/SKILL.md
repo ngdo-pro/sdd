@@ -1,5 +1,5 @@
 ---
-name: vision
+name: sdd-vision
 description: Frame or update the foundational product vision and core tenets in the canonical model (.sdd/canonical/vision.json + vision.md).
 ---
 

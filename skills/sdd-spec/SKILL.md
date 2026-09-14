@@ -1,5 +1,5 @@
 ---
-name: spec
+name: sdd-spec
 description: Frame an evolution requirement and generate a structured delta engineering spec in the canonical model.
 ---
 

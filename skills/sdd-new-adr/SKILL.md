@@ -1,5 +1,5 @@
 ---
-name: new-adr
+name: sdd-new-adr
 description: Formalize a technical, protocol, or architectural decision as an ADR.
 ---
 

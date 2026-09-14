@@ -8,7 +8,7 @@
 
 ## Tooling & Required Skills
 
-* **Primary Skill:** `skills/build-spec/SKILL.md` (`/build-spec [XXX]`)
+* **Primary Skill:** `skills/sdd-build-spec/SKILL.md` (`/sdd-build-spec [XXX]`)
 * **Required Input:** Engineering specification (`.sdd/generated/initiatives/[initiative]/specs/[id].md`)
 * **Governing Rules:** `rules/spec-rules.md` (portability, strict adherence to file inventory)
 * **Execution Tools:** Code editing tools, local build/typecheck commands, and database migration runners.
@@ -18,7 +18,7 @@
 ## Responsibilities
 
 1. **Execute the `build-spec` Skill Protocol:**
-   - Strictly follow the instructions in `skills/build-spec/SKILL.md`.
+   - Strictly follow the instructions in `skills/sdd-build-spec/SKILL.md`.
    - Read the authoritative body from `.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md` (the `.sdd/generated/**` markdown is a generated projection).
    - Adhere to the phased sequential execution plan (Section 7 of the spec).
    - Only create or modify files explicitly declared in the Inventory (Section 3.1).

@@ -1,5 +1,5 @@
 ---
-name: feature
+name: sdd-feature
 description: Frame a discrete functional or technical feature and persist it into the canonical model, linked to its initiative.
 ---
 

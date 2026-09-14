@@ -43,5 +43,5 @@ $ sdd init --interactive        # TTY
 ## 5. Out of Scope
 
 * Le connecteur GitHub (mirroring issues/projects) — future feature, seule la mécanique générique est livrée.
-* Toute validation réseau ou MCP dans le CLI (teamKey, repo…) — déléguée au skill `/setup` (feature `02-setup-skill`).
+* Toute validation réseau ou MCP dans le CLI (teamKey, repo…) — déléguée au skill `/sdd-setup` (feature `02-setup-skill`).
 * Migration de configs legacy v2 (`backends` → `connectors`), déjà couverte par le code de normalisation existant.

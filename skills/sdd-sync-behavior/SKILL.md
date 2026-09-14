@@ -1,5 +1,5 @@
 ---
-name: sync-behavior
+name: sdd-sync-behavior
 description: Synchronize functional behavior changes from a delivered specification into .sdd/knowledge/domains/[domain]/behavior.md.
 ---
 

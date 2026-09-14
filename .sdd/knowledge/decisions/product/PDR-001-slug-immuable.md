@@ -22,5 +22,5 @@ Option A : le slug est **immuable** après création. Un changement d'orientatio
 ## 4. Rationale & Impact
 
 * Le slug est l'identité stable du graphe : chemins, relations, refs distantes. Le rendre immuable élimine une classe entière de mutations destructrices et de resyncs de mirrors.
-* Impact workflow : le nommage est un acte de cadrage au moment de la création (`/initiative`, `/feature`) — renommer devient une décision stratégique, pas un réflexe. Courbe d'apprentissage : une seule règle, zéro exception.
+* Impact workflow : le nommage est un acte de cadrage au moment de la création (`/sdd-initiative`, `/sdd-feature`) — renommer devient une décision stratégique, pas un réflexe. Courbe d'apprentissage : une seule règle, zéro exception.
 * Non-goals : pas de rename dans ce milestone, pas d'alias de slug, pas d'exception pour les specs.

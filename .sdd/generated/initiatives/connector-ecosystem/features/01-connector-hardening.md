@@ -9,7 +9,7 @@
 
 ## 1. Problem & Trigger
 
-Trois défauts relevés lors des revues des specs 004-006 : grammaire de settings divergente entre `init` et `connectors enable` (les subkeys namespacées sont rejetées), `--dry-run` ignoré par `connectors enable` (écriture immédiate, contournement documenté dans le skill `/setup`), et `sync`/`move` exit 0 même quand tous les miroirs échouent — invisible en CI. Déclencheur : durcissement post-livraison, avant l'arrivée de nouveaux connecteurs.
+Trois défauts relevés lors des revues des specs 004-006 : grammaire de settings divergente entre `init` et `connectors enable` (les subkeys namespacées sont rejetées), `--dry-run` ignoré par `connectors enable` (écriture immédiate, contournement documenté dans le skill `/sdd-setup`), et `sync`/`move` exit 0 même quand tous les miroirs échouent — invisible en CI. Déclencheur : durcissement post-livraison, avant l'arrivée de nouveaux connecteurs.
 
 ---
 
@@ -41,7 +41,7 @@ $ sdd connectors enable linear         # sans transport résolu
 
 ## 4. Functional Invariants (Non-Negotiable Rules)
 
-* **INV-1:** `connectors enable|disable` accepte exactement la grammaire de settings de `sdd init` (subkeys namespacées == id positionnel, profondeur ≤ 2, flags répétés → tableau, coercion typée) et supporte `--dry-run` (aucun octet écrit) — le contournement documenté dans `/setup` devient inutile.
+* **INV-1:** `connectors enable|disable` accepte exactement la grammaire de settings de `sdd init` (subkeys namespacées == id positionnel, profondeur ≤ 2, flags répétés → tableau, coercion typée) et supporte `--dry-run` (aucun octet écrit) — le contournement documenté dans `/sdd-setup` devient inutile.
 * **INV-2:** `sync`/`move` exitent 1 si et seulement si au moins un miroir est activé et que **tous** échouent ; partiel ⇒ exit 0 ; zéro miroir activé ⇒ comportement actuel (warning, exit 0).
 * **INV-3:** plus aucun id de connecteur n'apparaît dans `src/**` — le hint « connecteur non configuré » est lu depuis un champ optionnel du manifest (`extension.json`) ; `sdd validate` reste inchangé.
 * **INV-4:** la mécanique de merge (idempotence, explicit-wins) est inchangée — la grammaire étendue passe par les mêmes helpers que `sdd init`.

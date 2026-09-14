@@ -1,6 +1,6 @@
 ## 1. Problem & Trigger
 
-Le CLI valide la structure mais pas la sémantique : un `teamKey` erroné ou un label inexistant ne sautent qu'au premier `sdd sync`, après coup. Déclencheur : l'adoptant lance le skill `/setup` (conversationnel) pour être guidé, interviewé, et recevoir une configuration **validée en amont** contre les vraies sources (MCP Linear/GitHub).
+Le CLI valide la structure mais pas la sémantique : un `teamKey` erroné ou un label inexistant ne sautent qu'au premier `sdd sync`, après coup. Déclencheur : l'adoptant lance le skill `/sdd-setup` (conversationnel) pour être guidé, interviewé, et recevoir une configuration **validée en amont** contre les vraies sources (MCP Linear/GitHub).
 
 ---
 
@@ -24,7 +24,7 @@ Le CLI valide la structure mais pas la sémantique : un `teamKey` erroné ou un 
 
 ## 3. Nominal User Flow (*Happy Path*)
 
-1. **Trigger:** l'adoptant invoque `/setup` dans un repo sans `.sdd/` (ou avec un workspace à étendre).
+1. **Trigger:** l'adoptant invoque `/sdd-setup` dans un repo sans `.sdd/` (ou avec un workspace à étendre).
 2. **Interaction & Display:** l'agent interviewe (connecteurs, settings), interroge le MCP du connecteur pour vérifier chaque valeur déclarée (Linear : teams, labels ; GitHub : repo), montre le dry-run de la commande CLI qu'il s'apprête à exécuter.
 3. **Validation & Persistence:** après confirmation, l'agent exécute la commande `sdd init` / `sdd connectors enable` avec les flags validés ; le CLI persiste (la responsabilité d'écriture reste au CLI — l'agent n'édite jamais config.json).
 

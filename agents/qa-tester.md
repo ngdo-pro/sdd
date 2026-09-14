@@ -8,7 +8,7 @@
 
 ## Tooling & Required Skills
 
-* **Primary Skill:** `skills/test-spec/SKILL.md` (`/test-spec [XXX]`)
+* **Primary Skill:** `skills/sdd-test-spec/SKILL.md` (`/sdd-test-spec [XXX]`)
 * **Required Input:** Active engineering specification body (`.sdd/canonical/initiatives/<initiative>/features/<feature>/specs/<id>.md`; `.sdd/generated/**` is a generated projection)
 * **Governing Rules:** `rules/spec-rules.md` (Gherkin exhaustiveness across unit, component, and e2e tiers)
 * **Execution Tools:** Project automated test runners (Unit, Component/Integration, End-to-End frameworks).

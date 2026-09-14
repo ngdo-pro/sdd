@@ -3,7 +3,7 @@
 > **Parent Initiative:** `setup-experience`  
 > **Status:** Archived  
 > **Author(s):** TBD  
-> **Last Updated:** 2026-09-13  
+> **Last Updated:** 2026-09-14  
 
 ---
 
@@ -39,7 +39,7 @@ $ sdd sync            # sans settings.mcp résolu
 ## 4. Functional Invariants (Non-Negotiable Rules)
 
 * **INV-1:** le connecteur ne détient aucun secret — le bloc `authentication` (`LINEAR_API_KEY`, `settings.apiKey`) disparaît du manifest ; aucun fallback vers une auth directe, jamais.
-* **INV-2:** sans `settings.mcp` résolu, le connecteur est inopérant : `sync`/`move` échouent avec un message renvoyant à `/setup`, et `sdd validate` (règle `connector-settings`) signale l'absence de transport requis.
+* **INV-2:** sans `settings.mcp` résolu, le connecteur est inopérant : `sync`/`move` échouent avec un message renvoyant à `/sdd-setup`, et `sdd validate` (règle `connector-settings`) signale l'absence de transport requis.
 * **INV-3:** le contrat miroir (`resolve`/`list`/`transition`/`create`/`link`, `remoteRef`, `--dry-run`, mirrors activés) est inchangé — les call-sites (`sync.js`, `move.js`, `done.js`) ne perçoivent pas la migration.
 * **INV-4:** le client MCP est un process par invocation (spawn stdio / requête HTTP), démarré et arrêté proprement — pas de serveur résident, pas de dépendance npm nouvelle (JSON-RPC sur standard library).
 
@@ -48,7 +48,7 @@ $ sdd sync            # sans settings.mcp résolu
 ## 5. Out of Scope
 
 * Le connecteur GitHub (transport `gh` CLI) — future feature, seul le principe ADR-002 est posé.
-* La découverte des serveurs MCP par le CLI — c'est le rôle de l'agent `/setup` (feature `02-setup-skill`) qui écrit `settings.mcp` via les flags.
+* La découverte des serveurs MCP par le CLI — c'est le rôle de l'agent `/sdd-setup` (feature `02-setup-skill`) qui écrit `settings.mcp` via les flags.
 * La validation sémantique (teamKey, labels) — reste agent-side via MCP.
 
 ---

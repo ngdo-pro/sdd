@@ -10,19 +10,19 @@
 
 ```mermaid
 flowchart TD
-    SPEC["Approved Spec (generated/initiatives/[initiative]/specs/[id].md)"] --> ORCH["Knowledge Orchestrator (/sync-knowledge)"]
+    SPEC["Approved Spec (generated/initiatives/[initiative]/specs/[id].md)"] --> ORCH["Knowledge Orchestrator (/sdd-sync-knowledge)"]
     
     subgraph Synchronisation Multi-Piliers
-        ORCH --> B["1. /sync-behavior<br>(behavior.md)"]
-        ORCH --> C["2. /sync-contracts<br>(contracts.md)"]
-        ORCH --> M["3. /sync-models<br>(models.md)"]
-        ORCH --> T["4. /sync-tech<br>(tech.md)"]
+        ORCH --> B["1. /sdd-sync-behavior<br>(behavior.md)"]
+        ORCH --> C["2. /sdd-sync-contracts<br>(contracts.md)"]
+        ORCH --> M["3. /sdd-sync-models<br>(models.md)"]
+        ORCH --> T["4. /sdd-sync-tech<br>(tech.md)"]
     end
     
     subgraph Arbitrages Structurants
         B & C & M & T --> DEC{"Décision structurante ?"}
-        DEC -->|Choix Produit / UX| PDR["/new-pdr<br>(knowledge/decisions/product/)"]
-        DEC -->|Choix Technique / Stack| ADR["/new-adr<br>(knowledge/decisions/architecture/)"]
+        DEC -->|Choix Produit / UX| PDR["/sdd-new-pdr<br>(knowledge/decisions/product/)"]
+        DEC -->|Choix Technique / Stack| ADR["/sdd-new-adr<br>(knowledge/decisions/architecture/)"]
         DEC -->|Standard| CLOSE["Clôture & Archivage"]
         PDR --> CLOSE
         ADR --> CLOSE
@@ -44,13 +44,13 @@ flowchart TD
 
 | Sub-Skill | Target Artifact | Enforced Standard |
 |---|---|---|
-| `skills/sync-behavior/SKILL.md` | `.sdd/knowledge/domains/[domain]/behavior.md` | `DOMAIN_BEHAVIOR_TEMPLATE.md` (Zero technical/CSS pollution) |
-| `skills/sync-contracts/SKILL.md` | `.sdd/knowledge/domains/[domain]/contracts.md` | `DOMAIN_CONTRACTS_TEMPLATE.md` (OpenAPI specs & validation schemas) |
-| `skills/sync-models/SKILL.md` | `.sdd/knowledge/domains/[domain]/models.md` | `DOMAIN_MODELS_TEMPLATE.md` (Datastore schemas, ERD, Entities) |
-| `skills/sync-tech/SKILL.md` | `.sdd/knowledge/domains/[domain]/tech.md` | `DOMAIN_TECH_TEMPLATE.md` (Stack, patterns, security invariants) |
-| `skills/new-pdr/SKILL.md` | `.sdd/knowledge/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
-| `skills/new-adr/SKILL.md` | `.sdd/knowledge/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
-| `skills/sync-knowledge/SKILL.md` | Complete Knowledge Base & Archives | Master pipeline coordinator |
+| `skills/sdd-sync-behavior/SKILL.md` | `.sdd/knowledge/domains/[domain]/behavior.md` | `DOMAIN_BEHAVIOR_TEMPLATE.md` (Zero technical/CSS pollution) |
+| `skills/sdd-sync-contracts/SKILL.md` | `.sdd/knowledge/domains/[domain]/contracts.md` | `DOMAIN_CONTRACTS_TEMPLATE.md` (OpenAPI specs & validation schemas) |
+| `skills/sdd-sync-models/SKILL.md` | `.sdd/knowledge/domains/[domain]/models.md` | `DOMAIN_MODELS_TEMPLATE.md` (Datastore schemas, ERD, Entities) |
+| `skills/sdd-sync-tech/SKILL.md` | `.sdd/knowledge/domains/[domain]/tech.md` | `DOMAIN_TECH_TEMPLATE.md` (Stack, patterns, security invariants) |
+| `skills/sdd-new-pdr/SKILL.md` | `.sdd/knowledge/decisions/product/PDR-XXX-[slug].md` | `PDR_TEMPLATE.md` |
+| `skills/sdd-new-adr/SKILL.md` | `.sdd/knowledge/decisions/architecture/ADR-XXX-[slug].md` | `ADR_TEMPLATE.md` |
+| `skills/sdd-sync-knowledge/SKILL.md` | Complete Knowledge Base & Archives | Master pipeline coordinator |
 
 ---
 

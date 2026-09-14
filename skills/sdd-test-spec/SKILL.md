@@ -1,5 +1,5 @@
 ---
-name: test-spec
+name: sdd-test-spec
 description: Audit, design, and synchronize unit, integration, E2E tests, and their Gherkin scenarios in the active specification.
 ---
 

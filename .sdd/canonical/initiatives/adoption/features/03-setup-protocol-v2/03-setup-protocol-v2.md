@@ -1,6 +1,6 @@
 ## 1. Problem & Trigger
 
-Deux portes d'entrée concurrentes existent : `sdd install` (câblage hôtes + init, aveugle aux workspaces existants et aux connecteurs) et le skill `/setup` (validation MCP only, présume un workspace existant). L'ancien skill `spec-driven-setup` (.specs/ Evaneos) ajoute une troisième voie obsolète. L'adoptant ne sait pas laquelle invoquer, et aucune ne couvre le parcours complet. Déclencheur : `/setup` sur n'importe quel repo (vierge, legacy `.specs/`, ou workspace existant).
+Deux portes d'entrée concurrentes existent : `sdd install` (câblage hôtes + init, aveugle aux workspaces existants et aux connecteurs) et le skill `/sdd-setup` (validation MCP only, présume un workspace existant). L'ancien skill `spec-driven-setup` (.specs/ Evaneos) ajoute une troisième voie obsolète. L'adoptant ne sait pas laquelle invoquer, et aucune ne couvre le parcours complet. Déclencheur : `/sdd-setup` sur n'importe quel repo (vierge, legacy `.specs/`, ou workspace existant).
 
 ---
 
@@ -27,7 +27,7 @@ Deux portes d'entrée concurrentes existent : `sdd install` (câblage hôtes + i
 
 ## 3. Nominal User Flow (*Happy Path*)
 
-1. **Trigger:** `/setup` dans n'importe quel repo — le skill démarre par un état des lieux (détection `.sdd/`, `.specs/`, hôtes agentiques) et n'exécute que les phases nécessaires.
+1. **Trigger:** `/sdd-setup` dans n'importe quel repo — le skill démarre par un état des lieux (détection `.sdd/`, `.specs/`, hôtes agentiques) et n'exécute que les phases nécessaires.
 2. **Interaction & Display:** chaque phase est conditionnelle et confirmée : migration legacy (dry-run → confirmation → `sdd migrate`), câblage hôtes + init (`sdd install`), connecteur (interview + validation MCP + dry-run `sdd connectors enable`).
 3. **Validation & Persistence:** toute écriture passe par la CLI (`migrate`/`install`/`connectors enable`) après confirmation explicite ; l'agent n'édite jamais `.sdd/` ni les configs d'hôte.
 
@@ -35,11 +35,11 @@ Deux portes d'entrée concurrentes existent : `sdd install` (câblage hôtes + i
 
 ## 4. Functional Invariants (Non-Negotiable Rules)
 
-* **INV-1:** `/setup` démarre toujours par l'état des lieux (détection `.sdd/`, `.specs/`, hôtes) et n'exécute que les phases manquantes — idempotent de bout en bout.
+* **INV-1:** `/sdd-setup` démarre toujours par l'état des lieux (détection `.sdd/`, `.specs/`, hôtes) et n'exécute que les phases manquantes — idempotent de bout en bout.
 * **INV-2:** `.specs/` détecté ⇒ migration proposée avec `sdd migrate --dry-run` affiché et confirmation explicite ; jamais de migration sans accord, jamais de migration avec workspace `.sdd/` valide déjà en place sans arbitrage présenté.
 * **INV-3:** l'agent n'écrit jamais directement — toute mutation passe par `sdd migrate` / `sdd install` / `sdd connectors enable` avec dry-run préalable ; configs d'hôte et `.sdd/` jamais éditées à la main (rule 7).
 * **INV-4:** la phase connecteur est optionnelle et repliable : sans MCP découvrable, deux options explicites (activer sans validation sémantique / rester local) — jamais d'échec silencieux, jamais de secret manipulé.
-* **INV-5:** relancer `/setup` sur un workspace complet re-état des lieux, ne duplique rien, propose des ajustements en merge (sémantique idempotente des commandes sous-jacentes).
+* **INV-5:** relancer `/sdd-setup` sur un workspace complet re-état des lieux, ne duplique rien, propose des ajustements en merge (sémantique idempotente des commandes sous-jacentes).
 
 ---
 

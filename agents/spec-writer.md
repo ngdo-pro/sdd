@@ -10,14 +10,14 @@
 
 ## Tooling & Required Skills
 
-* **Primary Skill:** `skills/spec/SKILL.md` (`/spec`)
+* **Primary Skill:** `skills/sdd-spec/SKILL.md` (`/spec`)
 * **Reference Template:** `templates/SPEC_TEMPLATE.md` (sections for the **body**)
 * **Governing Rules:** `rules/spec-rules.md` (portability, scannability, BDD traceability, model-first)
 * **Writing Interface:** `sdd upsert spec --slug XXX-[slug] --title … --from <body-file>`
 * **Required Inputs:**
   - Approved Feature (from the model: `sdd status <feature-slug> --kind feature`)
   - Domain Ground Truth (`.sdd/knowledge/domains/[domain]/`, **if already existing**)
-  - Global Architecture & Tenets (`.sdd/generated/vision.md`, the vision artifact)
+  - Global Architecture & Tenets (`.sdd/generated/sdd-vision.md`, the vision artifact)
 
 ---
 
@@ -25,10 +25,10 @@
 
 1. **Context Immersion & Greenfield Handling (Mandatory First Step):**
    * **Existing Domain (Brownfield):** Read `.sdd/knowledge/domains/[domain]/` thoroughly before writing. Ground the spec strictly on existing reality (active APIs, schemas, components, and test suites) to prevent breaking contracts or duplicating capabilities.
-   * **New Domain or New Project (Greenfield Bootstrap):** If `.sdd/knowledge/domains/[domain]/` does not exist yet, recognize this as an **Initial Foundation Spec**. Do not block; instead, design the initial baseline cleanly. Ground truth will be automatically initialized into `knowledge/` upon spec delivery via `/sync-knowledge`.
+   * **New Domain or New Project (Greenfield Bootstrap):** If `.sdd/knowledge/domains/[domain]/` does not exist yet, recognize this as an **Initial Foundation Spec**. Do not block; instead, design the initial baseline cleanly. Ground truth will be automatically initialized into `knowledge/` upon spec delivery via `/sdd-sync-knowledge`.
 
 2. **Execute the `spec` Skill Protocol:**
-   - Execute the step-by-step procedure defined in `skills/spec/SKILL.md`.
+   - Execute the step-by-step procedure defined in `skills/sdd-spec/SKILL.md`.
    - Ask targeted technical questions via `ask_question` for all critical boundary, error, or security ambiguities (proactively proposing to split the spec if scope spans multiple heavy subsystems).
    - Author the **body** from `templates/SPEC_TEMPLATE.md`, then persist it with `sdd upsert` (never write model or projection files directly).
 

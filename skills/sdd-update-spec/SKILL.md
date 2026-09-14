@@ -1,5 +1,5 @@
 ---
-name: update-spec
+name: sdd-update-spec
 description: Update an active engineering specification body during a pivot, scope adjustment, or business rule refinement.
 ---
 

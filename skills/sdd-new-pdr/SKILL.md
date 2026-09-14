@@ -1,5 +1,5 @@
 ---
-name: new-pdr
+name: sdd-new-pdr
 description: Formalize an ergonomic or product design decision as a PDR.
 ---
 

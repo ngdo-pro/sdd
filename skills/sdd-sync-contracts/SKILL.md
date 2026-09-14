@@ -1,5 +1,5 @@
 ---
-name: sync-contracts
+name: sdd-sync-contracts
 description: Synchronize API contracts, endpoints, and validation schemas from a delivered specification into .sdd/knowledge/domains/[domain]/contracts.md.
 ---
 

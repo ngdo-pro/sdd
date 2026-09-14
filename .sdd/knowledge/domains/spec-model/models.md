@@ -10,19 +10,19 @@
 ## 1. Périmètre & Frontières des Données
 
 * **Entités gérées dans ce domaine (sous `.sdd/canonical/`) :**
-  * `vision` : racine unique du graphe — `.sdd/canonical/vision.{json,md}`.
+  * `vision` : racine unique du graphe — `.sdd/canonical/sdd-vision.{json,md}`.
   * `initiative` : jalon stratégique — `.sdd/canonical/initiatives/<slug>/<slug>.{json,md}`.
   * `feature` : tranche livrable — `.sdd/canonical/initiatives/<init>/features/<slug>/<slug>.{json,md}`.
   * `spec` : delta d'ingénierie — `.sdd/canonical/…/specs/<id>.{json,md}` (nom de fichier = id seul).
 * **Projections générées (`.sdd/generated/` — 100 % CLI, jamais éditées à la main, purge des orphelins au `render`) :**
-  * `vision` → `.sdd/generated/vision.md` (une seule vision — le double racine est tombé avec la feature `02`).
+  * `vision` → `.sdd/generated/sdd-vision.md` (une seule vision — le double racine est tombé avec la feature `02`).
   * `initiative` → `.sdd/generated/initiatives/<slug>/README.md`.
   * `feature` → `.sdd/generated/initiatives/<initiative>/features/<slug>.md` (aplatie au niveau initiative).
   * `spec` → `.sdd/generated/initiatives/<initiative>/specs/<id>.md` (nom de fichier = id seul, listes triées par id).
 * **Frontières & Délégations :**
   * `knowledge/` (`.sdd/knowledge/decisions/` + `domains/`) : authored, **hors graphe**, jamais généré ni exigé (INV-4), hors de portée du render.
   * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge des orphelins, suppressions listées et prévisualisables ; l'horizon de purge est limité à `generated/` depuis le retrait du sweep hérité).
-  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) et **dépourvus de secret** (toute clé de forme `apiKey|token|secret` est rejetée par `validate`, cf. §4) ; le connecteur Linear porte un transport MCP résolu `settings.mcp` (`{command,args}` | `{url}` — cf. §3), écrit par le skill `/setup`, jamais de credential ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
+  * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) et **dépourvus de secret** (toute clé de forme `apiKey|token|secret` est rejetée par `validate`, cf. §4) ; le connecteur Linear porte un transport MCP résolu `settings.mcp` (`{command,args}` | `{url}` — cf. §3), écrit par le skill `/sdd-setup`, jamais de credential ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
   * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`sdd migrate` reconstruit de zéro puis le retire avec la source).
   * `.sdd/.install-journal.json` : journal d'undo de `sdd install` (feature 01-install-command) — tableau d'entrées `{ kind, target, source, created }` (cf. §3), fichier caché toléré par `root-layout`, hors modèle ; écrit par l'install **après** `sdd init` dans un `finally` (le câblage reste réversible même si init échoue), fusionné par clé `kind:target` au re-install, consommé et supprimé par un `--undo` réussi — unique source d'undo.
   * `.sdd/.update-check.json` : cache du check de mise à jour post-run (feature 02-update-notice) — `{ lastCheck, latest }` (cf. §3), dotfile toléré par `root-layout`, hors modèle et hors graphe ; écrit par le hook post-run après chaque fetch — même en échec réseau, même en `--dry-run` — jamais créé si `.sdd/` n'existe pas (cache mémoire seule) ; `sdd validate` reste exit 0.
@@ -94,7 +94,7 @@ erDiagram
 ```
 
   * Exactement l'une des deux formes — stdio `{command, args}` (`args` tableau de strings, les flags répétés formant le tableau) ou HTTP `{url}` ; les deux à la fois, ou aucune, sont rejetées (`UsageError`, exit 2).
-  * Résolu une fois par le skill `/setup` (`skills/setup/SKILL.md`) depuis les configs MCP de l'hôte (lecture seule) — jamais saisi à la main, jamais deviné par le CLI.
+  * Résolu une fois par le skill `/sdd-setup` (`skills/sdd-setup/SKILL.md`) depuis les configs MCP de l'hôte (lecture seule) — jamais saisi à la main, jamais deviné par le CLI.
   * **Ne contient aucun secret :** l'authentification vit dans l'environnement ; `validate` rejette toute clé de settings de forme `apiKey|token|secret` (clé ou suffixe, case-insensitive, séparateurs tolérés, scan imbriqué — `tokenBucketRate` légitime passe).
 * **Garanties de forme :** `connectors[]` est triée par id après chaque merge (diff on-disk stable) ; les merges (`mergeSettingOverrides`, `mergeConnectorConfigs`) sont purs — aucun objet partagé n'est muté ; les valeurs explicites (flags, interview) écrasent, les défauts du manifest ne remplissent que les clés absentes.
 

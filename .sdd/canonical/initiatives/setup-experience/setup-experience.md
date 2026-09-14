@@ -21,5 +21,5 @@ sdd init [--connector <id>]… [--<id>.<key>[.<subkey>]=<value>]… [--interacti
 ## 3. Strategic Invariants & Guardrails
 
 * **Manifest-driven:** le CLI ne connaît aucun connecteur spécifique — tout seed de settings vient de l'`extension.json` ; un id inconnu est rejeté avant toute écriture.
-* **Offline & déterministe:** aucune validation réseau dans le CLI (la validation sémantique — teamKey, repo — est déléguée au skill `/setup` via MCP) ; `--dry-run` prévisualise, re-init idempotent fusionne sans jamais effacer.
+* **Offline & déterministe:** aucune validation réseau dans le CLI (la validation sémantique — teamKey, repo — est déléguée au skill `/sdd-setup` via MCP) ; `--dry-run` prévisualise, re-init idempotent fusionne sans jamais effacer.
 * **Interactif explicite:** les prompts ne surviennent que si `--interactive` ET un TTY ; sinon erreur claire — un `sdd init` sans flag reste silencieux et CI-safe (local only).

@@ -1,5 +1,5 @@
 ---
-name: sync-models
+name: sdd-sync-models
 description: Synchronize domain aggregates, SQL database schemas, and ERD diagrams from a delivered specification into .sdd/knowledge/domains/[domain]/models.md.
 ---
 

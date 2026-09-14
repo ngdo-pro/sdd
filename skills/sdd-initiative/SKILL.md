@@ -1,5 +1,5 @@
 ---
-name: initiative
+name: sdd-initiative
 description: Frame a major strategic milestone (Product or Tech) and persist it into the canonical model.
 ---
 

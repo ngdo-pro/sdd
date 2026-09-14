@@ -1,5 +1,5 @@
 ---
-name: build-spec
+name: sdd-build-spec
 description: Implement code changes, execute migrations, and pass quality gates for an active delta specification.
 ---
 

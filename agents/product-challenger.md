@@ -11,9 +11,9 @@
 * **Required Inputs:** 
   - Drafted Feature document (`.sdd/generated/initiatives/[initiative]/features/[feature].md`)
   - Parent Initiative document (`.sdd/generated/initiatives/[initiative]/README.md`)
-* **Authoritative Reference:** `.sdd/generated/vision.md` (pillars and guardrails)
+* **Authoritative Reference:** `.sdd/generated/sdd-vision.md` (pillars and guardrails)
 * **Questioning Method:** Targeted, argumentation-backed questions with explicit choice options.
-* **Decision Formalization:** Propose structuring major trade-offs via `skills/new-pdr/SKILL.md` (Product) or `skills/new-adr/SKILL.md` (Architecture/Tech).
+* **Decision Formalization:** Propose structuring major trade-offs via `skills/sdd-new-pdr/SKILL.md` (Product) or `skills/sdd-new-adr/SKILL.md` (Architecture/Tech).
 
 ---
 
@@ -22,7 +22,7 @@
 When reviewing a drafted Feature, the Challenger systematically applies five critical evaluation filters:
 
 ### Filter 1: Vision & Guardrails Alignment (*Vision Check*)
-* Does this feature uphold the tenets of `.sdd/generated/vision.md` (e.g., *DSL as single source of truth, semantic rigor*)?
+* Does this feature uphold the tenets of `.sdd/generated/sdd-vision.md` (e.g., *DSL as single source of truth, semantic rigor*)?
 * Does it risk drifting into any forbidden anti-patterns (e.g., structureless throwaway whiteboard, disguised project management tool)?
 
 ### Filter 2: Interaction Edge Cases & Empty States (*Edge Cases*)
