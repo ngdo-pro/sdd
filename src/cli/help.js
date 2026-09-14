@@ -20,6 +20,9 @@ export const HELP = `
 
   COMMANDS
     init                 Bootstrap .sdd/canonical/ + config (nothing else)
+    install [--host h]   Wire skills/agents for the detected agent hosts
+                         (opencode.json, .claude/, .agents/), then run init
+                         (--no-init to skip); --undo reverts via the journal
     migrate [--dry-run]  Rebuild .sdd/ from a legacy workspace (.specs/) —
                          strict gate, then the legacy root is retired
     import               Convert legacy .specs/**/*.md into the model
@@ -47,7 +50,8 @@ export const HELP = `
     --initiative <slug>  Parent initiative (link / upsert)
     --state <state>      Filter (list) or initial state (upsert)
     --cascade            Archive parents whose children are all complete
-    --undo               Reopen an artifact (done)
+    --undo               Reopen an artifact (done); revert install wiring
+    --host <id>          Agent host (install): auto | opencode | claude | agents
     --create             Create missing remote artifacts (sync)
     --check              Report drift without writing (render)
     --write              Write index.json (model)
@@ -61,6 +65,7 @@ export const HELP = `
 
   EXAMPLES
     sdd init
+    sdd install --dry-run && sdd install
     sdd migrate --dry-run && sdd migrate
     sdd upsert spec --slug 042-login --title "Magic link login" --from draft.md
     sdd link 042-login --feature auth-login

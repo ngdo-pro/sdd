@@ -52,6 +52,8 @@ _None._
 
 ### ✅ Archived / Delivered
 
+- [x] **`adoption`**: Distribution et adoption  
+  ↳ *Initiative:* [`generated/initiatives/adoption/README.md`](./initiatives/adoption/README.md)
 - [x] **`connector-ecosystem`**: Écosystème connecteurs  
   ↳ *Initiative:* [`generated/initiatives/connector-ecosystem/README.md`](./initiatives/connector-ecosystem/README.md)
 - [x] **`layout-v3`**: SDD Layout v3  

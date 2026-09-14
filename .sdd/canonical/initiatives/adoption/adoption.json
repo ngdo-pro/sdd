@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "kind": "initiative",
+  "id": "adoption",
+  "slug": "adoption",
+  "title": "Distribution et adoption",
+  "state": "archived",
+  "relations": {},
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

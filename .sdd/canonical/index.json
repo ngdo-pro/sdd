@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-14T03:48:51.860Z",
+  "generatedAt": "2026-09-14T04:14:40.495Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -54,6 +54,26 @@
       "projection": ".sdd/generated/initiatives/setup-experience/features/01-declarative-init.md",
       "relations": {
         "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "01-install-command",
+      "slug": "01-install-command",
+      "title": "Commande sdd install",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/01-install-command/01-install-command.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/01-install-command/01-install-command.md",
+      "projection": ".sdd/generated/initiatives/adoption/features/01-install-command.md",
+      "relations": {
+        "initiative": "adoption"
       },
       "progress": {
         "done": false,
@@ -159,6 +179,24 @@
         "done": false,
         "children": 0,
         "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "initiative",
+      "id": "adoption",
+      "slug": "adoption",
+      "title": "Distribution et adoption",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/adoption.json",
+      "body": ".sdd/canonical/initiatives/adoption/adoption.md",
+      "projection": ".sdd/generated/initiatives/adoption/README.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
         "complete": true
       },
       "remote": {}
@@ -355,6 +393,27 @@
       "relations": {
         "feature": "01-connector-hardening",
         "initiative": "connector-ecosystem"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "008",
+      "slug": "008-install-command",
+      "title": "Commande sdd install",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/01-install-command/specs/008.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/01-install-command/specs/008.md",
+      "projection": ".sdd/generated/initiatives/adoption/specs/008.md",
+      "relations": {
+        "feature": "01-install-command",
+        "initiative": "adoption"
       },
       "progress": {
         "done": true,

@@ -24,6 +24,7 @@
   * `generated/` : projections markdown régénérées par le CLI — hors graphe, intégralité régénérable (purge des orphelins, suppressions listées et prévisualisables ; l'horizon de purge est limité à `generated/` depuis le retrait du sweep hérité).
   * `config.json` (`.sdd/config.json`) : configuration du CLI, hors modèle — schéma **v3** (`version: 3`) : clés `version`, `sourceOfTruth`, `projections`, `connectors` ; toute clé top-level inconnue et tout connector `filesystem` (intrinsèque en v3) sont retirés avec warning lors de la conversion (`convertConfig`). Chaque entrée de `connectors[]` porte `{ id, type, enabled, settings }` — settings typés à l'écriture par le contrat de manifest (cf. §3) et **dépourvus de secret** (toute clé de forme `apiKey|token|secret` est rejetée par `validate`, cf. §4) ; le connecteur Linear porte un transport MCP résolu `settings.mcp` (`{command,args}` | `{url}` — cf. §3), écrit par le skill `/setup`, jamais de credential ; liste triée par id ; les connecteurs intrinsèques (`local`, `filesystem`) n'y figurent jamais.
   * `.sdd/.migration-failed.json` : marqueur d'échec de migration (`failedAt`, `stage` = `validate` | `render-check`, `message`) — fichier caché toléré par `root-layout`, hors modèle ; écrit par le gate strict quand une migration échoue, consommé par la reprise (`sdd migrate` reconstruit de zéro puis le retire avec la source).
+  * `.sdd/.install-journal.json` : journal d'undo de `sdd install` (feature 01-install-command) — tableau d'entrées `{ kind, target, source, created }` (cf. §3), fichier caché toléré par `root-layout`, hors modèle ; écrit par l'install **après** `sdd init` dans un `finally` (le câblage reste réversible même si init échoue), fusionné par clé `kind:target` au re-install, consommé et supprimé par un `--undo` réussi — unique source d'undo.
 
 ---
 
@@ -96,6 +97,18 @@ erDiagram
   * **Ne contient aucun secret :** l'authentification vit dans l'environnement ; `validate` rejette toute clé de settings de forme `apiKey|token|secret` (clé ou suffixe, case-insensitive, séparateurs tolérés, scan imbriqué — `tokenBucketRate` légitime passe).
 * **Garanties de forme :** `connectors[]` est triée par id après chaque merge (diff on-disk stable) ; les merges (`mergeSettingOverrides`, `mergeConnectorConfigs`) sont purs — aucun objet partagé n'est muté ; les valeurs explicites (flags, interview) écrasent, les défauts du manifest ne remplissent que les clés absentes.
 
+*Dictionnaire du journal d'installation (`.sdd/.install-journal.json` — hors graphe, écrit/lu/supprimé exclusivement par le CLI via `sdd install` / `sdd install --undo`, jamais édité à la main ; feature 01-install-command, spec 008) :*
+
+| Entrée | Attribut | Type | Nullable | Contraintes | Rôle Métier |
+|---|---|:---:|:---:|---|---|
+| entry | `kind` | enum | Non | `symlink \| opencode-path` | Type de câblage journalisé (symlink d'hôte `.claude/`/`.agents/`, ou valeur `skills.paths` de `opencode.json`) |
+| entry | `target` | string | Non | Repo-relatif (chemin du symlink ou valeur `skills.paths`, ex. `node_modules/shodo/skills`) | Ce qui a été posé dans le repo cible |
+| entry | `source` | string | Non | Chemin absolu dans le package exécuté (pkgRoot résolu `import.meta.url`) | Ce que la cible pointe — rafraîchie au re-install |
+| entry | `created` | string (ISO) | Non | Stamp du premier apply — conservé au re-install (fusion `kind:target`, première occurrence gagne) | Traçabilité de la pose |
+
+* **Tolérance root-layout :** le journal est un fichier caché de la racine `.sdd/` — toléré comme `.migration-failed.json` ; `sdd validate` reste exit 0 après un `sdd install`.
+* **Cycle du journal :** écrit après `init` dans un `finally` (câblage réversible même si init échoue) ; au re-install, les entrées sont fusionnées par clé `kind:target` (le `created` d'origine est conservé, la `source` périmée est rafraîchie au pkg courant) ; un `--undo` réussi le consomme intégralement (retire exactement les entrées journalisées, puis supprime le fichier) ; `readJournal` retourne `null` si absent/illisible/non-tableau — `--undo` échoue alors proprement (`UsageError` « nothing to undo »), sans suppression à la devinette.
+
 ---
 
 ## 4. Règles d'Intégrité & Cycle de Vie
@@ -117,3 +130,6 @@ erDiagram
    * Idempotence du merge : les défauts du manifest ne ré-écrasent jamais une valeur utilisateur ; un connecteur jamais déclaré est ajouté, jamais retiré ; `connectors[]` triée par id.
    * Complétude auditée : un connecteur activé doit porter ses `requiredSettings` (règle `connector-settings` de `sdd validate`, exit 1) ; les connecteurs sans manifest (tiers, rétrocompatibles) ne sont pas audités.
    * Zéro secret audité : toute clé de settings de forme `apiKey|token|secret` (clé ou suffixe, case-insensitive, séparateurs tolérés, scan imbriqué) produit un finding `connector-settings` (exit 1) — le framework ne détient aucun credential, l'authentification vit dans le transport d'environnement (ADR-002) ; complétude du transport : linear activé exige `teamKey` **et** un `mcp` non vide (`requiredSettings ["teamKey","mcp"]`).
+5. **Règles du Journal d'Installation (`sdd install`) :**
+   * Réversibilité par journal : l'`--undo` retire exactement les entrées journalisées — le journal est l'unique source, jamais de suppression « à la devinette » ; un symlink ne pointant plus la source journalisée est laissé intact (warning) ; une entrée de fallback copie (EPERM Windows, indistinguable d'un contenu utilisateur) est laissée en place avec warning.
+   * Conservation : le journal est écrit après `init` dans un `finally` (réversible même si init échoue) ; la fusion `kind:target` conserve le `created` d'origine et rafraîchit la `source` ; le fichier n'est supprimé qu'au succès d'un `--undo`.

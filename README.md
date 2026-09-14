@@ -6,6 +6,36 @@ Built for humans and AI agents, natively compatible with agent conventions like 
 
 ---
 
+## Installation
+
+```bash
+npm i -g shodo       # then, inside any repo:
+sdd install          # or one-shot without a global install: npx shodo install
+```
+
+`sdd install` turns a repo into an SDD workspace in one command:
+
+1. **Detects the agent hosts** present in the repo: `opencode.json` → `.claude/` → `.agents/`.
+2. **Wires the framework** for each host — structurally merges `"skills": { "paths": ["node_modules/shodo/skills"] }` into `opencode.json` (existing keys, order and content preserved), and symlinks `.claude/skills/shodo` + `.claude/agents/shodo` (resp. `.agents/…`) to the **installed package** (npx cache, `npm -g` or clone) — resolved from the executing module, never from the working directory.
+3. **Bootstraps the model** with `sdd init` (skip with `--no-init`).
+
+Flags:
+
+```bash
+sdd install --host claude   # force one host: auto | opencode | claude | agents
+sdd install --dry-run       # print the plan, write nothing
+sdd install --undo          # revert exactly what install wrote (journal-based)
+```
+
+* **Idempotent:** re-running is a no-op; a pre-existing symlink or `opencode.json` entry shodo does not own is warned and skipped — nothing is ever overwritten.
+* **Several hosts detected without `--host`?** A TTY asks which ones to wire; in CI (non-TTY) it fails with a `UsageError` listing them, so pass `--host <id>`.
+* **No host detected?** `sdd init` still runs and manual wiring instructions are printed.
+* **`templates/` are not wired:** agents read them from the package at runtime.
+* **Windows:** when symlink creation is refused (EPERM), the wiring falls back to a copy with a warning — re-run `sdd install` after updating the package to refresh it.
+* **Clone path:** `git clone <this repo> && cd shodo && npm i -g .`, or run `node bin/sdd.js install` straight from the clone. Everything is offline — no API keys, no network.
+
+---
+
 ## Model-First Architecture
 
 Artifacts are stored once, in a canonical model, and **everything else is generated**:
@@ -103,6 +133,7 @@ An artifact's metadata:
 ## CLI (`sdd`)
 
 ```bash
+sdd install [--host h] [--dry-run] [--undo]   # wire agent hosts + sdd init
 sdd init                        # bootstrap .sdd/canonical/ + config
 sdd init --connector linear --linear.teamKey=ENG   # declarative init: declare mirrors + seed settings
 sdd migrate --dry-run && sdd migrate         # convert a legacy .specs/ workspace

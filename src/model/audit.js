@@ -43,7 +43,8 @@ function toRepoRelative(cwd, absolute) {
 /**
  * INV-1: the `.sdd/` root is exhaustive — only `config.json`, `canonical/`,
  * `generated/` and `knowledge/` may live there. Dotfiles (`.DS_Store`,
- * `.gitkeep`, `.migration-failed.json`) are tolerated; `generated/` and
+ * `.gitkeep`, `.migration-failed.json`, `.install-journal.json` — the
+ * `sdd install` undo journal) are tolerated; `generated/` and
  * `knowledge/` are permitted without being required.
  */
 async function findRootLayoutViolations(cwd) {

@@ -9,6 +9,7 @@
 
 * **Ce qui relève de ce domaine (In Scope) :**
   * Bootstrap et layout du workspace : `.sdd/canonical/` sans état, tout répertoire créé à la volée.
+  * Amorçage one-command d'un repo adoptant : `sdd install` — détection des hôtes agentiques, câblage idempotent et réversible des skills/agents pointant le package installé, enchaînement `sdd init`, `--undo` journal-based (cf. `PAR-WM-08`).
   * Amorçage déclaratif des connecteurs : déclaration par flags (`sdd init --connector …`), settings seedés depuis les manifests avec overrides namespacés, interview TTY optionnelle, re-init idempotent — la config des miroirs se pose à la création du workspace comme après coup via `sdd connectors enable|disable` (même grammaire que `init`, `--dry-run` réel ; le mirroring lui-même reste hors graphe).
   * Amorçage guidé des connecteurs : l'agent `/setup` conduit l'adoptant de zéro à un workspace configuré et validé — interview, découverte read-only du transport MCP de l'hôte, validation sémantique via MCP, application CLI-only (cf. `PAR-WM-07`).
   * Cycle de vie des artefacts : cadrage du graphe, transitions d'état, achèvement en cascade.
@@ -34,6 +35,11 @@ flowchart TD
     Marker -->|cause corrigée, relance| Migrate
     Retire --> Start
     Start([Workspace vierge ou existant]) --> Init[sdd init — arbre minimal]
+    Start -.->|repo adoptant, package shodo installé| Inst["sdd install — détection → câblage journalisé → init"]
+    Inst -.->|plusieurs hôtes, hors TTY| ErrHost([UsageError listant les hôtes — --host requis])
+    Inst -.->|cible étrangère préexistante| WarnSkip[warn + skip — jamais d'écrasement]
+    Inst -->|câblage posé, journal écrit| Init
+    Inst -.->|aucun hôte détecté| Deg[sdd init seul + instructions manuelles]
     Start -.->|première configuration d'un connecteur| Setup["Agent /setup<br>interview → découverte MCP read-only → validation → dry-run"]
     Setup -->|application CLI-only, après confirmation| Decl
     Init -->|--connector + settings namespacés| Decl[sdd init déclaratif — seed manifest ⊕ overrides coercés, config typée]
@@ -62,6 +68,7 @@ flowchart TD
 | `PAR-WM-05` | Synchroniser & auditer les projections | Utilisateur / Agent | `sdd render` / `--dry-run` / `--check` | Projections sous `.sdd/generated/` fidèles au modèle ; drift signalé sans écriture |
 | `PAR-WM-06` | Migrer un workspace hérité | Utilisateur / Agent | `sdd migrate [--dry-run]` | Workspace reconstruit intégralement à la racine `.sdd/`, ancienne racine retirée — ou plan complet sans écriture en `--dry-run` |
 | `PAR-WM-07` | Amorçage guidé d'un connecteur (`/setup`) | Agent amorceur (`/setup`) | Commande `/setup` ou demande de configuration d'un miroir | Workspace configuré et validé : connecteur activé, settings vérifiés, transport MCP résolu — persisté exclusivement par le CLI |
+| `PAR-WM-08` | Amorcer un repo adoptant (`sdd install`) | Utilisateur / Agent | `sdd install [--host <id>] [--dry-run] [--undo] [--no-init]` | Hôtes câblés (skills/agents → package installé), workspace initialisé, récap + pointer `/setup` — ou plan affiché en `--dry-run`, câblages retirés en `--undo` |
 
 ---
 
@@ -121,6 +128,14 @@ flowchart TD
 * **Post-conditions :** connecteur activé avec `teamKey` et transport MCP résolus ; `sdd validate` exit 0 ; aucun secret affiché, copié ou persisté.
 * **Variantes :** *Serveur MCP introuvable :* repli explicite — activer sans validation sémantique (valeurs marquées « (non vérifiée) ») ou rester local ; l'humain arbitre, rien ne s'exécute sans lui. *Confirmation refusée :* rien n'est exécuté, la synthèse reste consultable. *Workspace déjà configuré (relance) :* ajustements proposés en merge après lecture de `sdd status` — rien n'est dupliqué.
 
+### `PAR-WM-08` : Amorcer un repo adoptant (`sdd install`)
+* **Acteur :** Utilisateur / Agent.
+* **Prérequis :** package shodo installé (`npm i -g shodo`, `npx shodo install`, ou clone) ; repo cible quelconque (workspace `.sdd/` absent ou existant). Tout est offline.
+* **Déclencheur :** `sdd install` — flags : `--host auto|opencode|claude|agents`, `--init/--no-init`, `--dry-run`, `--undo`.
+* **Déroulement nominal :** 1. détection des hôtes par marqueurs (`opencode.json`, `.claude/`, `.agents/`) — un `--host` explicite gagne toujours sur la détection ; 2. plan pur : entrées `opencode-path` / `symlink` pointant le package **en cours d'exécution** (résolu depuis le module — jamais le répertoire courant) ; 3. câblage idempotent : merge structurel de `skills.paths` dans `opencode.json` (clés et ordre préservés, valeur ajoutée une seule fois), symlinks `.claude/{skills,agents}/shodo` (resp. `.agents/…`) ; 4. `sdd init` (sauf `--no-init`) puis écriture du journal — dans un `finally`, le câblage reste réversible même si init échoue ; 5. récapitulatif + pointer vers le skill `/setup`.
+* **Post-conditions :** skills/agents câblés vers le module installé (zéro copie divergente) ; journal `.sdd/.install-journal.json` posé ; un second install est un no-op ; `sdd validate` reste exit 0 (fichier journal toléré).
+* **Variantes :** *Dry-run :* plan affiché (hôtes, entrées, init), rien d'écrit. *Ambiguïté TTY :* multi-select des hôtes détectés (annulation ⇒ erreur propre) ; hors TTY (CI) : erreur listant les hôtes, `--host` requis. *Cible étrangère préexistante :* warn + skip — jamais d'écrasement ; symlink shodo périmé (pointant un ancien pkgRoot journalisé) : repointé vers le package courant. *Windows EPERM :* fallback copie récursive + warning (ré-installer après update du package pour rafraîchir). *Aucun hôte détecté :* `sdd init` seul + instructions de câblage manuel ; les templates ne sont pas câblés (les agents les lisent du package au runtime). *Undo :* `sdd install --undo` retire exactement les entrées journalisées (symlinks + valeur `opencode.json`), supprime le journal ; sans journal : erreur propre, rien d'écrit.
+
 ---
 
 ## 5. Invariants & Règles Métier
@@ -148,6 +163,11 @@ flowchart TD
 * **`RULE-WM-21` (Exit honnête sur échec total de miroir) :** dans `sync`/`move`, si au moins une opération de miroir a été tentée et qu'aucun miroir activé n'a réussi, la commande sort 1 avec la synthèse `all enabled mirrors failed (n/n)` — l'échec total n'est jamais levé en exception : le rapport détaillé par artefact/connecteur reste affiché (warnings d'abord, synthèse ensuite) ; un succès partiel, un modèle sans opération à tenter ou l'absence de miroir activé sortent 0 ; le `--dry-run` est exclu de cette agrégation.
 * **`RULE-WM-22` (Hint manifest-driven) :** le message d'aide affiché quand les réglages obligatoires d'un connecteur activé restent incomplets vient du champ optionnel `hint` de son manifest — aucun id de connecteur n'est codé en dur dans le CLI ; le hint ne s'affiche qu'à l'activation incomplète (jamais sur `connectors list`, jamais sur une activation complète), et son absence retombe sur un message générique listant les réglages manquants.
 * **`RULE-WM-23` (Dry-run sur la surface connecteurs) :** `connectors enable|disable <id> --dry-run` affiche la config projetée et n'écrit rien — même sémantique de preview zéro-octet que `init --dry-run` ; la grammaire étendue est optionnelle : `disable <id> --dry-run` (comme `enable`) fonctionne sans aucun flag de settings.
+* **`RULE-WM-24` (Câblage vers le module installé, réversible) :** les paths et symlinks posés par `sdd install` pointent le pkgRoot effectif du package **en cours d'exécution** (`import.meta.url` — jamais `process.cwd()` : cache npx, `npm -g` ou clone) ; re-install idempotent (pas de doublon, symlink déjà correct = no-op) ; `--undo` retire exactement les entrées journalisées — le journal `.sdd/.install-journal.json` est l'unique source d'undo, jamais de suppression à la devinette.
+* **`RULE-WM-25` (Jamais d'écrasement d'existant) :** une cible préexistante non possédée par shodo est warn + skip — jamais écrasée ; `opencode.json` est merge structurellement (clés et ordre préservés, seule la valeur manquante est ajoutée, jamais réécrit brut) ; un fichier illisible est refusé (`ConfigError`) sans être touché ; à l'`--undo`, un symlink ne pointant plus la source journalisée est laissé intact.
+* **`RULE-WM-26` (Install offline) :** `sdd install` n'ouvre aucun réseau, ne demande aucune clé — tout passe par `node:fs` ; `sdd init` conserve sa sémantique (local par défaut, connecteurs via `--connector`/`/setup`).
+* **`RULE-WM-27` (Ordre de phases, dry-run install) :** détection → câblage → `sdd init` ; `--dry-run` affiche le plan complet (hôtes, entrées, init) et n'écrit rien ; le journal est écrit après init dans un `finally` — le câblage reste réversible même quand init échoue.
+* **`RULE-WM-28` (Dégradation propre sans hôte) :** sans hôte détecté, `sdd install` dégrade en `sdd init` seul + instructions de câblage manuel — jamais d'échec ; les templates ne sont pas câblés par défaut (les agents les lisent du package au runtime).
 
 ---
 
@@ -180,3 +200,12 @@ flowchart TD
 | Première configuration d'un connecteur miroir | Parcours guidé `/setup` (`PAR-WM-07`) : interview → découverte MCP read-only → validation → dry-run → application CLI-only | Re-run `/setup` pour des ajustements (mode merge, idempotent) |
 | Re-init / re-enable sur une config déjà peuplée | Merge idempotent : les défauts du manifest n'écrasent pas les valeurs posées, connecteurs conservés, liste triée | — |
 | Projections désactivées (`projections.markdown: false`) | Aucune projection markdown n'est écrite ; `--check` sort 0 (aucune projection attendue) | Réactiver dans `config.json` (absence de la clé = activé) |
+| `sdd install` — plusieurs hôtes détectés sans `--host`, stdout hors TTY (CI) | UsageError listant les hôtes détectés (`id — evidence`), rien d'écrit | Relancer avec `--host <id>` (un run par hôte), ou choisir dans le multi-select en TTY |
+| `sdd install --host cursor` (hôte hors registre) | UsageError citant les hôtes valides (`auto | opencode | claude | agents`), rien d'écrit | Choisir un hôte du registre (le registre est extensible : ajouter une entrée `detect` + `plan` à `HOSTS`) |
+| `sdd install --undo` sans journal | UsageError « Nothing to undo — no install journal found at .sdd/.install-journal.json », rien d'écrit | Le journal est l'unique source d'undo — si le journal a été supprimé, retirer les câblages manuellement |
+| Cible préexistante étrangère (`.claude/skills/shodo` pointant ailleurs) | Warning + skip, cible intacte, install continue (exit 0) | Retirer/renommer la cible étrangère puis relancer `sdd install` |
+| Symlink shodo périmé (pointant un ancien pkgRoot journalisé) | Repointé vers le package courant, stamp `created` d'origine conservé — re-install attendu après update du package | — |
+| Windows : création de symlink refusée (EPERM) | Fallback copie récursive + warning expliquant de ré-installer après update ; à l'`--undo`, la copie est laissée en place (warning) | Ré-exécuter `sdd install` après mise à jour du package pour rafraîchir la copie |
+| `opencode.json` illisible ou non-objet lors du merge | ConfigError « fix it before running `sdd install` (nothing was overwritten) », rien d'écrasé | Corriger `opencode.json` puis relancer |
+| Aucun hôte détecté (repo vierge) | `sdd init` seul + instructions de câblage manuel (merge `opencode.json`, symlinks `.claude/`/`.agents/`), exit 0 | Suivre les instructions affichées (cf. README › Installation) |
+| Journal posé par l'install | `.sdd/.install-journal.json` écrit après init (fichier caché toléré par `root-layout` — `sdd validate` reste exit 0) | `sdd install --undo` pour tout retirer |

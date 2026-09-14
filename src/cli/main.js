@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util';
 import { UsageError } from '../core/errors.js';
 import { line } from './render.js';
 import { init } from './commands/init.js';
+import { install } from './commands/install.js';
 import { importArtifacts } from './commands/import.js';
 import { migrate } from './commands/migrate.js';
 import { render } from './commands/render.js';
@@ -37,6 +38,9 @@ const OPTIONS = {
   cascade: { type: 'boolean' },
   undo: { type: 'boolean' },
   done: { type: 'boolean' },
+  host: { type: 'string' },
+  init: { type: 'boolean' },
+  'no-init': { type: 'boolean' },
   'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },
   cwd: { type: 'string' },
@@ -46,6 +50,7 @@ const OPTIONS = {
 
 const COMMANDS = {
   init,
+  install,
   import: importArtifacts,
   migrate,
   render,
@@ -140,6 +145,8 @@ export async function run(argv) {
       cascade: Boolean(values.cascade),
       undo: Boolean(values.undo),
       done: Boolean(values.done),
+      host: values.host,
+      init: values['no-init'] ? false : (values.init ?? true),
       dryRun: Boolean(values['dry-run']),
       json: Boolean(values.json),
       interactive: Boolean(values.interactive),
