@@ -85,6 +85,16 @@ export async function listCatalogIds(cwd, { extensionsDir } = {}) {
   return [...ids].sort();
 }
 
+/**
+ * Optional manifest `hint` (spec 007): a guidance string the CLI may surface
+ * when a connector's `requiredSettings` are incomplete. Absent or blank ⇒
+ * `null` (retrocompatible — manifests never required the field).
+ */
+export function manifestHint(manifest) {
+  const hint = manifest?.hint;
+  return typeof hint === 'string' && hint.trim().length > 0 ? hint : null;
+}
+
 /** Fills the retrocompatible defaults: absent `settingTypes`/`requiredSettings`. */
 function normalizeManifest(raw) {
   return {

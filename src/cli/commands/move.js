@@ -38,6 +38,13 @@ export async function move({ cwd, positionals, flags }) {
     }
   }
 
+  // INV-2 (spec 007): every enabled mirror failed (zero successful result) ⇒
+  // the command exits 1 through `process.exitCode` — never a thrown error, the
+  // per-mirror report stands. Partial success or no mirror ⇒ exit 0.
+  const succeededCount = mirrorResults.filter((result) => !result.error).length;
+  const failedCount = mirrorResults.length - succeededCount;
+  const allFailed = !flags.dryRun && mirrors.length > 0 && succeededCount === 0;
+
   const next = { ...artifact, remote: { ...artifact.remote, ...remoteRefs } };
   let moved = next;
 
@@ -55,6 +62,7 @@ export async function move({ cwd, positionals, flags }) {
 
   if (flags.json) {
     printJson({ artifact: moved.slug, from: artifact.state, to: toState, mirrors: mirrorResults, cascade });
+    if (allFailed) process.exitCode = 1;
     return;
   }
 
@@ -72,6 +80,11 @@ export async function move({ cwd, positionals, flags }) {
   for (const entry of cascade) {
     if (entry.planned) info(`would cascade-archive ${entry.kind} ${entry.slug}`);
     else success(`${entry.kind} ${entry.slug} archived (all children complete)`);
+  }
+
+  if (allFailed) {
+    warn(`all enabled mirrors failed (${failedCount}/${mirrors.length})`);
+    process.exitCode = 1;
   }
 
   if (flags.dryRun) line('\n  (dry-run: nothing was written)');

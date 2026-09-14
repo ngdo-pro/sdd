@@ -20,10 +20,10 @@ Everything shown to the adoptant (questions, synthesis, summaries) must be autho
 | Probe the workspace (first read of every run) | `sdd status` (or `--json`) |
 | Preview the resolved config — writes nothing, not even the `.sdd/` skeleton | `sdd init --connector linear --linear.… --dry-run` |
 | Apply or merge | `sdd init --connector linear --linear.…` |
-| Enable on an already-initialized workspace | `sdd connectors enable linear --teamKey=ENG --linear.mcp.command=…` |
+| Enable on an already-initialized workspace (preview with `--dry-run`) | `sdd connectors enable linear --teamKey=ENG --linear.mcp.command=…` |
 | Structural validation after application | `sdd validate` |
 
-Settings flags deep-merge and are coerced through the connector manifest: `--linear.<key>[.<subkey>]=<value>` (depth ≤ 2), repeated flags form arrays (`--linear.mcp.args=-y --linear.mcp.args=npx`), booleans are strict (`true`/`false`). The `mcp` transport is exactly one of `command`+`args` (stdio) or `url` (HTTP) — never both. With `connectors enable`, top-level keys may be un-namespaced (`--teamKey=ENG`) but subkeys must use the namespaced form (`--linear.mcp.command=…`). `connectors enable` has **no** `--dry-run`: always preview through `sdd init --dry-run`.
+Settings flags deep-merge and are coerced through the connector manifest: `--linear.<key>[.<subkey>]=<value>` (depth ≤ 2), repeated flags form arrays (`--linear.mcp.args=-y --linear.mcp.args=npx`), booleans are strict (`true`/`false`). The `mcp` transport is exactly one of `command`+`args` (stdio) or `url` (HTTP) — never both. The grammar is unified across `sdd init` and `sdd connectors enable|disable`: top-level keys bind to the positional connector id (`--teamKey=ENG`, dotted paths of a declared setting like `--mcp.command=…`) and the namespaced form is accepted when the namespace matches the id (`--linear.mcp.command=…`). `connectors enable` supports `--dry-run` — the same zero-write preview as `sdd init --dry-run` — so an enable or a re-run merge can be previewed before it is applied.
 
 ## Procedure
 

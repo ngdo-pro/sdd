@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-13T17:46:57.169Z",
+  "generatedAt": "2026-09-14T03:48:51.860Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -14,6 +14,26 @@
       "projection": ".sdd/generated/initiatives/layout-v3/features/01-canonical-tree.md",
       "relations": {
         "initiative": "layout-v3"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
+      "id": "01-connector-hardening",
+      "slug": "01-connector-hardening",
+      "title": "Durcissement surface connecteurs",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/connector-ecosystem/features/01-connector-hardening/01-connector-hardening.json",
+      "body": ".sdd/canonical/initiatives/connector-ecosystem/features/01-connector-hardening/01-connector-hardening.md",
+      "projection": ".sdd/generated/initiatives/connector-ecosystem/features/01-connector-hardening.md",
+      "relations": {
+        "initiative": "connector-ecosystem"
       },
       "progress": {
         "done": false,
@@ -139,6 +159,24 @@
         "done": false,
         "children": 0,
         "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "initiative",
+      "id": "connector-ecosystem",
+      "slug": "connector-ecosystem",
+      "title": "Écosystème connecteurs",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/connector-ecosystem/connector-ecosystem.json",
+      "body": ".sdd/canonical/initiatives/connector-ecosystem/connector-ecosystem.md",
+      "projection": ".sdd/generated/initiatives/connector-ecosystem/README.md",
+      "relations": {},
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
         "complete": true
       },
       "remote": {}
@@ -296,6 +334,27 @@
       "relations": {
         "feature": "02-setup-skill",
         "initiative": "setup-experience"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "007",
+      "slug": "007-connector-hardening",
+      "title": "Durcissement surface connecteurs",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/connector-ecosystem/features/01-connector-hardening/specs/007.json",
+      "body": ".sdd/canonical/initiatives/connector-ecosystem/features/01-connector-hardening/specs/007.md",
+      "projection": ".sdd/generated/initiatives/connector-ecosystem/specs/007.md",
+      "relations": {
+        "feature": "01-connector-hardening",
+        "initiative": "connector-ecosystem"
       },
       "progress": {
         "done": true,

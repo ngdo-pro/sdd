@@ -345,6 +345,52 @@ test('[C6][INV-2] repeated --linear.mcp.args flags build the settings.mcp args a
   }
 });
 
+// ============================================================================
+// Component Test (@component) — spec 007-connector-hardening, §8.1 [INV-1]
+// Grammar parity: `connectors enable|disable` resolve settings through the
+// same registry helpers as `sdd init`.
+// ============================================================================
+
+test('[C7][INV-1] connectors enable resolves the same flags identically to sdd init', async () => {
+  const flags = [
+    '--linear.teamKey=ENG',
+    '--linear.mcp.command=npx',
+    '--linear.mcp.args=-y',
+    '--linear.mcp.args=@linear/mcp-server',
+  ];
+  const viaInit = await makeWorkspace();
+  const viaEnable = await makeWorkspace();
+  const topLevel = await makeWorkspace();
+  try {
+    await cli(['init', '--connector', 'linear', ...flags], viaInit);
+    await cli(['init'], viaEnable);
+    await cli(['connectors', 'enable', 'linear', ...flags], viaEnable);
+    await cli(['init'], topLevel);
+    // Top-level (un-namespaced) flags bind to the positional id and must land
+    // on the exact same resolved settings as the namespaced forms.
+    await cli([
+      'connectors', 'enable', 'linear',
+      '--teamKey=ENG',
+      '--mcp.command=npx',
+      '--linear.mcp.args=-y',
+      '--linear.mcp.args=@linear/mcp-server',
+    ], topLevel);
+
+    const initSettings = getBackendConfig(await readConfig(viaInit), 'linear').settings;
+    const enableSettings = getBackendConfig(await readConfig(viaEnable), 'linear').settings;
+    const topSettings = getBackendConfig(await readConfig(topLevel), 'linear').settings;
+
+    assert.equal(getBackendConfig(await readConfig(viaEnable), 'linear').enabled, true);
+    assert.deepEqual(enableSettings, initSettings);
+    assert.deepEqual(topSettings, initSettings);
+    assert.deepEqual(initSettings.mcp, { command: 'npx', args: ['-y', '@linear/mcp-server'] });
+  } finally {
+    await cleanup(viaInit);
+    await cleanup(viaEnable);
+    await cleanup(topLevel);
+  }
+});
+
 test('[C3][INV-5] validate reports invalid setting types and passes a compliant connector', async () => {
   const root = await makeWorkspace();
   const config = (settings) => JSON.stringify({

@@ -55,6 +55,14 @@ export async function sync({ cwd, positionals, flags }) {
     }
   }
 
+  // INV-2 (spec 007): per-connector aggregation — a connector succeeded when at
+  // least one of its operations did not error. When every enabled mirror failed
+  // (and at least one operation was attempted), the command exits 1 through
+  // `process.exitCode` — never a thrown error, the per-artifact report stands.
+  const succeededConnectors = new Set(report.filter((entry) => entry.ok).map((entry) => entry.connector));
+  const failedConnectors = mirrors.filter((mirror) => !succeededConnectors.has(mirror.id)).length;
+  const allFailed = !flags.dryRun && mirrors.length > 0 && report.length > 0 && failedConnectors === mirrors.length;
+
   if (!flags.dryRun) {
     for (const artifact of dirty) {
       await persistArtifact(cwd, artifact, { previous: artifact.model });
@@ -64,6 +72,7 @@ export async function sync({ cwd, positionals, flags }) {
 
   if (flags.json) {
     printJson(report);
+    if (allFailed) process.exitCode = 1;
     return;
   }
 
@@ -73,6 +82,10 @@ export async function sync({ cwd, positionals, flags }) {
     if (!entry.ok) warn(`${label}: ${entry.action}`);
     else if (entry.action?.startsWith('skipped')) line(`  · ${label}: ${entry.action}`);
     else success(`${label}: ${entry.action}`);
+  }
+  if (allFailed) {
+    warn(`all enabled mirrors failed (${failedConnectors}/${mirrors.length})`);
+    process.exitCode = 1;
   }
   if (flags.dryRun) line('\n  (dry-run: nothing was written)');
 }

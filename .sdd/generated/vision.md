@@ -52,6 +52,8 @@ _None._
 
 ### ✅ Archived / Delivered
 
+- [x] **`connector-ecosystem`**: Écosystème connecteurs  
+  ↳ *Initiative:* [`generated/initiatives/connector-ecosystem/README.md`](./initiatives/connector-ecosystem/README.md)
 - [x] **`layout-v3`**: SDD Layout v3  
   ↳ *Initiative:* [`generated/initiatives/layout-v3/README.md`](./initiatives/layout-v3/README.md)
 - [x] **`setup-experience`**: Expérience d'installation  

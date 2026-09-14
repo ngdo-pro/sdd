@@ -7,6 +7,7 @@
   "builtin": true,
   "entry": "../../src/connectors/linear.js",
   "description": "Mirrors canonical model artifacts onto Linear issues through the Linear MCP server (JSON-RPC stdio or HTTP). Built into the CLI and documented here.",
+  "hint": "Run /setup — it discovers the MCP transport in your host config",
   "capabilities": ["read", "list", "transition", "create"],
   "remoteRefs": "artifact.remote.linear (stored in .sdd/canonical/**/<artifact>.json)",
   "settings": {

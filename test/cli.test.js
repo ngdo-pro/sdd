@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { init } from '../src/cli/commands/init.js';
 import { upsert } from '../src/cli/commands/upsert.js';
 import { move } from '../src/cli/commands/move.js';
@@ -20,7 +21,7 @@ import { UsageError } from '../src/core/errors.js';
 import { getBackendConfig, loadConfig } from '../src/core/config.js';
 import { findByRef, loadModel } from '../src/model/store.js';
 import { canonicalRoot } from '../src/core/paths.js';
-import { makeWorkspace, cleanup, fileExists, writeFiles } from './helpers.js';
+import { makeWorkspace, cleanup, fileExists, writeFiles, seedModel } from './helpers.js';
 
 const BASE_FLAGS = {
   to: undefined,
@@ -813,6 +814,136 @@ test('[E2][INV-2] render idempotence: re-render and dry-run are side-effect free
     assert.equal(indexFingerprint(after['.sdd/canonical/index.json']), beforeIndex);
     delete after['.sdd/canonical/index.json'];
     assert.deepEqual(after, before);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+// ============================================================================
+// Integration Tests (@integration) — spec 007-connector-hardening, §8.1 [INV-2]
+// Honest exit codes for `sync`/`move`: run() against the fake MCP server
+// (alive / dead / mixed mirrors).
+// ============================================================================
+
+const FAKE_SERVER = fileURLToPath(new URL('./helpers/fake-mcp-server.js', import.meta.url));
+
+/** stdio transport to the fake Linear MCP server (`--silent` = dead: never answers). */
+function mcpTransport(root, { silent = false } = {}) {
+  return {
+    command: process.execPath,
+    args: silent
+      ? [FAKE_SERVER, '--silent']
+      : [FAKE_SERVER, `--state=${path.join(root, 'fake-state.json')}`, `--log=${path.join(root, 'log.jsonl')}`],
+    timeoutMs: 250,
+  };
+}
+
+/** Writes a config whose enabled mirrors point at live/dead fake MCP servers. */
+async function writeMirrorConfig(root, mirrors) {
+  const config = {
+    version: 3,
+    sourceOfTruth: 'model',
+    projections: { markdown: true },
+    connectors: mirrors.map(({ id, server }) => ({
+      id,
+      type: 'linear',
+      enabled: true,
+      settings: {
+        teamKey: 'ENG',
+        createOnMove: true,
+        mcp: mcpTransport(root, { silent: server === 'dead' }),
+      },
+    })),
+  };
+  await fsp.writeFile(path.join(root, '.sdd', 'config.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+}
+
+/** Runs the real CLI capturing stdout while measuring `process.exitCode`. */
+async function runCaptured(args, root) {
+  const chunks = [];
+  const original = process.stdout.write;
+  process.stdout.write = (chunk) => {
+    chunks.push(String(chunk));
+    return true;
+  };
+  try {
+    process.exitCode = 0;
+    await run([...args, '--cwd', root]);
+    return { output: chunks.join(''), exitCode: process.exitCode };
+  } finally {
+    process.stdout.write = original;
+    process.exitCode = 0;
+  }
+}
+
+test('[E3][INV-2] sync exit codes: alive exits 0, mixed exits 0 with warnings, all-fail exits 1', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seedModel(root, [
+      { kind: 'initiative', slug: 'demo', title: 'Demo', state: 'active', body: '## 1. Intent\n\nDemo.\n' },
+      { kind: 'feature', slug: '01-login', title: 'Login', state: 'active', relations: { initiative: 'demo' }, body: '## 1. Problem\n\nLogin.\n' },
+      { kind: 'spec', slug: '042-login', title: 'Magic link', state: 'active', relations: { feature: '01-login', initiative: 'demo' }, body: '## 1. Intent\n\nMagic link.\n' },
+    ]);
+
+    // Alive only: every mirror operation succeeds → exit 0.
+    await writeMirrorConfig(root, [{ id: 'mirror-live', server: 'live' }]);
+    const alive = await runCaptured(['sync', '--create'], root);
+    assert.equal(alive.exitCode, 0);
+    assert.equal(alive.output.includes('all enabled mirrors failed'), false);
+    assert.match(alive.output, /created ENG-\d+/);
+
+    // Mixed: the dead mirror warns per artifact, the alive one succeeds → exit 0.
+    await writeMirrorConfig(root, [
+      { id: 'mirror-live', server: 'live' },
+      { id: 'mirror-dead', server: 'dead' },
+    ]);
+    const mixed = await runCaptured(['sync', '--create'], root);
+    assert.equal(mixed.exitCode, 0);
+    assert.equal(mixed.output.includes('all enabled mirrors failed'), false);
+    assert.match(mixed.output, /mirror-dead]: .*timeout/);
+    assert.match(mixed.output, /mirror-live]: in sync/);
+
+    // Dead only: every enabled mirror failed → synthesis + exit 1.
+    await writeMirrorConfig(root, [{ id: 'mirror-dead', server: 'dead' }]);
+    const dead = await runCaptured(['sync', '--create'], root);
+    assert.equal(dead.exitCode, 1);
+    assert.match(dead.output, /all enabled mirrors failed \(1\/1\)/);
+    assert.match(dead.output, /mirror-dead]: .*timeout/);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[E4][INV-2] move exit codes: mixed and alive exit 0, all-fail exits 1, dry-run stays 0', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seedModel(root, [
+      { kind: 'initiative', slug: 'demo', title: 'Demo', state: 'active', body: '## 1. Intent\n\nDemo.\n' },
+      { kind: 'feature', slug: '01-login', title: 'Login', state: 'active', relations: { initiative: 'demo' }, body: '## 1. Problem\n\nLogin.\n' },
+      { kind: 'spec', slug: '042-login', title: 'Magic link', state: 'active', relations: { feature: '01-login', initiative: 'demo' }, body: '## 1. Intent\n\nMagic link.\n' },
+    ]);
+    await writeMirrorConfig(root, [
+      { id: 'mirror-live', server: 'live' },
+      { id: 'mirror-dead', server: 'dead' },
+    ]);
+
+    // Mixed mirrors: the live one creates the issue, the dead one errors → exit 0.
+    const mixed = await runCaptured(['move', '042', '--to', 'archived'], root);
+    assert.equal(mixed.exitCode, 0);
+    assert.equal(mixed.output.includes('all enabled mirrors failed'), false);
+    assert.match(mixed.output, /mirror-dead: .*timeout/);
+    assert.match(mixed.output, /mirror-live: ENG-\d+ → Done/);
+
+    // Dry-run with a failing mirror stays exit 0 (§4.1: dry-run unchanged).
+    await writeMirrorConfig(root, [{ id: 'mirror-dead', server: 'dead' }]);
+    const planned = await runCaptured(['move', '01-login', '--to', 'archived', '--dry-run'], root);
+    assert.equal(planned.exitCode, 0);
+    assert.match(planned.output, /\(dry-run: nothing was written\)/);
+
+    // Dead only, real move: total failure → synthesis + exit 1.
+    const dead = await runCaptured(['move', '01-login', '--to', 'archived'], root);
+    assert.equal(dead.exitCode, 1);
+    assert.match(dead.output, /all enabled mirrors failed \(1\/1\)/);
   } finally {
     await cleanup(root);
   }
