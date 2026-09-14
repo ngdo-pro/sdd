@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "kind": "feature",
+  "id": "03-setup-protocol-v2",
+  "slug": "03-setup-protocol-v2",
+  "title": "Protocole /setup unifié",
+  "state": "archived",
+  "relations": {
+    "initiative": "adoption"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

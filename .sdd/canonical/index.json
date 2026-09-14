@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-14T04:59:14.962Z",
+  "generatedAt": "2026-09-14T05:50:37.533Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -185,6 +185,26 @@
     },
     {
       "kind": "feature",
+      "id": "03-setup-protocol-v2",
+      "slug": "03-setup-protocol-v2",
+      "title": "Protocole /setup unifié",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/03-setup-protocol-v2/03-setup-protocol-v2.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/03-setup-protocol-v2/03-setup-protocol-v2.md",
+      "projection": ".sdd/generated/initiatives/adoption/features/03-setup-protocol-v2.md",
+      "relations": {
+        "initiative": "adoption"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "feature",
       "id": "04-static-site",
       "slug": "04-static-site",
       "title": "Site statique optionnel",
@@ -215,8 +235,8 @@
       "relations": {},
       "progress": {
         "done": false,
-        "children": 2,
-        "completedChildren": 2,
+        "children": 3,
+        "completedChildren": 3,
         "complete": true
       },
       "remote": {}
@@ -454,6 +474,27 @@
       "projection": ".sdd/generated/initiatives/adoption/specs/009.md",
       "relations": {
         "feature": "02-update-notice",
+        "initiative": "adoption"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "010",
+      "slug": "010-setup-protocol-v2",
+      "title": "Protocole /setup unifié",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/03-setup-protocol-v2/specs/010.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/03-setup-protocol-v2/specs/010.md",
+      "projection": ".sdd/generated/initiatives/adoption/specs/010.md",
+      "relations": {
+        "feature": "03-setup-protocol-v2",
         "initiative": "adoption"
       },
       "progress": {

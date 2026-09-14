@@ -8,6 +8,18 @@ Built for humans and AI agents, natively compatible with agent conventions like 
 
 ## Installation
 
+The guided adoption path is the **`/setup`** skill — the single conversational entry point, whatever the repo's situation (blank, legacy `.specs/` workspace, or already wired). There is no separate "install" conversation: one protocol, with conditional and confirmed phases:
+
+1. **État des lieux (read-only):** `sdd status` / `sdd list --json`, `.specs/` presence, agent-host markers (`opencode.json`, `.claude/`, `.agents/`) — a to-do matrix is presented before anything runs.
+2. **Legacy migration (if `.specs/` exists):** the `sdd migrate --dry-run` plan is shown, the migration only runs after explicit confirmation — with an explicit arbitrage if a valid `.sdd/` coexists (migrate rebuilds `.sdd/` from the legacy source).
+3. **Wiring + init (if no `.sdd/`):** `sdd install --dry-run` first, then the wiring of the detected hosts.
+4. **Optional connector:** the Linear mirror, resolved from the host MCP configs, validated through MCP, enabled via `sdd connectors enable … --dry-run` → confirmation.
+5. **Recap:** what was done, what remains, and the pointer to the next step (`/vision`).
+
+Re-running `/setup` is idempotent: the état des lieux detects the existing state and only the missing phases run.
+
+### The CLI primitive underneath
+
 ```bash
 npm i -g @ngdo-pro/sdd       # then, inside any repo:
 sdd install          # or one-shot without a global install: npx @ngdo-pro/sdd install
@@ -180,7 +192,7 @@ sdd init --interactive                         # TTY interview (multi-select + t
 * `sdd connectors enable|disable <id>` accepts the same settings (un-namespaced keys bind to the positional `<id>`): `sdd connectors enable linear --teamKey=ENG --createOnMove=true`.
 * `sdd validate` enforces the `connector-settings` rule: an enabled connector must carry its manifest `requiredSettings` (e.g. Linear's `teamKey` and the resolved `mcp` transport) with valid types, and no settings key may be secret-shaped (`apiKey`/`token`/`secret`) — the framework carries zero secrets (INV-1).
 * `--interactive` prompts only when stdout is a TTY; in CI it exits with a UsageError pointing at the explicit flags.
-* The **`/setup`** skill is the guided adoption path: interview, read-only discovery of the Linear MCP transport in the host configs (`.mcp.json`, `opencode.json`, `.agents/**`), semantic validation through MCP, then the exact `sdd init … --dry-run` preview and a CLI-only application — the config is never hand-edited.
+* The **`/setup`** skill is the single adoption entry point (see [Installation](#installation)): état des lieux, legacy `.specs/` migration, host wiring + init, then optionally the Linear connector — read-only discovery of the MCP transport in the host configs (`.mcp.json`, `opencode.json`, `.agents/**`), semantic validation through MCP, the exact `sdd connectors enable … --dry-run` preview and a CLI-only application — the config is never hand-edited.
 
 ### Everything happens in one command
 

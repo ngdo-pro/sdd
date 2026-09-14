@@ -44,3 +44,5 @@ sdd install [--host auto|opencode|claude|agents] [--dry-run] [--init/--no-init]
   ↳ *Feature:* [`generated/initiatives/adoption/features/01-install-command.md`](./features/01-install-command.md)  *(Archived ✅)*
 - [x] **`02-update-notice`**: Notice de mise à jour  
   ↳ *Feature:* [`generated/initiatives/adoption/features/02-update-notice.md`](./features/02-update-notice.md)  *(Archived ✅)*
+- [x] **`03-setup-protocol-v2`**: Protocole /setup unifié  
+  ↳ *Feature:* [`generated/initiatives/adoption/features/03-setup-protocol-v2.md`](./features/03-setup-protocol-v2.md)  *(Archived ✅)*
