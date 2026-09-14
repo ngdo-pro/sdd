@@ -214,7 +214,7 @@ The importer parses titles, metadata blocks (`## Metadata`, `> **Status:**`), st
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "sourceOfTruth": "model",
   "projections": { "markdown": true },
   "connectors": [
@@ -270,5 +270,9 @@ See **[`extensions/README.md`](./extensions/README.md)** for the full contract, 
 ## Development
 
 ```bash
-npm test        # node:test
+npm test                        # node:test suite
+node bin/sdd.js validate        # spec-rules gates (the repo dogfoods its own model)
+node bin/sdd.js render --check  # projection drift guard
 ```
+
+This repository dogfoods the framework: its own product decisions live in `.sdd/canonical/initiatives/` (see `setup-experience`, `connector-ecosystem`, `adoption`), decisions in `.sdd/knowledge/decisions/` (ADR-001, ADR-002) and the `spec-model` domain knowledge in `.sdd/knowledge/domains/spec-model/`.
