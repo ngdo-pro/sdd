@@ -20,7 +20,7 @@ import { ensureDir, exists, isDir, specsRoot } from '../core/paths.js';
 export const JOURNAL_FILENAME = '.install-journal.json';
 
 /** Path added to `skills.paths` in `opencode.json` (relative to the target repo). */
-export const OPENCODE_SKILLS_PATH = 'node_modules/shodo/skills';
+export const OPENCODE_SKILLS_PATH = 'node_modules/@ngdo-pro/sdd/skills';
 
 export function journalPath(cwd) {
   return path.join(specsRoot(cwd), JOURNAL_FILENAME);
@@ -39,8 +39,8 @@ export function resolvePkgRoot() {
 /** Plan entries wiring one symlinked host directory (`.claude/` or `.agents/`). */
 function symlinkEntries(baseDir) {
   return (cwd, pkgRoot) => [
-    { kind: 'symlink', target: `${baseDir}/skills/shodo`, source: path.join(pkgRoot, 'skills') },
-    { kind: 'symlink', target: `${baseDir}/agents/shodo`, source: path.join(pkgRoot, 'agents') },
+    { kind: 'symlink', target: `${baseDir}/skills/sdd`, source: path.join(pkgRoot, 'skills') },
+    { kind: 'symlink', target: `${baseDir}/agents/sdd`, source: path.join(pkgRoot, 'agents') },
   ];
 }
 
@@ -185,8 +185,8 @@ async function unmergeOpenCodePaths(cwd, value) {
 
 /**
  * Applies a wiring plan idempotently. A pre-existing target that is not owned
- * by shodo is warned and skipped — never overwritten (INV-2); a target
- * pointing at a previous shodo package root (stale journal) is refreshed to
+ * by the package is warned and skipped — never overwritten (INV-2); a target
+ * pointing at a previous package root (stale journal) is refreshed to
  * the package currently executing (INV-1 re-install). On platforms refusing
  * symlinks (Windows EPERM) the entry falls back to a copy with an explicit
  * warning (documented softening of INV-1).
@@ -208,7 +208,7 @@ export async function applyPlan(cwd, plan, existingJournal = []) {
           applied.push(journalEntry(entry));
           continue;
         }
-        // Stale shodo wiring: the link still points at a previous package root.
+        // Stale wiring: the link still points at a previous package root.
         let stale = null;
         for (const past of existingJournal) {
           if (past.kind === 'symlink' && entryKey(past) === entryKey(entry)
@@ -226,7 +226,7 @@ export async function applyPlan(cwd, plan, existingJournal = []) {
         }
         skipped.push(entry.target);
         warnings.push(
-          `"${entry.target}" already exists and is not owned by shodo — skipped, nothing was overwritten (INV-2).`,
+          `"${entry.target}" already exists and is not owned by the package — skipped, nothing was overwritten (INV-2).`,
         );
         continue;
       }
@@ -238,7 +238,7 @@ export async function applyPlan(cwd, plan, existingJournal = []) {
         await fsp.cp(entry.source, link, { recursive: true });
         warnings.push(
           `"${entry.target}" was copied instead of symlinked (symlink creation is not permitted on this platform). `
-          + 'Re-run `sdd install` after updating the shodo package to refresh the copy.',
+          + 'Re-run `sdd install` after updating the package to refresh the copy.',
         );
       }
       applied.push(journalEntry(entry));
@@ -277,7 +277,7 @@ export async function undoPlan(cwd, journal) {
           await fsp.unlink(link);
           removed.push(entry.target);
         } else {
-          warnings.push(`"${entry.target}" no longer points at the shodo package — left untouched (INV-2).`);
+          warnings.push(`"${entry.target}" no longer points at the package — left untouched (INV-2).`);
         }
       } else {
         warnings.push(

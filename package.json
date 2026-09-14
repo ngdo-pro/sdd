@@ -1,7 +1,7 @@
 {
-  "name": "shodo",
+  "name": "@ngdo-pro/sdd",
   "version": "2.0.0",
-  "description": "Shodo — Spec-Driven Development (SDD) Framework for Humans and AI Agents",
+  "description": "Spec-Driven Development (SDD) Framework for Humans and AI Agents",
   "keywords": [
     "spec-driven-development",
     "specification",
@@ -17,10 +17,10 @@
   "main": "plugin.json",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ngdo-pro/shodo.git"
+    "url": "git+ssh://git@github.com/ngdo-pro/sdd.git"
   },
-  "homepage": "https://github.com/ngdo-pro/shodo#readme",
-  "bugs": "https://github.com/ngdo-pro/shodo/issues",
+  "homepage": "https://github.com/ngdo-pro/sdd#readme",
+  "bugs": "https://github.com/ngdo-pro/sdd/issues",
   "bin": {
     "sdd": "bin/sdd.js"
   },

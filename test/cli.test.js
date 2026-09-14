@@ -1012,7 +1012,7 @@ test('[N1][INV-1][INV-4] the update notice follows the command output on stderr 
     assert.match(stdout, /SDD Framework status/);
     assert.match(stdout, /source of truth/);
     // The notice: exactly one line on stderr, after every stdout event.
-    assert.equal(stderr, `· update available: v2.1.0 (installed: v${VERSION}) — npm i -g shodo\n`);
+    assert.equal(stderr, `· update available: v2.1.0 (installed: v${VERSION}) — npm i -g @ngdo-pro/sdd\n`);
     assert.ok(events.length > 1);
     assert.equal(events[events.length - 1][0], 'stderr');
     assert.ok(events.slice(0, -1).every(([writer]) => writer === 'stdout'));

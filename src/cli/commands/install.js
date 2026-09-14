@@ -39,9 +39,9 @@ function manualInstructions(pkgRoot) {
   return [
     'No agent host detected — nothing was wired. Manual setup (see README › Installation):',
     '  · opencode — merge into opencode.json:',
-    '      { "skills": { "paths": ["node_modules/shodo/skills"] } }',
-    `  · claude   — ln -s ${path.join(pkgRoot, 'skills')} .claude/skills/shodo`,
-    `               ln -s ${path.join(pkgRoot, 'agents')} .claude/agents/shodo`,
+    '      { "skills": { "paths": ["node_modules/@ngdo-pro/sdd/skills"] } }',
+    `  · claude   — ln -s ${path.join(pkgRoot, 'skills')} .claude/skills/sdd`,
+    `               ln -s ${path.join(pkgRoot, 'agents')} .claude/agents/sdd`,
     '  · agents   — same symlinks under .agents/',
     '  · templates/ are not wired by default: agents read them from the package at runtime.',
   ];

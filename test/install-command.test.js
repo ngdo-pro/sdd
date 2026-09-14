@@ -63,15 +63,15 @@ test('[U1][INV-1] detects hosts and plans entries pointing at the package root',
     ]);
 
     const claude = installPlan(ws, 'claude', { pkgRoot: PKG_ROOT });
-    assert.deepEqual(claude.map((entry) => entry.target), ['.claude/skills/shodo', '.claude/agents/shodo']);
+    assert.deepEqual(claude.map((entry) => entry.target), ['.claude/skills/sdd', '.claude/agents/sdd']);
     for (const entry of claude) {
       assert.equal(entry.kind, 'symlink');
-      assert.equal(entry.source, path.join(PKG_ROOT, entry.target.endsWith('/skills/shodo') ? 'skills' : 'agents'));
+      assert.equal(entry.source, path.join(PKG_ROOT, entry.target.endsWith('/skills/sdd') ? 'skills' : 'agents'));
     }
 
     const opencode = installPlan(ws, 'opencode', { pkgRoot: PKG_ROOT });
     assert.equal(opencode[0].kind, 'opencode-path');
-    assert.equal(opencode[0].target, 'node_modules/shodo/skills');
+    assert.equal(opencode[0].target, 'node_modules/@ngdo-pro/sdd/skills');
     assert.equal(opencode[0].source, path.join(PKG_ROOT, 'skills'));
   } finally {
     await cleanup(ws);
@@ -94,8 +94,8 @@ test('[C1][INV-1][INV-4] dry-run writes nothing; install is idempotent', async (
     await mkdir(path.join(ws, '.claude'));
 
     await sdd(['install', '--dry-run', '--cwd', ws]);
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'shodo')), null);
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'shodo')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'sdd')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'sdd')), null);
     assert.equal(await fileExists(ws, '.sdd/config.json'), false);
     assert.equal(await lstatSafe(journalPath(ws)), null);
 
@@ -103,25 +103,25 @@ test('[C1][INV-1][INV-4] dry-run writes nothing; install is idempotent', async (
     await sdd(['install', '--no-init', '--cwd', ws]);
     assert.equal(await fileExists(ws, '.sdd/config.json'), false);
     assert.equal(
-      await fsp.realpath(path.join(ws, '.claude', 'skills', 'shodo')),
+      await fsp.realpath(path.join(ws, '.claude', 'skills', 'sdd')),
       await fsp.realpath(path.join(PKG_ROOT, 'skills')),
     );
     assert.deepEqual((await readJournal(ws)).map((entry) => entry.target).sort(), [
-      '.claude/agents/shodo',
-      '.claude/skills/shodo',
+      '.claude/agents/sdd',
+      '.claude/skills/sdd',
     ]);
 
     await sdd(['install', '--cwd', ws]);
-    const skillsLink = path.join(ws, '.claude', 'skills', 'shodo');
+    const skillsLink = path.join(ws, '.claude', 'skills', 'sdd');
     assert.equal((await lstatSafe(skillsLink)).isSymbolicLink(), true);
     assert.equal(await fsp.realpath(skillsLink), await fsp.realpath(path.join(PKG_ROOT, 'skills')));
     assert.equal(
-      await fsp.realpath(path.join(ws, '.claude', 'agents', 'shodo')),
+      await fsp.realpath(path.join(ws, '.claude', 'agents', 'sdd')),
       await fsp.realpath(path.join(PKG_ROOT, 'agents')),
     );
     assert.equal(await fileExists(ws, '.sdd/config.json'), true);
     const journal = await readJournal(ws);
-    assert.deepEqual(journal.map((entry) => entry.target).sort(), ['.claude/agents/shodo', '.claude/skills/shodo']);
+    assert.deepEqual(journal.map((entry) => entry.target).sort(), ['.claude/agents/sdd', '.claude/skills/sdd']);
 
     const journalBefore = JSON.stringify(await readJournal(ws));
     const configBefore = await readWorkspaceFile(ws, '.sdd/config.json');
@@ -138,21 +138,21 @@ test('[C2][INV-2] foreign pre-existing target is warned and skipped, never overw
   const ws = await makeWorkspace();
   try {
     await mkdir(path.join(ws, 'elsewhere'));
-    await symlink(path.join(ws, 'elsewhere'), path.join(ws, '.claude', 'skills', 'shodo'));
+    await symlink(path.join(ws, 'elsewhere'), path.join(ws, '.claude', 'skills', 'sdd'));
 
     const output = await sdd(['install', '--host', 'claude', '--cwd', ws]);
     assert.match(output, /skipped, nothing was overwritten/);
 
     assert.equal(
-      await fsp.readlink(path.join(ws, '.claude', 'skills', 'shodo')),
+      await fsp.readlink(path.join(ws, '.claude', 'skills', 'sdd')),
       path.join(ws, 'elsewhere'),
     );
     assert.equal(
-      await fsp.realpath(path.join(ws, '.claude', 'agents', 'shodo')),
+      await fsp.realpath(path.join(ws, '.claude', 'agents', 'sdd')),
       await fsp.realpath(path.join(PKG_ROOT, 'agents')),
     );
     const journal = await readJournal(ws);
-    assert.deepEqual(journal.map((entry) => entry.target), ['.claude/agents/shodo']);
+    assert.deepEqual(journal.map((entry) => entry.target), ['.claude/agents/sdd']);
   } finally {
     await cleanup(ws);
   }
@@ -164,7 +164,7 @@ test('[C3][INV-5] no host detected: init alone + manual wiring instructions', as
     const output = await sdd(['install', '--cwd', ws]);
     assert.equal(await fileExists(ws, '.sdd/config.json'), true);
     assert.match(output, /No agent host detected/);
-    assert.match(output, /node_modules\/shodo\/skills/);
+    assert.match(output, /node_modules\/@ngdo-pro\/sdd\/skills/);
     assert.match(output, /README/);
     assert.match(output, /templates\//);
     assert.equal(await lstatSafe(journalPath(ws)), null);
@@ -234,7 +234,7 @@ test('[I1][INV-1] undo removes exactly the journaled entries, nothing else', asy
     await sdd(['install', '--host', 'claude', '--cwd', ws]);
 
     let config = JSON.parse(await readWorkspaceFile(ws, 'opencode.json'));
-    assert.deepEqual(config.skills.paths, ['local/skills', 'node_modules/shodo/skills']);
+    assert.deepEqual(config.skills.paths, ['local/skills', 'node_modules/@ngdo-pro/sdd/skills']);
     assert.equal(config.name, 'demo');
     assert.equal(config.model, 'openai');
     // INV-2: the structural merge preserves the existing key order verbatim.
@@ -246,7 +246,7 @@ test('[I1][INV-1] undo removes exactly the journaled entries, nothing else', asy
         '  "skills": {',
         '    "paths": [',
         '      "local/skills",',
-        '      "node_modules/shodo/skills"',
+        '      "node_modules/@ngdo-pro/sdd/skills"',
         '    ]',
         '  },',
         '  "model": "openai"',
@@ -260,7 +260,7 @@ test('[I1][INV-1] undo removes exactly the journaled entries, nothing else', asy
 
     await sdd(['install', '--host', 'opencode', '--cwd', ws]);
     config = JSON.parse(await readWorkspaceFile(ws, 'opencode.json'));
-    assert.deepEqual(config.skills.paths, ['local/skills', 'node_modules/shodo/skills']);
+    assert.deepEqual(config.skills.paths, ['local/skills', 'node_modules/@ngdo-pro/sdd/skills']);
 
     await sdd(['install', '--undo', '--cwd', ws]);
     config = JSON.parse(await readWorkspaceFile(ws, 'opencode.json'));
@@ -284,8 +284,8 @@ test('[I1][INV-1] undo removes exactly the journaled entries, nothing else', asy
         '',
       ].join('\n'),
     );
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'shodo')), null);
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'shodo')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'sdd')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'sdd')), null);
     assert.equal(await lstatSafe(journalPath(ws)), null);
   } finally {
     await cleanup(ws);
@@ -301,15 +301,15 @@ test('[E1][INV-1][INV-2][INV-3][INV-4][INV-5] install → validate → undo leav
     await sdd(['install', '--host', 'claude', '--cwd', ws]);
     assert.equal((await lstatSafe(path.join(ws, '.sdd', 'canonical')))?.isDirectory(), true);
     assert.equal(await fileExists(ws, '.sdd/config.json'), true);
-    assert.equal((await lstatSafe(path.join(ws, '.claude', 'skills', 'shodo')))?.isSymbolicLink(), true);
+    assert.equal((await lstatSafe(path.join(ws, '.claude', 'skills', 'sdd')))?.isSymbolicLink(), true);
 
     process.exitCode = undefined;
     await sdd(['validate', '--cwd', ws]);
     assert.notEqual(process.exitCode, 1);
 
     await sdd(['install', '--undo', '--cwd', ws]);
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'shodo')), null);
-    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'shodo')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'skills', 'sdd')), null);
+    assert.equal(await lstatSafe(path.join(ws, '.claude', 'agents', 'sdd')), null);
     assert.equal(await lstatSafe(journalPath(ws)), null);
   } finally {
     process.exitCode = previousExitCode;

@@ -6,8 +6,8 @@ import { checkUpdate, updateCheckDisabled } from '../src/cli/update-check.js';
 import { makeWorkspace, cleanup } from './helpers.js';
 
 const NOW = 1_700_000_000_000;
-const PKG = { name: 'shodo', version: '2.0.0' };
-const NOTICE = '· update available: v2.1.0 (installed: v2.0.0) — npm i -g shodo\n';
+const PKG = { name: '@ngdo-pro/sdd', version: '2.0.0' };
+const NOTICE = '· update available: v2.1.0 (installed: v2.0.0) — npm i -g @ngdo-pro/sdd\n';
 
 /** Counting registry stub: answers `{ version }`, records urls and options. */
 function registry(version) {
@@ -52,7 +52,7 @@ test('[U1][INV-5][INV-2] fetches the official registry endpoint and renders the 
     const result = await checkUpdate({ cwd: root, pkg: PKG, now: NOW, fetchImpl });
 
     // INV-5: stdlib fetch against the official npm registry endpoint only.
-    assert.equal(state.urls[0], 'https://registry.npmjs.org/shodo/latest');
+    assert.equal(state.urls[0], 'https://registry.npmjs.org/@ngdo-pro%2fsdd/latest');
     assert.ok(state.options[0].signal instanceof AbortSignal);
     assert.equal(result.cached, false);
     assert.equal(result.notice, NOTICE);
