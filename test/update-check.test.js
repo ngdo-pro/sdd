@@ -52,7 +52,7 @@ test('[U1][INV-5][INV-2] fetches the official registry endpoint and renders the 
     const result = await checkUpdate({ cwd: root, pkg: PKG, now: NOW, fetchImpl });
 
     // INV-5: stdlib fetch against the official npm registry endpoint only.
-    assert.equal(state.urls[0], 'https://registry.npmjs.org/@ngdo-pro%2fsdd/latest');
+    assert.equal(state.urls[0], 'https://registry.npmjs.org/%40ngdo-pro%2Fsdd/latest');
     assert.ok(state.options[0].signal instanceof AbortSignal);
     assert.equal(result.cached, false);
     assert.equal(result.notice, NOTICE);
