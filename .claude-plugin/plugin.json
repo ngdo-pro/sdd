@@ -1,0 +1,12 @@
+{
+  "name": "sdd",
+  "version": "2.0.3",
+  "description": "Spec-Driven Development (SDD) Framework — skills, agents and the `sdd` CLI (install with `npm i -g @ngdo-pro/sdd`) to drive AI-agentic development through a rigorous canonical-model pipeline.",
+  "author": {
+    "name": "Nicolas Gomes de Oliveira"
+  },
+  "homepage": "https://github.com/ngdo-pro/sdd",
+  "repository": "https://github.com/ngdo-pro/sdd",
+  "license": "MIT",
+  "keywords": ["spec-driven-development", "specification", "ai-agents", "skills", "cli", "linear", "model-first"]
+}
