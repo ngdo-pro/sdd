@@ -4,7 +4,7 @@ import https from 'node:https';
 import { ConnectorError, UsageError } from '../../core/errors.js';
 
 const PROTOCOL_VERSION = '2024-11-05';
-const CLIENT_INFO = { name: 'sdd-framework', version: '2.0.0' };
+const CLIENT_INFO = { name: 'shodo', version: '2.0.0' };
 const KILL_GRACE_MS = 1000;
 const DEFAULT_TIMEOUT_MS = 15000;
 

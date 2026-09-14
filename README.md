@@ -1,4 +1,4 @@
-# SDD Framework (Spec-Driven Development)
+# Shodo — Spec-Driven Development
 
 A structured, universal framework to drive AI agentic software development through a rigorous, scannable, and highly executable documentation pipeline.
 
