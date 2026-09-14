@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "kind": "feature",
+  "id": "04-update-cache-invalidation",
+  "slug": "04-update-cache-invalidation",
+  "title": "Invalidation du cache update-check au changement de version",
+  "state": "archived",
+  "relations": {
+    "initiative": "adoption"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

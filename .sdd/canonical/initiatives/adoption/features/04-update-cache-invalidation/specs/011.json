@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "011",
+  "slug": "011-update-cache-invalidation",
+  "title": "Invalidation du cache update-check au changement de version",
+  "state": "archived",
+  "relations": {
+    "feature": "04-update-cache-invalidation",
+    "initiative": "adoption"
+  },
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
+    "Change Type": "`Bugfix`",
+    "Complexity": "`Small`"
+  },
+  "remote": {},
+  "progress": {
+    "done": true
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

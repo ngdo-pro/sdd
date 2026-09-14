@@ -10,6 +10,15 @@ import { isDir, specsRoot } from '../core/paths.js';
  * silent and the caller (main.js post-run hook) additionally wraps the whole
  * check in a total try/catch — a failing check never affects a command's
  * output order, stdout purity or exit code.
+ *
+ * Spec 011-update-cache-invalidation: every cache entry (memory + dotfile)
+ * also carries `installedVersion` — the running binary's version at write
+ * time. On read, an entry stamped with another version, or without a stamp
+ * (legacy caches), is invalid even when fresh: an upgrade always triggers
+ * exactly one fresh check, so a stale answer picked up under the previous
+ * binary (e.g. `latest: null` during an npm replication window) cannot
+ * outlive the upgrade. A mismatched dotfile is never deleted — it is simply
+ * ignored and superseded by the next write.
  */
 
 const REGISTRY_URL = 'https://registry.npmjs.org'; // INV-5: official registry, stdlib fetch only.
@@ -67,7 +76,7 @@ export function updateCheckDisabled({ flag = false, env = process.env } = {}) {
 
 // Per-process memory cache, one entry per workspace root (INV-4: when no
 // `.sdd/` exists this is the only cache — lifetime = session).
-const memoryCache = new Map(); // cwd → { lastCheck, latest }
+const memoryCache = new Map(); // cwd → { lastCheck, latest, installedVersion }
 
 async function readDotfileCache(cwd) {
   try {
@@ -76,6 +85,11 @@ async function readDotfileCache(cwd) {
     return {
       lastCheck: parsed.lastCheck,
       latest: typeof parsed.latest === 'string' ? parsed.latest : null,
+      // Spec 011: an absent (legacy cache) or non-string (partially formed
+      // dotfile) stamp is coerced to `undefined` — the strict equality against
+      // the running version in `isServable` then treats the entry as invalid.
+      installedVersion:
+        typeof parsed.installedVersion === 'string' ? parsed.installedVersion : undefined,
     };
   } catch {
     return null;
@@ -108,6 +122,11 @@ async function writeDotfileCache(cwd, cache) {
  * Never throws; the cache is refreshed even when the fetch fails (offline
  * sessions must not re-probe on every command — §4.2) and even during
  * `--dry-run` invocations (the dotfile lives outside the model graph).
+ *
+ * Spec 011: every write (success, network failure, equality) stamps
+ * `installedVersion`; on read, an entry stamped with another version — or
+ * without a stamp (legacy) — is invalid even when fresh, so an upgrade always
+ * triggers exactly one fresh check.
  */
 export async function checkUpdate({ cwd, pkg, timeoutMs = 1500, now = Date.now(), fetchImpl = globalThis.fetch } = {}) {
   let installed;
@@ -119,15 +138,21 @@ export async function checkUpdate({ cwd, pkg, timeoutMs = 1500, now = Date.now()
   }
 
   // 1. Fresh cache (memory first, then the dotfile) → serve without fetching.
+  // Spec 011: an entry is servable only when fresh AND stamped with the
+  // running binary's version — an upgrade (stamp mismatch) or a legacy cache
+  // without the stamp is ignored and falls through to exactly one fresh
+  // check; the mismatched dotfile is not deleted, just superseded on write.
+  const isServable = (cache) =>
+    cache && now - cache.lastCheck < CACHE_TTL_MS && cache.installedVersion === installed;
   const memory = memoryCache.get(cwd);
-  if (memory && now - memory.lastCheck < CACHE_TTL_MS) {
+  if (isServable(memory)) {
     return {
       notice: isNewer(memory.latest, installed) ? noticeFor(memory.latest, installed, name) : null,
       cached: true,
     };
   }
   const dotfile = await readDotfileCache(cwd);
-  if (dotfile && now - dotfile.lastCheck < CACHE_TTL_MS) {
+  if (isServable(dotfile)) {
     memoryCache.set(cwd, dotfile);
     return {
       notice: isNewer(dotfile.latest, installed) ? noticeFor(dotfile.latest, installed, name) : null,
@@ -149,13 +174,15 @@ export async function checkUpdate({ cwd, pkg, timeoutMs = 1500, now = Date.now()
   } catch {
     // Timeout, HTTP error, malformed JSON/semver, offline — all silent;
     // `lastCheck` is still refreshed and the last known `latest` is kept.
-    memoryCache.set(cwd, { lastCheck: now, latest: previousLatest });
-    await writeDotfileCache(cwd, { lastCheck: now, latest: previousLatest });
+    // Spec 011: the stamp is written here too — an unstamped write would
+    // leave the bug alive on this path (re-invalidated on every run).
+    memoryCache.set(cwd, { lastCheck: now, latest: previousLatest, installedVersion: installed });
+    await writeDotfileCache(cwd, { lastCheck: now, latest: previousLatest, installedVersion: installed });
     return { notice: null, cached: false };
   }
 
   // 3. Refresh the cache (equality included — §6) and decide on the notice.
-  memoryCache.set(cwd, { lastCheck: now, latest });
-  await writeDotfileCache(cwd, { lastCheck: now, latest });
+  memoryCache.set(cwd, { lastCheck: now, latest, installedVersion: installed });
+  await writeDotfileCache(cwd, { lastCheck: now, latest, installedVersion: installed });
   return { notice: isNewer(latest, installed) ? noticeFor(latest, installed, name) : null, cached: false };
 }

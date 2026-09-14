@@ -48,7 +48,7 @@ sdd install --undo          # revert exactly what install wrote (journal-based)
 
 ### Update notice
 
-After every `sdd` command, the CLI checks the npm registry (best-effort: 1.5 s timeout, result cached for 24 h in the `.sdd/.update-check.json` dotfile) and prints a one-line notice on **stderr** when a newer version is published — after the command output, never on stdout (`--json` and pipes stay clean), and never affecting exit codes. Offline, timeout or registry failures are completely silent.
+After every `sdd` command, the CLI checks the npm registry (best-effort: 1.5 s timeout, result cached for 24 h in the `.sdd/.update-check.json` dotfile) and prints a one-line notice on **stderr** when a newer version is published — after the command output, never on stdout (`--json` and pipes stay clean), and never affecting exit codes. Offline, timeout or registry failures are completely silent. The cache is stamped with the installed binary version and invalidated whenever it changes, so an upgrade always triggers a fresh check (a stale answer cached under the previous version is never served).
 
 Opt out at any time:
 

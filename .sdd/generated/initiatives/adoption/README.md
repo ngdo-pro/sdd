@@ -46,3 +46,5 @@ sdd install [--host auto|opencode|claude|agents] [--dry-run] [--init/--no-init]
   ↳ *Feature:* [`generated/initiatives/adoption/features/02-update-notice.md`](./features/02-update-notice.md)  *(Archived ✅)*
 - [x] **`03-setup-protocol-v2`**: Protocole /setup unifié  
   ↳ *Feature:* [`generated/initiatives/adoption/features/03-setup-protocol-v2.md`](./features/03-setup-protocol-v2.md)  *(Archived ✅)*
+- [x] **`04-update-cache-invalidation`**: Invalidation du cache update-check au changement de version  
+  ↳ *Feature:* [`generated/initiatives/adoption/features/04-update-cache-invalidation.md`](./features/04-update-cache-invalidation.md)  *(Archived ✅)*
