@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "kind": "feature",
+  "id": "05-installed-copies",
+  "slug": "05-installed-copies",
+  "title": "Câblage par copie (zéro path local)",
+  "state": "archived",
+  "relations": {
+    "initiative": "adoption"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

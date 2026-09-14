@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "kind": "spec",
+  "id": "012",
+  "slug": "012-installed-copies",
+  "title": "Câblage par copie (zéro path local)",
+  "state": "archived",
+  "relations": {
+    "feature": "05-installed-copies",
+    "initiative": "adoption"
+  },
+  "fields": {
+    "Domain": "`.sdd/knowledge/domains/spec-model/`",
+    "Change Type": "`Refactor`",
+    "Complexity": "`Medium`"
+  },
+  "remote": {},
+  "progress": {
+    "done": true
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}

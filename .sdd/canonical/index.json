@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sourceOfTruth": "model",
-  "generatedAt": "2026-09-14T06:30:30.220Z",
+  "generatedAt": "2026-09-14T07:11:36.060Z",
   "artifacts": [
     {
       "kind": "feature",
@@ -244,6 +244,26 @@
       "remote": {}
     },
     {
+      "kind": "feature",
+      "id": "05-installed-copies",
+      "slug": "05-installed-copies",
+      "title": "Câblage par copie (zéro path local)",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/05-installed-copies/05-installed-copies.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/05-installed-copies/05-installed-copies.md",
+      "projection": ".sdd/generated/initiatives/adoption/features/05-installed-copies.md",
+      "relations": {
+        "initiative": "adoption"
+      },
+      "progress": {
+        "done": false,
+        "children": 1,
+        "completedChildren": 1,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
       "kind": "initiative",
       "id": "adoption",
       "slug": "adoption",
@@ -255,8 +275,8 @@
       "relations": {},
       "progress": {
         "done": false,
-        "children": 4,
-        "completedChildren": 4,
+        "children": 5,
+        "completedChildren": 5,
         "complete": true
       },
       "remote": {}
@@ -536,6 +556,27 @@
       "projection": ".sdd/generated/initiatives/adoption/specs/011.md",
       "relations": {
         "feature": "04-update-cache-invalidation",
+        "initiative": "adoption"
+      },
+      "progress": {
+        "done": true,
+        "children": 0,
+        "completedChildren": 0,
+        "complete": true
+      },
+      "remote": {}
+    },
+    {
+      "kind": "spec",
+      "id": "012",
+      "slug": "012-installed-copies",
+      "title": "Câblage par copie (zéro path local)",
+      "state": "archived",
+      "meta": ".sdd/canonical/initiatives/adoption/features/05-installed-copies/specs/012.json",
+      "body": ".sdd/canonical/initiatives/adoption/features/05-installed-copies/specs/012.md",
+      "projection": ".sdd/generated/initiatives/adoption/specs/012.md",
+      "relations": {
+        "feature": "05-installed-copies",
         "initiative": "adoption"
       },
       "progress": {

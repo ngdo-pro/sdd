@@ -6,7 +6,9 @@ import {
   deleteJournal,
   detectHosts,
   installPlan,
+  planWithActions,
   readJournal,
+  readPkgVersion,
   resolvePkgRoot,
   undoPlan,
   writeJournal,
@@ -38,11 +40,9 @@ async function promptHostSelection(detected) {
 function manualInstructions(pkgRoot) {
   return [
     'No agent host detected — nothing was wired. Manual setup (see README › Installation):',
-    '  · opencode — merge into opencode.json:',
-    '      { "skills": { "paths": ["node_modules/@ngdo-pro/sdd/skills"] } }',
-    `  · claude   — ln -s ${path.join(pkgRoot, 'skills')} .claude/skills/sdd`,
-    `               ln -s ${path.join(pkgRoot, 'agents')} .claude/agents/sdd`,
-    '  · agents   — same symlinks under .agents/',
+    `  · opencode — cp -R ${path.join(pkgRoot, 'skills', 'sdd-*')} .opencode/skills/`,
+    `  · claude   — cp -R ${path.join(pkgRoot, 'skills', 'sdd-*')} .claude/skills/ && cp ${path.join(pkgRoot, 'agents', '*.md')} .claude/agents/`,
+    '  · agents   — same copies under .agents/',
     '  · templates/ are not wired by default: agents read them from the package at runtime.',
   ];
 }
@@ -73,12 +73,14 @@ async function undo(cwd, flags) {
 
 /**
  * `sdd install` — one command from package install to working pipeline:
- * detect the agent hosts, wire skills/agents for them (idempotent, journaled,
- * never overwriting foreign content), then run `sdd init` (skippable).
+ * detect the agent hosts, wire skills/agents for them by **copying** them to
+ * the native host locations (idempotent, journal-versioned, never touching
+ * foreign content or host configs), then run `sdd init` (skippable).
  * Phase order is detection → wiring → init (INV-4); `--dry-run` prints the
- * plan and writes nothing; `--undo` reverts exactly the journal (INV-1);
- * with no host detected it degrades to init alone plus manual instructions
- * (INV-5). Fully offline (INV-3).
+ * plan — copy/refresh/skip per target — and writes nothing; `--undo` reverts
+ * exactly the journal (INV-3, including legacy 008 symlinks); with no host
+ * detected it degrades to init alone plus manual instructions (INV-5).
+ * Fully offline (INV-4).
  */
 export async function install({ cwd, flags }) {
   const host = flags.host ?? 'auto';
@@ -89,6 +91,7 @@ export async function install({ cwd, flags }) {
   if (flags.undo) return undo(cwd, flags);
 
   const pkgRoot = resolvePkgRoot();
+  const pkgVersion = readPkgVersion(pkgRoot);
 
   // Phase 1 — detection (explicit --host always wins over detection).
   let hosts;
@@ -110,11 +113,18 @@ export async function install({ cwd, flags }) {
     }
   }
 
-  // Phase 2 — plan (pure); dry-run prints it and writes nothing.
-  const plan = hosts.flatMap((id) => installPlan(cwd, id, { pkgRoot }));
+  // Phase 2 — plan (pure); dry-run prints it — copy/refresh/skip per target —
+  // and writes nothing.
+  const plan = hosts.flatMap((id) => installPlan(cwd, id, { pkgRoot, pkgVersion }));
   if (flags.dryRun) {
     heading(`sdd install — dry run (${hosts.length > 0 ? hosts.join(', ') : 'no host detected'})`);
-    for (const entry of plan) info(`${entry.kind} ${entry.target} → ${entry.source}`);
+    const actions = await planWithActions(cwd, plan, (await readJournal(cwd)) ?? []);
+    for (const { entry, action } of actions) {
+      if (action === 'copy') info(`copy ${entry.target}`);
+      else if (action === 'refresh') info(`refresh ${entry.target} (journal version ≠ package)`);
+      else if (action === 'noop') info(`skip ${entry.target} (owned, same version — up to date)`);
+      else info(`skip ${entry.target} (foreign — nothing would be overwritten, INV-2)`);
+    }
     info(`sdd init: ${flags.init === false ? 'skipped (--no-init)' : 'run after wiring'}`);
     line('\n  (dry-run: nothing was written)');
     return;
@@ -132,10 +142,17 @@ export async function install({ cwd, flags }) {
 
   // Phase 3 — wiring (idempotent, journal-merged across runs).
   let journal = (await readJournal(cwd)) ?? [];
+  const staleOwned = journal.some(
+    (entry) => entry.kind === 'copy' && (!entry.version || entry.version !== pkgVersion),
+  );
+  if (staleOwned) info(`Package version changed — refreshing owned targets (installed ≠ ${pkgVersion}).`);
+
+  const totals = { copy: 0, refresh: 0, noop: 0, skip: 0 };
   for (const id of hosts) {
-    const result = await applyPlan(cwd, installPlan(cwd, id, { pkgRoot }), journal);
+    const result = await applyPlan(cwd, installPlan(cwd, id, { pkgRoot, pkgVersion }), journal);
     journal = result.journal;
     for (const message of result.warnings) warn(message);
+    for (const { action } of result.actions) totals[action] += 1;
   }
 
   // Phase 4 — init, then the journal: written AFTER `sdd init` so `.sdd/`
@@ -146,7 +163,11 @@ export async function install({ cwd, flags }) {
     if (journal.length > 0) await writeJournal(cwd, journal);
   }
 
-  for (const entry of journal) info(`wired ${entry.target} → ${entry.source}`);
+  const copied = totals.copy + totals.refresh;
+  info(
+    `Copied ${copied} item(s) — ${totals.copy} new, ${totals.refresh} refreshed, `
+    + `${totals.noop} up to date, ${totals.skip} skipped.`,
+  );
   info('Templates are not wired: agents read them from the package at runtime.');
   info('Next: run the /setup skill to configure connectors (see README › Installation).');
 }
