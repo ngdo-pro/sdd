@@ -34,6 +34,17 @@ sdd install --undo          # revert exactly what install wrote (journal-based)
 * **Windows:** when symlink creation is refused (EPERM), the wiring falls back to a copy with a warning — re-run `sdd install` after updating the package to refresh it.
 * **Clone path:** `git clone <this repo> && cd shodo && npm i -g .`, or run `node bin/sdd.js install` straight from the clone. Everything is offline — no API keys, no network.
 
+### Update notice
+
+After every `sdd` command, the CLI checks the npm registry (best-effort: 1.5 s timeout, result cached for 24 h in the `.sdd/.update-check.json` dotfile) and prints a one-line notice on **stderr** when a newer version is published — after the command output, never on stdout (`--json` and pipes stay clean), and never affecting exit codes. Offline, timeout or registry failures are completely silent.
+
+Opt out at any time:
+
+```bash
+sdd status --no-update-check        # per invocation
+SDD_NO_UPDATE_CHECK=1 sdd status    # per environment (any non-empty value)
+```
+
 ---
 
 ## Model-First Architecture

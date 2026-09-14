@@ -10,6 +10,10 @@ import { getBackendConfig, loadConfig } from '../src/core/config.js';
 import { UsageError } from '../src/core/errors.js';
 import { makeWorkspace, cleanup, seedModel, writeFiles, readWorkspaceFile, fileExists } from './helpers.js';
 
+// Hermeticity (spec 009): the post-run update check is exercised with a fake
+// fetch in cli.test.js — opt out here so no test ever touches the registry.
+process.env.SDD_NO_UPDATE_CHECK = '1';
+
 const FAKE_SERVER = fileURLToPath(new URL('./helpers/fake-mcp-server.js', import.meta.url));
 
 /** Runs the real CLI (flag parsing included) while muting stdout. */

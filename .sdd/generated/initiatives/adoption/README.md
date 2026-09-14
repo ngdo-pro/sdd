@@ -42,3 +42,5 @@ sdd install [--host auto|opencode|claude|agents] [--dry-run] [--init/--no-init]
 
 - [x] **`01-install-command`**: Commande sdd install  
   ↳ *Feature:* [`generated/initiatives/adoption/features/01-install-command.md`](./features/01-install-command.md)  *(Archived ✅)*
+- [x] **`02-update-notice`**: Notice de mise à jour  
+  ↳ *Feature:* [`generated/initiatives/adoption/features/02-update-notice.md`](./features/02-update-notice.md)  *(Archived ✅)*

@@ -16,6 +16,7 @@
   * Intégrité du graphe : relations, unicité des ids, dérivabilité des chemins.
   * Gouvernance des projections : elles vivent sous `.sdd/generated/`, écrites et purgées exclusivement par le CLI — jamais éditées à la main.
   * Migration de workspaces : conversion de tout workspace hérité de l'ancienne racine vers la racine finale `.sdd/`, par reconstruction intégrale depuis les métadonnées (`sdd migrate` — livrée, cf. `PAR-WM-06`).
+  * Notice de mise à jour post-run : après chaque commande `sdd`, une notice discrète sur stderr signale une version plus récente du package (best-effort, cache 24 h, opt-outs flag/env) — l'ordre de sortie, la propreté de stdout et l'exit code des commandes ne sont jamais affectés (cf. `RULE-WM-29`…`RULE-WM-33`).
 * **Ce qui relève d'autres domaines (Out of Scope & Frontières) :**
   * *Rendu des projections markdown :* feature `02-generated-namespace` (livrée) — namespace `.sdd/generated/`, purge des orphelins listée et prévisualisable, garde de drift `render --check` (cf. `PAR-WM-05`).
   * *Entrée racine optionnelle `site/` :* déléguée à `04-static-site` (à venir — elle étendra la racine autorisée).
@@ -53,6 +54,9 @@ flowchart TD
     Render --> Check[sdd render --check — drift = exit 1, rien d'écrit]
     Check --> Done[sdd done --cascade — archivage métadonnées seules]
     Done --> Valid([sdd validate exit 0 — graphe ET racine conformes])
+    Valid -.->|post-run — après toute commande| Notice["stderr : « update available: vX »<br>au plus 1×/24h — offline/timeout silencieux"]
+    Notice -.->|opt-out --no-update-check / SDD_NO_UPDATE_CHECK| Mute[no-op — ni fetch ni écriture]
+    Notice -.->|cache frais < 24h| NoFetch[aucun fetch, aucun affichage]
 ```
 
 ---
@@ -69,6 +73,7 @@ flowchart TD
 | `PAR-WM-06` | Migrer un workspace hérité | Utilisateur / Agent | `sdd migrate [--dry-run]` | Workspace reconstruit intégralement à la racine `.sdd/`, ancienne racine retirée — ou plan complet sans écriture en `--dry-run` |
 | `PAR-WM-07` | Amorçage guidé d'un connecteur (`/setup`) | Agent amorceur (`/setup`) | Commande `/setup` ou demande de configuration d'un miroir | Workspace configuré et validé : connecteur activé, settings vérifiés, transport MCP résolu — persisté exclusivement par le CLI |
 | `PAR-WM-08` | Amorcer un repo adoptant (`sdd install`) | Utilisateur / Agent | `sdd install [--host <id>] [--dry-run] [--undo] [--no-init]` | Hôtes câblés (skills/agents → package installé), workspace initialisé, récap + pointer `/setup` — ou plan affiché en `--dry-run`, câblages retirés en `--undo` |
+| `PAR-WM-09` | Voir la notice de mise à jour | Utilisateur / Agent | Toute commande `sdd` (après son exécution) | Une ligne stderr au plus une fois par 24 h si une version plus récente du package existe — silencieux sinon (offline, timeout, opt-out) |
 
 ---
 
@@ -136,6 +141,14 @@ flowchart TD
 * **Post-conditions :** skills/agents câblés vers le module installé (zéro copie divergente) ; journal `.sdd/.install-journal.json` posé ; un second install est un no-op ; `sdd validate` reste exit 0 (fichier journal toléré).
 * **Variantes :** *Dry-run :* plan affiché (hôtes, entrées, init), rien d'écrit. *Ambiguïté TTY :* multi-select des hôtes détectés (annulation ⇒ erreur propre) ; hors TTY (CI) : erreur listant les hôtes, `--host` requis. *Cible étrangère préexistante :* warn + skip — jamais d'écrasement ; symlink shodo périmé (pointant un ancien pkgRoot journalisé) : repointé vers le package courant. *Windows EPERM :* fallback copie récursive + warning (ré-installer après update du package pour rafraîchir). *Aucun hôte détecté :* `sdd init` seul + instructions de câblage manuel ; les templates ne sont pas câblés (les agents les lisent du package au runtime). *Undo :* `sdd install --undo` retire exactement les entrées journalisées (symlinks + valeur `opencode.json`), supprime le journal ; sans journal : erreur propre, rien d'écrit.
 
+### `PAR-WM-09` : Voir la notice de mise à jour
+* **Acteur :** Utilisateur / Agent — le parcours est entièrement transversal : il s'exécute après toute commande `sdd`, sans jamais la retarder ni la perturber.
+* **Prérequis :** aucun (le check est best-effort — sans réseau ni registre joignable, tout est silencieux).
+* **Déclencheur :** toute invocation `sdd <cmd>` (une seule par invocation, `--dry-run` inclus).
+* **Déroulement nominal :** 1. la commande s'exécute normalement — la sortie utile (stdout) et l'exit code sont intégralement préservés ; 2. opt-out ? flag `--no-update-check` ou env `SDD_NO_UPDATE_CHECK` non vide ⇒ no-op ; 3. cache de moins de 24 h (mémoire puis `.sdd/.update-check.json`) ⇒ aucun fetch, aucun affichage ; 4. cache expiré ⇒ un seul fetch du registre npm (`registry.npmjs.org/shodo/latest`, timeout 1,5 s) et comparaison semver strict ; 5. version distante plus récente que l'installée ⇒ une ligne stderr après la sortie : `· update available: vX.Y.Z (installed: vA.B.C) — npm i -g shodo` ; 6. le cache est rafraîchi dans tous les cas (échec réseau et égalité de version inclus).
+* **Post-conditions :** la commande se comporte exactement comme avant la feature (stdout, exit code, timing perçus intacts) ; le cache peut avoir été rafraîchi en `.sdd/.update-check.json` — dotfile hors graphe, `sdd validate` reste exit 0.
+* **Variantes :** *Offline / timeout / registre 404 / JSON ou semver malformé :* silencieux — aucune notice, aucune erreur ; `lastCheck` est quand même rafraîchi (les sessions offline ne re-sondent pas à chaque commande). *Version égale ou inférieure :* cache rafraîchi, aucune notice. *Notice déjà affichée il y a < 24 h :* le cache répond sans fetch (`cached`) et rien n'est ré-affiché — au plus un affichage par 24 h. *Workspace sans `.sdd/` :* cache mémoire seul (durée de vie = session), aucun dotfile écrit — la notice fonctionne normalement. *`--dry-run` :* la notice s'affiche comme pour toute commande et le cache dotfile s'écrit (il est hors graphe). *CI :* idem normal — le cache partagé évite que des invocations courtes se sondent en boucle.
+
 ---
 
 ## 5. Invariants & Règles Métier
@@ -168,6 +181,11 @@ flowchart TD
 * **`RULE-WM-26` (Install offline) :** `sdd install` n'ouvre aucun réseau, ne demande aucune clé — tout passe par `node:fs` ; `sdd init` conserve sa sémantique (local par défaut, connecteurs via `--connector`/`/setup`).
 * **`RULE-WM-27` (Ordre de phases, dry-run install) :** détection → câblage → `sdd init` ; `--dry-run` affiche le plan complet (hôtes, entrées, init) et n'écrit rien ; le journal est écrit après init dans un `finally` — le câblage reste réversible même quand init échoue.
 * **`RULE-WM-28` (Dégradation propre sans hôte) :** sans hôte détecté, `sdd install` dégrade en `sdd init` seul + instructions de câblage manuel — jamais d'échec ; les templates ne sont pas câblés par défaut (les agents les lisent du package au runtime).
+* **`RULE-WM-29` (Notice après commande, stderr, au plus 1×/24h) :** la notice de mise à jour n'apparaît jamais avant la sortie utile de la commande, uniquement sur stderr (stdout = contrat machine : `--json` et pipes restent propres) ; l'exit code et le timing perçus de la commande ne sont jamais affectés ; une réponse servie du cache n'est jamais ré-affichée — l'affichage exige que l'invocation courante ait elle-même fetché, ce qui plafonne l'affichage à une fois par 24 h par workspace.
+* **`RULE-WM-30` (Best-effort strict) :** le check porte un timeout réel de 1,5 s (abort effectif du fetch) ; tout échec — réseau, HTTP, JSON malformé, semver distant invalide, filesystem en lecture seule, exception interne — est silencieux (try/catch total autour du hook) et n'affecte jamais l'exit code ni la sortie, même quand la commande elle-même a échoué ; `lastCheck` est rafraîchi même en échec réseau (une session offline ne re-sonde pas à chaque commande).
+* **`RULE-WM-31` (Opt-outs) :** le flag `--no-update-check` ou la variable d'environnement `SDD_NO_UPDATE_CHECK` (toute valeur non vide compte, même `0`) désactivent le check intégralement — ni fetch, ni notice, ni écriture de cache.
+* **`RULE-WM-32` (Cache hors graphe) :** le cache vit en mémoire par process puis en dotfile `.sdd/.update-check.json` — jamais créé si `.sdd/` n'existe pas (cache mémoire seul, durée de vie = session), toléré par `root-layout` comme tout dotfile, jamais dans `canonical/` ni `generated/`, écrit même en `--dry-run` (l'invocation reste une invocation) ; la comparaison « égalité » rafraîchit le cache sans afficher de notice.
+* **`RULE-WM-33` (Registre officiel, stdlib uniquement) :** l'endpoint est celui du registre npm officiel (`registry.npmjs.org/<pkg>/latest`) — jamais d'endpoint maison ; stdlib `fetch` (Node ≥ 18.17), aucune dépendance nouvelle ; comparaison semver strict 3 segments numériques (pas de range, pas de prerelease) — une version distante malformée est traitée comme un échec silencieux ; les tests n'interrogent jamais le vrai registre (fetch injectable).
 
 ---
 
@@ -209,3 +227,8 @@ flowchart TD
 | `opencode.json` illisible ou non-objet lors du merge | ConfigError « fix it before running `sdd install` (nothing was overwritten) », rien d'écrasé | Corriger `opencode.json` puis relancer |
 | Aucun hôte détecté (repo vierge) | `sdd init` seul + instructions de câblage manuel (merge `opencode.json`, symlinks `.claude/`/`.agents/`), exit 0 | Suivre les instructions affichées (cf. README › Installation) |
 | Journal posé par l'install | `.sdd/.install-journal.json` écrit après init (fichier caché toléré par `root-layout` — `sdd validate` reste exit 0) | `sdd install --undo` pour tout retirer |
+| Notice de mise à jour — offline (réseau injoignable) ou timeout fetch > 1,5 s | Aucune notice, aucune erreur visible — la commande se termine exactement comme avant (exit code, stdout intacts) ; `lastCheck` rafraîchi (cache mémoire + dotfile) pour ne pas re-sonder à chaque commande | Rien à faire — nouveau check au plus tôt 24 h plus tard ; supprimer `.sdd/.update-check.json` pour re-sonder au prochain run |
+| Notice de mise à jour — registre 404 (paquet non publié) ou réponse malformée (JSON invalide, version non-semver strict) | Silencieux — traité comme un échec réseau : aucune notice, aucune erreur, exit code inchangé | Rien à faire — le check retente au plus tôt 24 h plus tard (supprimer le dotfile pour forcer) |
+| Notice de mise à jour — opt-out actif (`--no-update-check` ou `SDD_NO_UPDATE_CHECK` non vide) | No-op total : ni fetch, ni notice, ni écriture de cache | Retirer le flag / la variable d'environnement pour réactiver le check |
+| Notice de mise à jour — cache frais (< 24 h) | Aucun fetch, aucun affichage — même si une version plus récente est déjà connue du cache (au plus 1 affichage/24 h) | Supprimer `.sdd/.update-check.json` pour forcer un re-check (affichage au prochain run si version plus récente) |
+| Notice de mise à jour — workspace sans `.sdd/` | Cache mémoire seul (durée de vie = session), aucun dotfile écrit — la notice fonctionne normalement | — |

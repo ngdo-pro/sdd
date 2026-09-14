@@ -18,6 +18,7 @@ import { sync } from './commands/sync.js';
 import { connectors } from './commands/connectors.js';
 import { validate } from './commands/validate.js';
 import { VERSION, HELP } from './help.js';
+import { checkUpdate, updateCheckDisabled } from './update-check.js';
 
 const OPTIONS = {
   to: { type: 'string' },
@@ -43,6 +44,7 @@ const OPTIONS = {
   'no-init': { type: 'boolean' },
   'dry-run': { type: 'boolean' },
   json: { type: 'boolean' },
+  'no-update-check': { type: 'boolean' },
   cwd: { type: 'string' },
   help: { type: 'boolean', short: 'h' },
   version: { type: 'boolean', short: 'v' },
@@ -67,7 +69,7 @@ const COMMANDS = {
   validate,
 };
 
-export async function run(argv) {
+export async function run(argv, { fetchImpl } = {}) {
   let parsed;
   try {
     parsed = parseArgs({ args: argv, options: OPTIONS, allowPositionals: true, strict: false });
@@ -124,34 +126,57 @@ export async function run(argv) {
     settings[key] = occurrences && occurrences.length > 1 ? occurrences : value;
   }
 
-  await handler({
-    cwd: values.cwd ? path.resolve(values.cwd) : process.cwd(),
-    positionals: positionals.slice(1),
-    flags: {
-      to: values.to,
-      kind: values.kind,
-      state: values.state,
-      slug: values.slug,
-      title: values.title,
-      from: values.from,
-      feature: values.feature,
-      initiative: values.initiative,
-      field: values.field,
-      connectors: values.connector,
-      create: Boolean(values.create),
-      force: Boolean(values.force),
-      check: Boolean(values.check),
-      write: Boolean(values.write),
-      cascade: Boolean(values.cascade),
-      undo: Boolean(values.undo),
-      done: Boolean(values.done),
-      host: values.host,
-      init: values['no-init'] ? false : (values.init ?? true),
-      dryRun: Boolean(values['dry-run']),
-      json: Boolean(values.json),
-      interactive: Boolean(values.interactive),
-      settings,
-    },
-  });
+  const cwd = values.cwd ? path.resolve(values.cwd) : process.cwd();
+
+  // Post-run update notice (spec 009): strictly after the command output, one
+  // line on stderr, never before stdout output and never touching the exit
+  // code. One check per run() invocation, inside a `finally` with a total
+  // try/catch so a failing check can never break a command — even a
+  // command whose handler threw (INV-2). Opt-outs: `--no-update-check` or a
+  // non-empty SDD_NO_UPDATE_CHECK → no fetch, no cache write (INV-3).
+  try {
+    await handler({
+      cwd,
+      positionals: positionals.slice(1),
+      flags: {
+        to: values.to,
+        kind: values.kind,
+        state: values.state,
+        slug: values.slug,
+        title: values.title,
+        from: values.from,
+        feature: values.feature,
+        initiative: values.initiative,
+        field: values.field,
+        connectors: values.connector,
+        create: Boolean(values.create),
+        force: Boolean(values.force),
+        check: Boolean(values.check),
+        write: Boolean(values.write),
+        cascade: Boolean(values.cascade),
+        undo: Boolean(values.undo),
+        done: Boolean(values.done),
+        host: values.host,
+        init: values['no-init'] ? false : (values.init ?? true),
+        dryRun: Boolean(values['dry-run']),
+        json: Boolean(values.json),
+        interactive: Boolean(values.interactive),
+        settings,
+      },
+    });
+  } finally {
+    try {
+      if (!updateCheckDisabled({ flag: Boolean(values['no-update-check']) })) {
+        const { notice, cached } = await checkUpdate({ cwd, fetchImpl });
+        // §4.2 "Fraîcheur: aucun fetch, aucun affichage": a cache-served
+        // answer is returned by checkUpdate (the §8.1 cache scenario asserts
+        // it) but never displayed — the notice shows only when this very
+        // invocation fetched a newer version, i.e. at most once per 24 h.
+        if (notice && !cached) process.stderr.write(notice);
+      }
+    } catch {
+      // Best-effort by contract: a failing update check is swallowed.
+    }
+  }
 }
 

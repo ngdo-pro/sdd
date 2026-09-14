@@ -58,6 +58,7 @@ export const HELP = `
     --connector <id>       Restrict to a mirror (repeatable)
     --dry-run            Preview changes without writing
     --json               Machine-readable output
+    --no-update-check    Skip the post-run update notice (or set SDD_NO_UPDATE_CHECK)
     --force              Overwrite existing material (init, import)
     --cwd <path>         Run against another workspace root
     -h, --help           Show this help

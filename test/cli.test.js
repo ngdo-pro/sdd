@@ -15,6 +15,7 @@ import { validate } from '../src/cli/commands/validate.js';
 import { list } from '../src/cli/commands/list.js';
 import { importArtifacts } from '../src/cli/commands/import.js';
 import { run } from '../src/cli/main.js';
+import { VERSION } from '../src/cli/help.js';
 import { runInteractive } from '../src/cli/interactive.js';
 import { listManifests } from '../src/connectors/registry.js';
 import { UsageError } from '../src/core/errors.js';
@@ -559,12 +560,14 @@ test('[E2][INV-2] move idempotence: re-run and dry-run are side-effect free', as
 // Integration Tests (@integration) — spec 004-declarative-init, §8.1 I1, I2
 // ============================================================================
 
-/** Runs the real CLI (flag parsing included) while muting stdout. */
+/** Runs the real CLI (flag parsing included) while muting stdout.
+ *  `--no-update-check` keeps these legacy helpers hermetic — the post-run
+ *  update check is exercised with a fake fetch in the spec-009 section. */
 async function cli(args, root) {
   const original = process.stdout.write;
   process.stdout.write = () => true;
   try {
-    return await run([...args, '--cwd', root]);
+    return await run([...args, '--no-update-check', '--cwd', root]);
   } finally {
     process.stdout.write = original;
   }
@@ -579,7 +582,7 @@ async function cliCaptured(args, root) {
     return true;
   };
   try {
-    await run([...args, '--cwd', root]);
+    await run([...args, '--no-update-check', '--cwd', root]);
   } finally {
     process.stdout.write = original;
   }
@@ -868,7 +871,7 @@ async function runCaptured(args, root) {
   };
   try {
     process.exitCode = 0;
-    await run([...args, '--cwd', root]);
+    await run([...args, '--no-update-check', '--cwd', root]);
     return { output: chunks.join(''), exitCode: process.exitCode };
   } finally {
     process.stdout.write = original;
@@ -944,6 +947,189 @@ test('[E4][INV-2] move exit codes: mixed and alive exit 0, all-fail exits 1, dry
     const dead = await runCaptured(['move', '01-login', '--to', 'archived'], root);
     assert.equal(dead.exitCode, 1);
     assert.match(dead.output, /all enabled mirrors failed \(1\/1\)/);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+// ============================================================================
+// Integration & End-to-End Tests (@component/@e2e) — spec 009-update-notice, §8.1
+// The post-run update notice: after the command output, stderr-only, cached
+// 24 h, best-effort, opt-out-able. Every fetch goes to an injected stub —
+// no test ever talks to the real npm registry.
+// ============================================================================
+
+/**
+ * Runs the real CLI capturing stdout AND stderr as an ordered event log —
+ * the update notice must always be the last event (INV-1: never before the
+ * command output). `SDD_NO_UPDATE_CHECK` is neutralized unless `keepEnv`,
+ * so tests never inherit an opt-out from the surrounding environment.
+ */
+async function runObserved(args, root, { fetchImpl, keepEnv = false } = {}) {
+  const events = [];
+  const originalStdout = process.stdout.write;
+  const originalStderr = process.stderr.write;
+  const originalEnv = process.env.SDD_NO_UPDATE_CHECK;
+  if (!keepEnv) delete process.env.SDD_NO_UPDATE_CHECK;
+  process.stdout.write = (chunk) => {
+    events.push(['stdout', String(chunk)]);
+    return true;
+  };
+  process.stderr.write = (chunk) => {
+    events.push(['stderr', String(chunk)]);
+    return true;
+  };
+  try {
+    process.exitCode = 0;
+    await run([...args, '--cwd', root], { fetchImpl });
+    const stream = (name) => events.filter(([writer]) => writer === name).map(([, text]) => text).join('');
+    return { events, stdout: stream('stdout'), stderr: stream('stderr'), exitCode: process.exitCode };
+  } finally {
+    process.stdout.write = originalStdout;
+    process.stderr.write = originalStderr;
+    if (originalEnv === undefined) delete process.env.SDD_NO_UPDATE_CHECK;
+    else process.env.SDD_NO_UPDATE_CHECK = originalEnv;
+    process.exitCode = 0;
+  }
+}
+
+/** Registry stub answering `{ version }` with a call counter. */
+function registryStub(version, counter) {
+  return async () => {
+    counter.fetches += 1;
+    return { ok: true, json: async () => ({ version }) };
+  };
+}
+
+test('[N1][INV-1][INV-4] the update notice follows the command output on stderr and feeds the dotfile cache', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seed(root);
+    const counter = { fetches: 0 };
+    const { stdout, stderr, events } = await runObserved(['status'], root, { fetchImpl: registryStub('2.1.0', counter) });
+
+    // stdout intact: the full status output, untouched by the notice.
+    assert.match(stdout, /SDD Framework status/);
+    assert.match(stdout, /source of truth/);
+    // The notice: exactly one line on stderr, after every stdout event.
+    assert.equal(stderr, `· update available: v2.1.0 (installed: v${VERSION}) — npm i -g shodo\n`);
+    assert.ok(events.length > 1);
+    assert.equal(events[events.length - 1][0], 'stderr');
+    assert.ok(events.slice(0, -1).every(([writer]) => writer === 'stdout'));
+    assert.equal(counter.fetches, 1);
+
+    // INV-4: the cache dotfile lives at the .sdd root, outside the graph.
+    assert.equal(await fileExists(root, '.sdd/.update-check.json'), true);
+    const cache = JSON.parse(await fsp.readFile(path.join(root, '.sdd', '.update-check.json'), 'utf8'));
+    assert.equal(cache.latest, '2.1.0');
+    assert.equal(typeof cache.lastCheck, 'number');
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[N2][INV-1..INV-5] journey: notice once, cached rerun, --json stdout pure, opt-out silent', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seed(root);
+    const counter = { fetches: 0 };
+
+    // 1st run: exactly one notice on stderr, one fetch.
+    const first = await runObserved(['status'], root, { fetchImpl: registryStub('2.1.0', counter) });
+    assert.equal(counter.fetches, 1);
+    assert.match(first.stderr, /update available: v2\.1\.0/);
+    assert.equal(first.exitCode, 0);
+
+    // 2nd run (--json): served from the cache — zero fetch, zero stderr,
+    // stdout stays pure machine-readable JSON.
+    const second = await runObserved(['status', '--json'], root, { fetchImpl: registryStub('2.1.0', counter) });
+    assert.equal(counter.fetches, 1);
+    assert.equal(second.stderr, '');
+    const payload = JSON.parse(second.stdout);
+    assert.equal(payload.sourceOfTruth, 'model');
+    assert.equal(payload.total, 3);
+
+    // 3rd run with the opt-out flag: still zero fetch, zero stderr.
+    const third = await runObserved(['status', '--no-update-check'], root, { fetchImpl: registryStub('2.1.0', counter) });
+    assert.equal(counter.fetches, 1);
+    assert.equal(third.stderr, '');
+    assert.match(third.stdout, /SDD Framework status/);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[N3][INV-2] a failing registry probe stays silent, exits 0 and still refreshes lastCheck', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seed(root);
+    const { stdout, stderr, exitCode } = await runObserved(['status'], root, {
+      fetchImpl: async () => {
+        throw new Error('registry unreachable');
+      },
+    });
+    // INV-2: best-effort — no error surfaces, the command behaves normally.
+    assert.equal(exitCode, 0);
+    assert.equal(stderr, '');
+    assert.match(stdout, /SDD Framework status/);
+    // §4.2: lastCheck is refreshed even on failure (offline commands must
+    // not re-probe on every invocation).
+    const cache = JSON.parse(await fsp.readFile(path.join(root, '.sdd', '.update-check.json'), 'utf8'));
+    assert.equal(typeof cache.lastCheck, 'number');
+    assert.equal(cache.latest, null);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[N4][INV-3] opt-outs — SDD_NO_UPDATE_CHECK env and --no-update-check flag disable everything', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seed(root);
+
+    // Env opt-out (any non-empty value counts).
+    process.env.SDD_NO_UPDATE_CHECK = '0';
+    const envCounter = { fetches: 0 };
+    const viaEnv = await runObserved(['status'], root, { fetchImpl: registryStub('2.1.0', envCounter), keepEnv: true });
+    assert.equal(envCounter.fetches, 0);
+    assert.equal(viaEnv.stderr, '');
+    assert.equal(await fileExists(root, '.sdd/.update-check.json'), false);
+
+    // Flag opt-out.
+    const flagCounter = { fetches: 0 };
+    const viaFlag = await runObserved(['status', '--no-update-check'], root, { fetchImpl: registryStub('2.1.0', flagCounter) });
+    assert.equal(flagCounter.fetches, 0);
+    assert.equal(viaFlag.stderr, '');
+    assert.equal(await fileExists(root, '.sdd/.update-check.json'), false);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('[N5][INV-4] validate tolerates the .update-check.json dotfile and the flag leaves it untouched', async () => {
+  const root = await makeWorkspace();
+  try {
+    await seed(root);
+    const cachePath = path.join(root, '.sdd', '.update-check.json');
+    const cacheContent = `${JSON.stringify({ lastCheck: 1_700_000_000_000, latest: '9.9.9' }, null, 2)}\n`;
+    await fsp.writeFile(cachePath, cacheContent, 'utf8');
+
+    // Structural gate (root-layout engine): the dotfile is tolerated → exit 0.
+    const exitCode = await silently(async () => {
+      process.exitCode = 0;
+      await validate(ctx(root));
+      return process.exitCode;
+    });
+    assert.equal(exitCode, 0);
+    process.exitCode = 0;
+
+    // Full CLI with the opt-out flag: the hook is a total no-op — zero fetch
+    // and the pre-existing cache file is byte-identical (never rewritten).
+    const counter = { fetches: 0 };
+    const observed = await runObserved(['validate', '--no-update-check'], root, { fetchImpl: registryStub('9.9.9', counter) });
+    assert.equal(observed.exitCode, 0);
+    assert.equal(counter.fetches, 0);
+    assert.equal(await fsp.readFile(cachePath, 'utf8'), cacheContent);
   } finally {
     await cleanup(root);
   }

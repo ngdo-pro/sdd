@@ -8,6 +8,10 @@ import { UsageError } from '../src/core/errors.js';
 import { detectHosts, installPlan, journalPath, readJournal, resolvePkgRoot } from '../src/cli/hosts.js';
 import { makeWorkspace, cleanup, writeFiles, readWorkspaceFile, fileExists } from './helpers.js';
 
+// Hermeticity (spec 009): the post-run update check is exercised with a fake
+// fetch in cli.test.js — opt out here so no test ever touches the registry.
+process.env.SDD_NO_UPDATE_CHECK = '1';
+
 /** The real repo root — computed independently of `resolvePkgRoot()` on purpose. */
 const PKG_ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 

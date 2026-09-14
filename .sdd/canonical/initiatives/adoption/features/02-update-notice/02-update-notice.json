@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "kind": "feature",
+  "id": "02-update-notice",
+  "slug": "02-update-notice",
+  "title": "Notice de mise à jour",
+  "state": "archived",
+  "relations": {
+    "initiative": "adoption"
+  },
+  "fields": {},
+  "remote": {},
+  "progress": {
+    "done": false
+  },
+  "createdAt": "2026-09-14",
+  "updatedAt": "2026-09-14"
+}
